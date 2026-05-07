@@ -27,8 +27,12 @@ jobs:
       - name: Smoke test CLI
         run: |
           export VENVWIN_HOME="$RUNNER_TEMP/venvwin"
+          mkdir -p "$RUNNER_TEMP/installers"
+          touch "$RUNNER_TEMP/installers/setup.exe"
           venvwin init
           venvwin create "Notepad Plus Plus"
           venvwin list
           venvwin inspect notepad-plus-plus
           venvwin install-command notepad-plus-plus setup.exe
+          venvwin install notepad-plus-plus "$RUNNER_TEMP/installers/setup.exe" --dry-run
+          venvwin launcher create notepad-plus-plus "Notepad Plus Plus" "C:\\Program Files\\Notepad++\\notepad++.exe"
