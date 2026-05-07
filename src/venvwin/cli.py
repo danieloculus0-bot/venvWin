@@ -5,9 +5,11 @@ import json
 import sys
 from pathlib import Path
 
+from .associate import default_applications_dir, write_file_association_handlers
 from .capsule import create_capsule, list_capsules, load_capsule, save_capsule
 from .desktop import generate_desktop_launcher
 from .install import install_into_capsule
+from .open import open_windows_file
 from .paths import capsules_dir, default_root, ensure_runtime_dirs, profiles_dir
 from .profile import RunnerProfile, load_profile, save_profile
 from .runner import get_runner
@@ -20,6 +22,14 @@ def build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command", required=True)
 
     sub.add_parser("init", help="Initialize runtime directories and default profile")
+
+    associate = sub.add_parser("associate", help="Install desktop handlers for EXE/MSI double-click support")
+    associate.add_argument("--applications-dir", type=Path)
+
+    open_cmd = sub.add_parser("open", help="Open an EXE/MSI through venvWin")
+    open_cmd.add_argument("file_path", type=Path)
+    open_cmd.add_argument("--dry-run", action="store_true")
+    open_cmd.add_argument("--profile", default="default")
 
     profile = sub.add_parser("profile", help="Manage runner profiles")
     profile_sub = profile.add_subparsers(dest="profile_command", required=True)
@@ -69,6 +79,28 @@ def cmd_init(root: Path) -> int:
     save_profile(profiles_dir(root), RunnerProfile.default())
     print(f"Initialized venvWin runtime: {root}")
     return 0
+
+
+def cmd_associate(applications_dir: Path | None) -> int:
+    target_dir = applications_dir.expanduser().resolve() if applications_dir else default_applications_dir()
+    paths = write_file_association_handlers(target_dir)
+    for path in paths:
+        print(f"Wrote handler: {path}")
+    print("Set these handlers as defaults for EXE/MSI in your desktop environment if needed.")
+    return 0
+
+
+def cmd_open(root: Path, file_path: Path, dry_run: bool, profile_name: str) -> int:
+    ensure_runtime_dirs(root)
+    result = open_windows_file(
+        capsules_dir(root),
+        profiles_dir(root),
+        file_path.expanduser().resolve(),
+        dry_run=dry_run,
+        profile_name=profile_name,
+    )
+    print(json.dumps(result, indent=2))
+    return int(result.get("exit_code") or 0)
 
 
 def cmd_profile_default(root: Path) -> int:
@@ -167,6 +199,10 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if args.command == "init":
             return cmd_init(root)
+        if args.command == "associate":
+            return cmd_associate(args.applications_dir)
+        if args.command == "open":
+            return cmd_open(root, args.file_path, args.dry_run, args.profile)
         if args.command == "profile" and args.profile_command == "default":
             return cmd_profile_default(root)
         if args.command == "create":
