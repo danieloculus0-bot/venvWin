@@ -6,6 +6,8 @@ import sys
 from pathlib import Path
 
 from .capsule import create_capsule, list_capsules, load_capsule, save_capsule
+from .desktop import generate_desktop_launcher
+from .install import install_into_capsule
 from .paths import capsules_dir, default_root, ensure_runtime_dirs, profiles_dir
 from .profile import RunnerProfile, load_profile, save_profile
 from .runner import get_runner
@@ -32,13 +34,27 @@ def build_parser() -> argparse.ArgumentParser:
     inspect = sub.add_parser("inspect", help="Inspect a capsule")
     inspect.add_argument("capsule_id")
 
-    install = sub.add_parser("install-command", help="Print the install command for an installer")
+    install = sub.add_parser("install", help="Run an installer inside a capsule")
     install.add_argument("capsule_id")
-    install.add_argument("installer_path")
+    install.add_argument("installer_path", type=Path)
+    install.add_argument("--dry-run", action="store_true", help="Record and print command without executing")
+    install.add_argument("--no-copy", action="store_true", help="Do not copy installer into capsule history")
+
+    install_command = sub.add_parser("install-command", help="Print the install command for an installer")
+    install_command.add_argument("capsule_id")
+    install_command.add_argument("installer_path")
 
     launch = sub.add_parser("launch-command", help="Print the launch command for an executable")
     launch.add_argument("capsule_id")
     launch.add_argument("executable_path")
+
+    launcher = sub.add_parser("launcher", help="Manage desktop launchers")
+    launcher_sub = launcher.add_subparsers(dest="launcher_command", required=True)
+    launcher_create = launcher_sub.add_parser("create", help="Create a Linux .desktop launcher")
+    launcher_create.add_argument("capsule_id")
+    launcher_create.add_argument("name")
+    launcher_create.add_argument("executable_path")
+    launcher_create.add_argument("--output-dir", type=Path)
 
     record = sub.add_parser("record-launcher", help="Record a launch target inside a capsule")
     record.add_argument("capsule_id")
@@ -88,6 +104,20 @@ def cmd_inspect(root: Path, capsule_id: str) -> int:
     return 0
 
 
+def cmd_install(root: Path, capsule_id: str, installer_path: Path, dry_run: bool, no_copy: bool) -> int:
+    ensure_runtime_dirs(root)
+    capsule = load_capsule(capsules_dir(root), capsule_id)
+    result = install_into_capsule(
+        capsules_dir(root),
+        capsule,
+        installer_path.expanduser().resolve(),
+        dry_run=dry_run,
+        copy_installer=not no_copy,
+    )
+    print(json.dumps(result, indent=2))
+    return int(result.get("exit_code") or 0)
+
+
 def cmd_install_command(root: Path, capsule_id: str, installer_path: str) -> int:
     ensure_runtime_dirs(root)
     capsule = load_capsule(capsules_dir(root), capsule_id)
@@ -103,6 +133,20 @@ def cmd_launch_command(root: Path, capsule_id: str, executable_path: str) -> int
     runner = get_runner(capsule.profile.runner)
     command = runner.prepare_launch(capsule, executable_path)
     print(command.shell_preview())
+    return 0
+
+
+def cmd_launcher_create(root: Path, capsule_id: str, name: str, executable_path: str, output_dir: Path | None) -> int:
+    ensure_runtime_dirs(root)
+    capsule = load_capsule(capsules_dir(root), capsule_id)
+    path = generate_desktop_launcher(
+        capsules_dir(root),
+        capsule,
+        name,
+        executable_path,
+        output_dir.expanduser().resolve() if output_dir else None,
+    )
+    print(f"Created launcher: {path}")
     return 0
 
 
@@ -131,10 +175,14 @@ def main(argv: list[str] | None = None) -> int:
             return cmd_list(root)
         if args.command == "inspect":
             return cmd_inspect(root, args.capsule_id)
+        if args.command == "install":
+            return cmd_install(root, args.capsule_id, args.installer_path, args.dry_run, args.no_copy)
         if args.command == "install-command":
             return cmd_install_command(root, args.capsule_id, args.installer_path)
         if args.command == "launch-command":
             return cmd_launch_command(root, args.capsule_id, args.executable_path)
+        if args.command == "launcher" and args.launcher_command == "create":
+            return cmd_launcher_create(root, args.capsule_id, args.name, args.executable_path, args.output_dir)
         if args.command == "record-launcher":
             return cmd_record_launcher(root, args.capsule_id, args.name, args.executable_path)
     except Exception as exc:
