@@ -52,7 +52,22 @@ Goals:
 - Add runner version pinning
 - Add known-good install notes
 
-## Phase 5: WinUx integration
+## Phase 5: venvWin GUI
+
+Goals:
+
+- Build a dark, clean, lightweight graphical capsule manager
+- Keep the feel familiar like Linux Mint but more premium
+- Stay Jetson friendly and avoid heavyweight UI stacks unless justified
+- List capsules as app cards
+- Create capsules from EXE/MSI installers
+- Run install or dry-run install flows
+- Create launchers visually
+- Show health, errors, runner profile, and capsule metadata
+
+Design doc: `docs/gui-vision.md`
+
+## Phase 6: WinUx integration
 
 Goals:
 
@@ -60,8 +75,9 @@ Goals:
 - Surface capsules in WinUx app launcher
 - Add graphical install flow
 - Add health/report view
+- Expose venvWin apps as normal desktop applications
 
-## Phase 6: Fallback backends
+## Phase 7: Fallback backends
 
 Goals:
 
