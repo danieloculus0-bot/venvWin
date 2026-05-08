@@ -7,6 +7,7 @@ from pathlib import Path
 
 from .associate import default_applications_dir, write_file_association_handlers
 from .capsule import create_capsule, list_capsules, load_capsule, save_capsule
+from .dashboard import DEFAULT_HOST, DEFAULT_PORT, run_dashboard
 from .desktop import generate_desktop_launcher
 from .first_run import wizard_text, write_first_run_files
 from .health import health_report
@@ -31,6 +32,11 @@ def build_parser() -> argparse.ArgumentParser:
     first_run.add_argument("--home", type=Path, help="Override home path for testing")
     first_run.add_argument("--wizard-text", action="store_true", help="Print planned GUI-lite wizard text")
     first_run.add_argument("--json", action="store_true", help="Print raw JSON summary")
+
+    dashboard = sub.add_parser("dashboard", help="Run the local WinUx dashboard app")
+    dashboard.add_argument("--host", default=DEFAULT_HOST, help="Dashboard bind host")
+    dashboard.add_argument("--port", type=int, default=DEFAULT_PORT, help="Dashboard port")
+    dashboard.add_argument("--home", type=Path, help="Override home path for testing")
 
     doctor = sub.add_parser("doctor", help="Check venvWin health and setup status")
     doctor.add_argument("--applications-dir", type=Path)
@@ -122,6 +128,12 @@ def cmd_first_run(home: Path | None, wizard: bool, as_json: bool) -> int:
         print(f"capsule store: {summary['capsule_store']}")
         print(f"storage: {summary['storage_status']}")
         print(summary["storage_message"])
+    return 0
+
+
+def cmd_dashboard(root: Path, host: str, port: int, home: Path | None) -> int:
+    target_home = home.expanduser().resolve() if home else None
+    run_dashboard(host=host, port=port, root=root, home=target_home)
     return 0
 
 
@@ -306,6 +318,8 @@ def main(argv: list[str] | None = None) -> int:
             return cmd_init(root)
         if args.command == "first-run":
             return cmd_first_run(args.home, args.wizard_text, args.json)
+        if args.command == "dashboard":
+            return cmd_dashboard(root, args.host, args.port, args.home)
         if args.command == "doctor":
             return cmd_doctor(root, args.applications_dir, args.json)
         if args.command == "storage":
