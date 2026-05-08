@@ -2,7 +2,6 @@
   "workflow": "flash-ready-standard",
   "branch": "main",
   "public_product_name": "venvWin Portable",
-  "internal_codename": "WinUx",
   "required_artifact": "venvwin-portable-flash-ready-standard",
   "required_files": [
     "venvwin-portable-alpha-standard.iso",
