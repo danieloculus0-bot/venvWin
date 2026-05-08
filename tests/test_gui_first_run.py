@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from venvwin.first_run import PUBLIC_PRODUCT_NAME
 from venvwin.gui_first_run import display_model, status_color
 
 
@@ -8,13 +9,17 @@ def test_display_model_has_first_boot_fields(tmp_path: Path, monkeypatch):
 
     model = display_model(tmp_path)
 
+    assert model["product_name"] == PUBLIC_PRODUCT_NAME
+    assert model["internal_codename"] == "WinUx"
     assert "capsule_store" in model
     assert "storage_status" in model
     assert "storage_message" in model
+    assert "dashboard_url" in model
     assert "leave_no_trace" in model
     assert "portable_owned" in model
     assert "host_risk" in model
     assert model["capsule_store"] == str(tmp_path / "WinUx-Capsules")
+    assert model["dashboard_url"] == "http://127.0.0.1:8787"
 
 
 def test_status_color_mapping():
