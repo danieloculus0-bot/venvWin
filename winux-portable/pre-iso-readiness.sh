@@ -14,7 +14,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-echo "== WinUx pre-ISO readiness gate =="
+echo "== venvWin Portable pre-ISO readiness gate =="
 
 echo "Checking required command tools"
 for tool in bash python3 curl; do
@@ -24,6 +24,7 @@ done
 echo "Checking required files"
 required_files=(
   "pyproject.toml"
+  "docs/branding.md"
   "src/venvwin/cli.py"
   "src/venvwin/dashboard.py"
   "src/venvwin/first_run.py"
@@ -63,6 +64,7 @@ from venvwin.first_run import (
     DASHBOARD_NAME,
     FIRST_BOOT_CHECKLIST_NAME,
     FIRST_BOOT_PROOF_NAME,
+    PUBLIC_PRODUCT_NAME,
     QUICK_START_NAME,
     first_run_summary,
     wizard_text,
@@ -79,6 +81,8 @@ with TemporaryDirectory() as tmp:
     root = base / "runtime"
     home.mkdir(parents=True, exist_ok=True)
     summary = first_run_summary(home)
+    assert summary["product_name"] == PUBLIC_PRODUCT_NAME
+    assert summary["internal_codename"] == "WinUx"
     assert summary["capsule_store"] == str(home / "WinUx-Capsules")
     assert summary["dashboard_url"] == "http://127.0.0.1:8787"
     write_first_run_files(home)
@@ -93,17 +97,19 @@ with TemporaryDirectory() as tmp:
     assert (home / ".winux-persistence-report.json").exists()
     assert "Dashboard:" in quick_start.read_text(encoding="utf-8")
     proof_text = first_boot_proof.read_text(encoding="utf-8")
-    assert "WinUx First Boot Proof" in proof_text
-    assert "WinUx-Dashboard.txt" in proof_text
-    assert "WinUx-First-Boot-Checklist.txt" in proof_text
+    assert f"{PUBLIC_PRODUCT_NAME} First Boot Proof" in proof_text
+    assert "internal_codename=WinUx" in proof_text
+    assert DASHBOARD_NAME in proof_text
+    assert FIRST_BOOT_CHECKLIST_NAME in proof_text
     assert "dashboard_url=http://127.0.0.1:8787" in proof_text
     assert "capsule_store=" in proof_text
-    assert "WinUx Dashboard" in dashboard_file.read_text(encoding="utf-8")
-    assert "WinUx First Boot Checklist" in checklist_file.read_text(encoding="utf-8")
+    assert f"{PUBLIC_PRODUCT_NAME} Dashboard" in dashboard_file.read_text(encoding="utf-8")
+    assert f"{PUBLIC_PRODUCT_NAME} First Boot Checklist" in checklist_file.read_text(encoding="utf-8")
     model = display_model(home)
     assert model["capsule_store"] == str(home / "WinUx-Capsules")
     assert status_color("leave-no-trace-ok") == "#22c55e"
     wizard = wizard_text(home)
+    assert f"{PUBLIC_PRODUCT_NAME} First Run" in wizard
     assert "Where should Windows app state live?" in wizard
     assert "Dashboard: http://127.0.0.1:8787" in wizard
     report = persistence_report(home)
@@ -111,11 +117,13 @@ with TemporaryDirectory() as tmp:
     assert "leave_no_trace" in report
     assert "host_write_warning" in report
     dash = dashboard_model(root=root, home=home)
+    assert dash["product_name"] == PUBLIC_PRODUCT_NAME
     assert "storage" in dash
     assert "health" in dash
     assert "capsules" in dash
     rendered = render_dashboard(dash)
-    assert "WinUx Dashboard" in rendered
+    assert PUBLIC_PRODUCT_NAME in rendered
+    assert "Control Panel" in rendered
     assert "Leave no trace" in rendered
     rendered_token = render_dashboard(dash, token="abc")
     assert "/api/status?token=abc" in rendered_token
