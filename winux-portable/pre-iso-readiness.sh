@@ -37,6 +37,7 @@ required_files=(
   "winux-portable/build-flash-ready-standard.sh"
   "winux-portable/build-iso.sh"
   "winux-portable/compare-profiles.sh"
+  "winux-portable/run-wsl-flash-ready.ps1"
   "winux-portable/test-iso-qemu.sh"
   "winux-portable/test-persistence-qemu.sh"
   "winux-portable/usb-flash-guide.md"
@@ -64,6 +65,13 @@ bash -n winux-portable/build-all-profiles.sh
 bash -n winux-portable/test-iso-qemu.sh
 bash -n winux-portable/test-persistence-qemu.sh
 bash -n winux-portable/build-flash-ready-standard.sh
+
+echo "Checking PowerShell WSL runner contract"
+grep -q "venvWin Portable" winux-portable/run-wsl-flash-ready.ps1
+grep -q "bootstrap-flash-ready-ubuntu.sh" winux-portable/run-wsl-flash-ready.ps1
+grep -q "status=FLASH_READY" winux-portable/run-wsl-flash-ready.ps1
+grep -q "venvwin-portable-alpha-standard.iso" winux-portable/run-wsl-flash-ready.ps1
+grep -q "venvwin-flash-ready-verdict.txt" winux-portable/run-wsl-flash-ready.ps1
 
 echo "Checking flash-ready static-inspection contract"
 grep -q "unsquashfs -ll" winux-portable/build-flash-ready-standard.sh
