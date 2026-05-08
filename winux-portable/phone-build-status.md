@@ -18,6 +18,15 @@ Internal codename:
 WinUx
 ```
 
+## Latest build attempt
+
+```text
+status=REQUESTED
+path=GitHub Actions push trigger
+workflow=flash-ready-standard
+reason=actual flash-ready gate attempt after repo contract sweep
+```
+
 ## What must happen before Daniel flashes a USB
 
 The GitHub Actions workflow must complete successfully:
@@ -51,10 +60,13 @@ status=FLASH_READY
 
 ```text
 pre-ISO readiness
+public branding audit
+Python tests
 standard ISO build
 checksum generation
 manifest generation
-static ISO inspection
+filesystem.squashfs extraction
+squashfs static inspection
 QEMU boot smoke
 flash-ready verdict
 ```
@@ -69,6 +81,11 @@ venvWin-Quick-Start.txt
 venvWin-First-Boot-Proof.txt
 venvWin-Dashboard.txt
 venvWin-First-Boot-Checklist.txt
+venvWin-First-Boot.desktop
+venvWin-Dashboard.desktop
+venvWin-Capsules.desktop
+venvWin-Doctor.desktop
+venvWin-Private-Browser.desktop
 venvwin doctor output
 storage status output
 capsule storage path
@@ -106,6 +123,6 @@ capsule still exists
 
 ## Next build target
 
-The next build target is not more feature creep.
+The next build target is no longer feature creep.
 
-It is proving the standard ISO gate.
+It is the actual `flash-ready-standard` workflow run.
