@@ -85,14 +85,20 @@ On real hardware, first boot must show:
 
 - venvWin Portable desktop
 - first-boot GUI opens automatically
+- Start panel is visible
+- Control Panel section is visible
+- System Status section is visible
+- dashboard URL is visible
 - dashboard opens at `http://127.0.0.1:8787`
 - storage destination visible
 - leave-no-trace status visible
 - host-risk status visible
 - capsule path visible
-- Initialize button works
+- Initialize Storage button works
+- Open Dashboard button works
 - Open Capsules button works
 - Run Doctor button works
+- Private Browser button works when installed in the selected profile
 - Quick Start file exists on desktop
 
 ## USB persistence requirement
