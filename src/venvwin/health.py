@@ -29,7 +29,7 @@ def check_path_exists(name: str, path: Path, required: bool = True) -> HealthChe
     if path.exists():
         return HealthCheck(name, "ok", f"Found: {path}")
     status = "error" if required else "warn"
-    return HealthCheck(name, status, f"Missing: {path}")
+    return HealthCheck(name, status, f"Missing: {path}. Not fatal yet, but this little goblin needs a home.")
 
 
 def runner_status(runner: str = "wine") -> HealthCheck:
@@ -39,7 +39,7 @@ def runner_status(runner: str = "wine") -> HealthCheck:
     return HealthCheck(
         "runner",
         "warn",
-        f"Runner not found on PATH: {runner}. venvWin can manage capsules, but cannot launch Windows apps until a runner is installed.",
+        f"Runner not found on PATH: {runner}. venvWin can manage capsules, but Windows apps will not launch until the runner exists. Plumbing yes, engine no.",
     )
 
 
@@ -51,7 +51,7 @@ def association_status(applications_dir: Path) -> HealthCheck:
     return HealthCheck(
         "file-associations",
         "warn",
-        "EXE/MSI handlers are missing. Run `venvwin associate` to install user-local handlers.",
+        "EXE/MSI handlers are missing. Run `venvwin associate` so double-clicking Windows files stops being bullshit.",
     )
 
 
@@ -62,13 +62,15 @@ def persistence_status(root: Path) -> HealthCheck:
     return HealthCheck(
         "persistence",
         "warn",
-        f"VENVWIN_HOME is not set. Using default root: {root}. WinUx Portable should set this to persistent storage.",
+        f"VENVWIN_HOME is not set. Using default root: {root}. Fine for testing, sketchy for WinUx Portable persistence.",
     )
 
 
 def capsule_count_status(root: Path) -> HealthCheck:
     found = list_capsules(capsules_dir(root))
-    return HealthCheck("capsules", "ok", f"Capsules found: {len(found)}")
+    if found:
+        return HealthCheck("capsules", "ok", f"Capsules found: {len(found)}")
+    return HealthCheck("capsules", "ok", "Capsules found: 0. Empty cave, no disasters yet.")
 
 
 def health_report(root: Path, applications_dir: Path | None = None) -> dict[str, Any]:
