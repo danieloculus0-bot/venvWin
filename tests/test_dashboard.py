@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from venvwin.dashboard import dashboard_model, dashboard_url, get_or_create_token, render_dashboard, token_link
+from venvwin.first_run import PUBLIC_PRODUCT_NAME
 
 
 def test_dashboard_model_has_required_sections(tmp_path: Path, monkeypatch):
@@ -8,6 +9,7 @@ def test_dashboard_model_has_required_sections(tmp_path: Path, monkeypatch):
 
     model = dashboard_model(root=tmp_path / "runtime", home=tmp_path / "home")
 
+    assert model["product_name"] == PUBLIC_PRODUCT_NAME
     assert "runtime_root" in model
     assert "storage" in model
     assert "first_run" in model
@@ -23,13 +25,15 @@ def test_dashboard_render_contains_product_signals(tmp_path: Path, monkeypatch):
     model = dashboard_model(root=tmp_path / "runtime", home=tmp_path / "home")
     html = render_dashboard(model)
 
-    assert "WinUx Dashboard" in html
+    assert PUBLIC_PRODUCT_NAME in html
     assert "Storage destination" in html
     assert "Leave no trace" in html
     assert "Host write risk" in html
     assert "Capsules" in html
     assert "Status JSON" in html
     assert "Doctor JSON" in html
+    assert "Start" in html
+    assert "Control Panel" in html
 
 
 def test_dashboard_token_links():
