@@ -1,0 +1,54 @@
+name: flash-ready-standard
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "winux-portable/build-flash-ready-standard.sh"
+      - "winux-portable/pre-iso-readiness.sh"
+      - "winux-portable/build-iso.sh"
+      - "src/**"
+      - "tests/**"
+      - "pyproject.toml"
+      - ".github/workflows/flash-ready-standard.yml"
+
+jobs:
+  flash-ready-standard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python test tools
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e . pytest
+
+      - name: Install ISO build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y live-build rsync xorriso isolinux syslinux-common squashfs-tools qemu-system-x86 ovmf
+
+      - name: Run flash-ready standard gate
+        run: |
+          chmod +x winux-portable/pre-iso-readiness.sh
+          chmod +x winux-portable/build-iso.sh
+          chmod +x winux-portable/build-flash-ready-standard.sh
+          ./winux-portable/build-flash-ready-standard.sh
+
+      - name: Upload flash-ready artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: winux-portable-flash-ready-standard
+          path: |
+            dist/winux-portable-alpha-standard.iso
+            dist/winux-portable-alpha-standard.iso.sha256
+            dist/winux-portable-alpha-standard-manifest.txt
+            dist/winux-flash-ready-verdict.txt
+          if-no-files-found: error
