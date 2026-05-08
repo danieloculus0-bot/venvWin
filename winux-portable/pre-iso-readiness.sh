@@ -38,7 +38,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from venvwin.cli import build_parser
-from venvwin.dashboard import dashboard_model, render_dashboard
+from venvwin.dashboard import dashboard_model, dashboard_url, get_or_create_token, render_dashboard, token_link
 from venvwin.first_run import first_run_summary, wizard_text, write_first_run_files
 from venvwin.gui_first_run import display_model, status_color
 from venvwin.persistence import persistence_report
@@ -49,6 +49,7 @@ with TemporaryDirectory() as tmp:
     base = Path(tmp)
     home = base / "home"
     root = base / "runtime"
+    home.mkdir(parents=True, exist_ok=True)
     summary = first_run_summary(home)
     assert summary["capsule_store"] == str(home / "WinUx-Capsules")
     assert summary["dashboard_url"] == "http://127.0.0.1:8787"
@@ -81,6 +82,15 @@ with TemporaryDirectory() as tmp:
     rendered = render_dashboard(dash)
     assert "WinUx Dashboard" in rendered
     assert "Leave no trace" in rendered
+    rendered_token = render_dashboard(dash, token="abc")
+    assert "/api/status?token=abc" in rendered_token
+    assert token_link("/api/status", "abc") == "/api/status?token=abc"
+    assert dashboard_url("0.0.0.0", 8787, "abc") == "http://127.0.0.1:8787/?token=abc"
+    first_token = get_or_create_token(home)
+    second_token = get_or_create_token(home)
+    assert first_token == second_token
+    assert len(first_token) >= 20
+    assert (home / ".winux-dashboard-token").exists()
 
 print("Python readiness checks passed")
 PY
@@ -107,6 +117,17 @@ curl -fsS http://127.0.0.1:9878/ >/dev/null
 curl -fsS http://127.0.0.1:9878/api/status >/dev/null
 curl -fsS http://127.0.0.1:9878/api/doctor >/dev/null
 kill "${DASH_PID}" || true
+
+PYTHONPATH=src python3 -m venvwin.dashboard --root "${TMP_ROOT}/runtime" --home "${TMP_ROOT}/home" --port 9879 --token testtoken >/tmp/winux-dashboard-token-smoke.log 2>&1 &
+TOKEN_DASH_PID=$!
+sleep 1
+LOCK_CODE="$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:9879/)"
+test "${LOCK_CODE}" = "403"
+curl -fsS "http://127.0.0.1:9879/?token=testtoken" >/dev/null
+curl -fsS "http://127.0.0.1:9879/api/status?token=testtoken" >/dev/null
+curl -fsS "http://127.0.0.1:9879/api/doctor?token=testtoken" >/dev/null
+kill "${TOKEN_DASH_PID}" || true
+
 python3 -m venvwin.cli --root "${TMP_ROOT}/runtime" doctor >/dev/null || true
 python3 -m venvwin.cli --root "${TMP_ROOT}/runtime" doctor --json >/dev/null || true
 python3 -m venvwin.cli associate --applications-dir "${TMP_ROOT}/apps" >/dev/null
