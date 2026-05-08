@@ -1,4 +1,4 @@
-# Local WinUx Flash-Ready Build
+# Local venvWin Portable Flash-Ready Build
 
 ## Purpose
 
@@ -50,7 +50,7 @@ chmod +x winux-portable/pre-iso-readiness.sh winux-portable/build-iso.sh winux-p
 The script must print:
 
 ```text
-FLASH READY: dist/winux-portable-alpha-standard.iso
+FLASH READY: dist/venvwin-portable-alpha-standard.iso
 ```
 
 The verdict file must say:
@@ -62,10 +62,10 @@ status=FLASH_READY
 ## Output files
 
 ```text
-dist/winux-portable-alpha-standard.iso
-dist/winux-portable-alpha-standard.iso.sha256
-dist/winux-portable-alpha-standard-manifest.txt
-dist/winux-flash-ready-verdict.txt
+dist/venvwin-portable-alpha-standard.iso
+dist/venvwin-portable-alpha-standard.iso.sha256
+dist/venvwin-portable-alpha-standard-manifest.txt
+dist/venvwin-flash-ready-verdict.txt
 ```
 
 ## Flash rule
@@ -73,7 +73,7 @@ dist/winux-flash-ready-verdict.txt
 Only flash after:
 
 ```text
-cat dist/winux-flash-ready-verdict.txt
+cat dist/venvwin-flash-ready-verdict.txt
 ```
 
 shows:
