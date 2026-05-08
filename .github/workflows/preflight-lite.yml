@@ -32,6 +32,7 @@ jobs:
 
       - name: Shell syntax checks
         run: |
+          echo "preflight-lite trigger: v2"
           bash -n venvwin-portable/audit-public-branding.sh
           bash -n venvwin-portable/pre-iso-readiness.sh
           bash -n venvwin-portable/build-iso.sh
