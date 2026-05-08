@@ -1,31 +1,45 @@
-# WinUx Portable Product Gate
+# venvWin Portable Product Gate
 
-This document defines what counts as "real" for WinUx Portable Alpha.
+This document defines what counts as real for venvWin Portable Alpha.
 
-WinUx is a lightweight Linux-based OS wrapper and Windows-like product shell. Its purpose is to extend the usable life of older PCs, especially 2010-era hardware that is too annoying or unsupported for modern Windows, while adding managed compatibility paths for old Windows apps, obsolete tech, and legacy workflows.
+Public product name:
+
+```text
+venvWin Portable
+```
+
+Internal codename:
+
+```text
+WinUx
+```
+
+venvWin Portable is a lightweight Linux-based portable OS shell for managed Windows-app compatibility capsules. Its purpose is to extend the usable life of older PCs, especially 2010-era hardware that is too annoying or unsupported for modern Windows, while adding repeatable compatibility paths for old Windows apps, obsolete tech, and legacy workflows.
 
 venvWin is the compatibility engine that manages isolated Windows-like app capsules. Wine can be backend number one, but Wine is not the product. The product is the lightweight portable OS, familiar shell, repeatable app environment, launcher flow, storage policy, dashboard, and recovery model wrapped into a bootable Linux system.
 
-Leave No Trace means no host hard-drive usage by default. It does not mean stealth. Logs, proof files, and capsule metadata should remain visible inside the WinUx session or WinUx-owned storage.
+Leave No Trace means no host hard-drive usage by default. It does not mean stealth. Logs, proof files, and capsule metadata should remain visible inside the venvWin Portable session or venvWin-owned storage.
 
 ## Alpha must pass these gates
 
 ### 1. Bootable image gate
 
-WinUx Portable Alpha must produce a bootable ISO or hybrid image from the repository build scripts.
+venvWin Portable Alpha must produce a bootable ISO or hybrid image from the repository build scripts.
 
 Passing means:
 
 - the ISO build script completes without manual patching
 - the generated image has a checksum and manifest
 - the selected profile is recorded in the manifest
+- the public product name is recorded as venvWin Portable
+- the internal codename is recorded as WinUx
 - the image boots to a usable lightweight desktop session
-- the desktop has visible WinUx / venvWin entry points
+- the desktop has visible venvWin Portable / venvWin entry points
 - the image is not bloated beyond alpha reason without a recorded size warning
 
 ### 2. First boot gate
 
-First boot must initialize the user-facing WinUx environment.
+First boot must initialize the user-facing venvWin Portable environment.
 
 Passing means:
 
@@ -38,10 +52,10 @@ Passing means:
 
 Expected first-boot proof bundle:
 
-- `WinUx-Quick-Start.txt`
-- `WinUx-First-Boot-Proof.txt`
-- `WinUx-Dashboard.txt`
-- `WinUx-First-Boot-Checklist.txt`
+- `venvWin-Quick-Start.txt`
+- `venvWin-First-Boot-Proof.txt`
+- `venvWin-Dashboard.txt`
+- `venvWin-First-Boot-Checklist.txt`
 - `venvwin-init.txt`
 - `venvwin-associate.txt`
 - `venvwin-first-run.txt`
@@ -50,7 +64,7 @@ Expected first-boot proof bundle:
 
 ### 3. Leave-no-trace storage gate
 
-WinUx Portable must treat host hard-drive avoidance as a product feature, not an accident.
+venvWin Portable must treat host hard-drive avoidance as a product feature, not an accident.
 
 Passing means:
 
@@ -116,7 +130,7 @@ Backend candidates may include:
 
 ### 7. Dashboard gate
 
-The WinUx dashboard must expose product state in a human-usable way.
+The venvWin Portable dashboard must expose product state in a human-usable way.
 
 Passing means:
 
@@ -129,6 +143,7 @@ Passing means:
 - dashboard exposes status JSON
 - dashboard exposes doctor JSON
 - LAN binding must require a token or equivalent access control
+- dashboard uses familiar desktop-control patterns without impersonating Windows
 
 ### 8. CI gate
 
@@ -164,10 +179,11 @@ Passing means:
 - dashboards, launchers, and first-boot flows are described as product shell pieces
 - future roadmap items are not presented as finished features
 - obsolete-tech compatibility is described as a direction, not a completed universal guarantee
+- WinUx is treated as internal codename only
 
 ## Current alpha definition
 
-WinUx Portable Alpha is real when a user can boot the image, see WinUx controls, initialize storage, double-click or route a Windows installer into a capsule, inspect the capsule, and understand where the app state lives.
+venvWin Portable Alpha is real when a user can boot the image, see venvWin controls, initialize storage, double-click or route a Windows installer into a capsule, inspect the capsule, and understand where the app state lives.
 
 It does not need to beat Windows compatibility yet.
 
@@ -184,7 +200,7 @@ The next hard milestone is a boot-tested Alpha ISO with screenshots or logs prov
 - capsule storage is writable
 - EXE/MSI handlers are installed or attempted with visible output
 - one dummy installer dry-run is routed into a capsule
-- `WinUx-First-Boot-Proof.txt` exists on the desktop
-- `WinUx-First-Boot-Checklist.txt` exists on the desktop
+- `venvWin-First-Boot-Proof.txt` exists on the desktop
+- `venvWin-First-Boot-Checklist.txt` exists on the desktop
 
-Until that evidence exists, the project is pre-alpha with a strong skeleton. Once that evidence exists, it becomes WinUx Portable Alpha.
+Until that evidence exists, the project is pre-alpha with a strong skeleton. Once that evidence exists, it becomes venvWin Portable Alpha.
