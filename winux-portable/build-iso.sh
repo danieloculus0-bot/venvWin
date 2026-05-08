@@ -113,6 +113,14 @@ exec python3 -m venvwin.gui_first_run
 EOF
 chmod +x config/includes.chroot/usr/local/bin/winux-first-boot-gui
 
+cat > config/includes.chroot/usr/local/bin/winux-dashboard <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+export PYTHONPATH="/opt/venvwin/src:${PYTHONPATH:-}"
+exec python3 -m venvwin.dashboard --host 0.0.0.0 --port 8787
+EOF
+chmod +x config/includes.chroot/usr/local/bin/winux-dashboard
+
 cat > config/includes.chroot/usr/local/bin/winux-select-capsule-store <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
@@ -194,12 +202,32 @@ Terminal=false
 X-GNOME-Autostart-enabled=true
 EOF
 
+cat > config/includes.chroot/etc/xdg/autostart/winux-dashboard.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=WinUx Dashboard Service
+Comment=Start local WinUx dashboard on port 8787
+Exec=/usr/local/bin/winux-dashboard
+Terminal=false
+X-GNOME-Autostart-enabled=true
+EOF
+
 cat > config/includes.chroot/usr/share/applications/winux-first-boot.desktop <<'EOF'
 [Desktop Entry]
 Type=Application
 Name=WinUx First Boot
 Comment=Open WinUx first boot setup screen
 Exec=/usr/local/bin/winux-first-boot-gui
+Terminal=false
+Categories=Utility;
+EOF
+
+cat > config/includes.chroot/usr/share/applications/winux-dashboard.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=WinUx Dashboard
+Comment=Open the WinUx dashboard in the browser
+Exec=xdg-open http://127.0.0.1:8787
 Terminal=false
 Categories=Utility;
 EOF
@@ -289,7 +317,9 @@ sha256_file=${OUTPUT_ISO}.sha256
 leave_no_trace_default=true
 default_storage=WinUx USB/install drive only
 first_boot_gui=true
-product_gate=first boot must initialize storage, expose status, and show setup UI
+dashboard=true
+dashboard_url=http://127.0.0.1:8787
+product_gate=first boot must initialize storage, expose status, show setup UI, and start dashboard
 EOF
 
 echo "Built ISO: ${OUTPUT_ISO}"
