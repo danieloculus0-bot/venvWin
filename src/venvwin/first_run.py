@@ -15,6 +15,7 @@ DASHBOARD_NAME = "venvWin-Dashboard.txt"
 FIRST_BOOT_CHECKLIST_NAME = "venvWin-First-Boot-Checklist.txt"
 DOCTOR_NAME = "venvwin-doctor.txt"
 STORAGE_MARKER_NAME = ".winux-capsule-store"
+STORAGE_SOURCE_MARKER_NAME = ".winux-capsule-store-source"
 PERSISTENCE_REPORT_NAME = ".winux-persistence-report.json"
 DASHBOARD_URL = "http://127.0.0.1:8787"
 
@@ -29,7 +30,7 @@ def first_run_summary(home: Path | None = None) -> dict[str, Any]:
         storage_message = "Writing to venvWin Portable storage. Host machine stays clean."
     elif report["disposable_warning"]:
         storage_status = "disposable-warning"
-        storage_message = "No venvWin-owned persistent storage found. This may be disposable. Fine for testing, terrible for keeping your work."
+        storage_message = "No durable venvWin-owned persistent storage found. This may be disposable. Fine for testing, terrible for keeping your work."
     elif report["host_write_warning"]:
         storage_status = "host-risk-warning"
         storage_message = "Selected storage may be a host path. Use only if you chose that on purpose."
@@ -67,6 +68,10 @@ Storage status:
 Capsules live here:
 
   {capsule_store}
+
+Storage source:
+
+  {summary['storage_source']}
 
 Dashboard:
 
@@ -121,6 +126,7 @@ Useful endpoints:
 What it shows:
 
 - capsule storage path
+- storage source
 - leave-no-trace state
 - host write risk
 - capsule list
@@ -142,6 +148,7 @@ Use this checklist before calling an ISO flash-ready.
 [ ] venvWin First Boot GUI opened
 [ ] venvWin Dashboard opens at {summary['dashboard_url']}
 [ ] Capsule storage path is visible
+[ ] Capsule storage source is visible: {summary['storage_source']}
 [ ] Capsule storage path exists: {capsule_store}
 [ ] Leave-no-trace status is visible
 [ ] Host-risk status is visible
@@ -149,6 +156,7 @@ Use this checklist before calling an ISO flash-ready.
 [ ] First Boot Proof file exists
 [ ] Dashboard info file exists
 [ ] Storage marker exists: ~/{STORAGE_MARKER_NAME}
+[ ] Storage source marker exists: ~/{STORAGE_SOURCE_MARKER_NAME}
 [ ] Persistence report exists: ~/{PERSISTENCE_REPORT_NAME}
 [ ] venvwin storage runs
 [ ] venvwin doctor runs
@@ -200,6 +208,7 @@ Expected desktop proof files:
 Expected hidden home proof files:
 
 - {STORAGE_MARKER_NAME}
+- {STORAGE_SOURCE_MARKER_NAME}
 - {PERSISTENCE_REPORT_NAME}
 
 Alpha boot acceptance:
@@ -208,6 +217,7 @@ Alpha boot acceptance:
 - first-run setup creates this file
 - dashboard opens at {summary['dashboard_url']}
 - capsule store is writable
+- storage source is visible
 - storage risk is visible
 - venvwin doctor output exists
 """
@@ -223,6 +233,7 @@ def write_first_run_files(home: Path | None = None) -> dict[str, Any]:
     capsule_store.mkdir(parents=True, exist_ok=True)
 
     (user_home / STORAGE_MARKER_NAME).write_text(str(capsule_store), encoding="utf-8")
+    (user_home / STORAGE_SOURCE_MARKER_NAME).write_text(str(summary["storage_source"]), encoding="utf-8")
     (user_home / PERSISTENCE_REPORT_NAME).write_text(json.dumps(summary["persistence"], indent=2), encoding="utf-8")
     (desktop / QUICK_START_NAME).write_text(quick_start_text(summary, capsule_store), encoding="utf-8")
     (desktop / FIRST_BOOT_PROOF_NAME).write_text(first_boot_proof_text(summary, capsule_store), encoding="utf-8")
@@ -240,6 +251,7 @@ def wizard_text(home: Path | None = None) -> str:
         "Where should Windows app state live?",
         "",
         f"Recommended: {chosen}",
+        f"Storage source: {summary['storage_source']}",
         f"Status: {summary['storage_status']}",
         f"Message: {summary['storage_message']}",
         f"Dashboard: {summary['dashboard_url']}",
