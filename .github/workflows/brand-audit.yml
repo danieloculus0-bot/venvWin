@@ -1,0 +1,49 @@
+name: brand-audit
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/brand-audit.yml"
+      - "README.md"
+      - "docs/**"
+      - "src/**"
+      - "tests/**"
+      - "winux-portable/**"
+      - "venvwin-portable/**"
+      - ".github/workflows/**"
+
+jobs:
+  brand-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Scan tracked paths and text for retired naming
+        shell: bash
+        run: |
+          set -euo pipefail
+          old_mixed="Wi""nUx"
+          old_upper="WI""NUX"
+          old_title="Wi""nux"
+          old_lower="wi""nux"
+          failed=0
+
+          echo "Scanning tracked paths"
+          if git ls-files | grep -E "${old_mixed}|${old_upper}|${old_title}|${old_lower}"; then
+            failed=1
+          fi
+
+          echo "Scanning tracked text content"
+          if git grep -n -e "${old_mixed}" -e "${old_upper}" -e "${old_title}" -e "${old_lower}" -- .; then
+            failed=1
+          fi
+
+          if [[ "${failed}" -ne 0 ]]; then
+            echo "Retired naming still exists." >&2
+            exit 1
+          fi
+
+          echo "BRAND AUDIT: PASS"
