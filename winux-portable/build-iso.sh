@@ -2,10 +2,12 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-BUILD_DIR="${ROOT_DIR}/build/winux-portable-iso"
+BUILD_DIR="${ROOT_DIR}/build/venvwin-portable-iso"
 OUT_DIR="${ROOT_DIR}/dist"
-IMAGE_NAME="winux-portable-alpha"
+IMAGE_NAME="venvwin-portable-alpha"
 WINUX_PROFILE="${WINUX_PROFILE:-standard}"
+PUBLIC_PRODUCT_NAME="venvWin Portable"
+INTERNAL_CODENAME="WinUx"
 
 if ! command -v lb >/dev/null 2>&1; then
   echo "live-build is missing. Install it with: sudo apt-get install -y live-build" >&2
@@ -34,9 +36,9 @@ lb config \
   --debian-installer false \
   --memtest none \
   --bootappend-live "boot=live components quiet splash persistence toram" \
-  --iso-application "WinUx Portable" \
-  --iso-publisher "WinUx / venvWin" \
-  --iso-volume "WINUX_PORTABLE"
+  --iso-application "${PUBLIC_PRODUCT_NAME}" \
+  --iso-publisher "venvWin" \
+  --iso-volume "VENVWIN_PORTABLE"
 
 mkdir -p \
   config/package-lists \
@@ -167,7 +169,7 @@ WARN
 fi
 
 cat <<'ERR'
-Privacy browser is not installed in this WinUx profile.
+Privacy browser is not installed in this venvWin Portable profile.
 Use WINUX_PROFILE=privacy for Tor/Firefox tooling.
 Core and Standard stay lean on purpose.
 ERR
@@ -189,8 +191,8 @@ venvwin first-run > "$HOME/Desktop/venvwin-first-run.txt" 2>&1 || true
 venvwin storage > "$HOME/Desktop/venvwin-storage.txt" 2>&1 || true
 venvwin doctor > "$HOME/Desktop/venvwin-doctor.txt" 2>&1 || true
 
-cat > "$HOME/Desktop/WinUx-Dashboard.txt" <<DASH
-WinUx Dashboard
+cat > "$HOME/Desktop/venvWin-Dashboard.txt" <<DASH
+venvWin Portable Dashboard
 
 Local URL:
 
@@ -200,17 +202,19 @@ Default dashboard mode is local-only.
 LAN mode requires the explicit tokenized launcher:
 
   winux-dashboard-lan
+
+Internal codename: WinUx
 DASH
 
-cat > "$HOME/Desktop/WinUx-First-Boot-Checklist.txt" <<CHECK
-WinUx First Boot Checklist
+cat > "$HOME/Desktop/venvWin-First-Boot-Checklist.txt" <<CHECK
+venvWin Portable First Boot Checklist
 
 Expected files on this desktop:
 
-- WinUx-Quick-Start.txt
-- WinUx-First-Boot-Proof.txt
-- WinUx-Dashboard.txt
-- WinUx-First-Boot-Checklist.txt
+- venvWin-Quick-Start.txt
+- venvWin-First-Boot-Proof.txt
+- venvWin-Dashboard.txt
+- venvWin-First-Boot-Checklist.txt
 - venvwin-init.txt
 - venvwin-associate.txt
 - venvwin-first-run.txt
@@ -232,8 +236,8 @@ chmod +x config/includes.chroot/usr/local/bin/winux-first-run
 cat > config/includes.chroot/etc/xdg/autostart/winux-first-run.desktop <<'EOF'
 [Desktop Entry]
 Type=Application
-Name=WinUx First Run Setup
-Comment=Initialize WinUx capsule storage and file handlers
+Name=venvWin Portable First Run Setup
+Comment=Initialize venvWin Portable capsule storage and file handlers
 Exec=/usr/local/bin/winux-first-run
 Terminal=false
 X-GNOME-Autostart-enabled=true
@@ -242,8 +246,8 @@ EOF
 cat > config/includes.chroot/etc/xdg/autostart/winux-first-boot-gui.desktop <<'EOF'
 [Desktop Entry]
 Type=Application
-Name=WinUx First Boot
-Comment=Show WinUx first boot setup screen
+Name=venvWin Portable First Boot
+Comment=Show venvWin Portable first boot setup screen
 Exec=/usr/local/bin/winux-first-boot-gui
 Terminal=false
 X-GNOME-Autostart-enabled=true
@@ -252,8 +256,8 @@ EOF
 cat > config/includes.chroot/etc/xdg/autostart/winux-dashboard.desktop <<'EOF'
 [Desktop Entry]
 Type=Application
-Name=WinUx Dashboard Service
-Comment=Start local-only WinUx dashboard on port 8787
+Name=venvWin Portable Dashboard Service
+Comment=Start local-only venvWin Portable dashboard on port 8787
 Exec=/usr/local/bin/winux-dashboard
 Terminal=false
 X-GNOME-Autostart-enabled=true
@@ -262,8 +266,8 @@ EOF
 cat > config/includes.chroot/usr/share/applications/winux-first-boot.desktop <<'EOF'
 [Desktop Entry]
 Type=Application
-Name=WinUx First Boot
-Comment=Open WinUx first boot setup screen
+Name=venvWin Portable First Boot
+Comment=Open venvWin Portable first boot setup screen
 Exec=/usr/local/bin/winux-first-boot-gui
 Terminal=false
 Categories=Utility;
@@ -272,8 +276,8 @@ EOF
 cat > config/includes.chroot/usr/share/applications/winux-dashboard.desktop <<'EOF'
 [Desktop Entry]
 Type=Application
-Name=WinUx Dashboard
-Comment=Open the local WinUx dashboard in the browser
+Name=venvWin Portable Dashboard
+Comment=Open the local venvWin Portable dashboard in the browser
 Exec=xdg-open http://127.0.0.1:8787
 Terminal=false
 Categories=Utility;
@@ -282,7 +286,7 @@ EOF
 cat > config/includes.chroot/usr/share/applications/winux-dashboard-lan.desktop <<'EOF'
 [Desktop Entry]
 Type=Application
-Name=WinUx Dashboard LAN Mode
+Name=venvWin Portable Dashboard LAN Mode
 Comment=Start token-protected LAN dashboard access
 Exec=xfce4-terminal -e "winux-dashboard-lan"
 Terminal=false
@@ -292,7 +296,7 @@ EOF
 cat > config/includes.chroot/usr/share/applications/winux-private-browser.desktop <<'EOF'
 [Desktop Entry]
 Type=Application
-Name=WinUx Private Browser
+Name=venvWin Portable Private Browser
 Comment=Privacy browser launcher. Installed only in Privacy profile.
 Exec=/usr/local/bin/winux-private-browser
 Terminal=false
@@ -323,7 +327,7 @@ cat > config/hooks/normal/010-winux-setup.chroot <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "Setting up WinUx Portable runtime hooks"
+echo "Setting up venvWin Portable runtime hooks"
 
 cat > /etc/profile.d/venvwin.sh <<'PROFILE'
 if [ -f "$HOME/.winux-capsule-store" ]; then
@@ -343,7 +347,7 @@ cat > config/hooks/normal/090-winux-trim.chroot <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "Trimming WinUx Portable image"
+echo "Trimming venvWin Portable image"
 apt-get clean || true
 rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* || true
 rm -rf /usr/share/doc/* /usr/share/man/* /usr/share/info/* || true
@@ -366,20 +370,22 @@ sha256sum "${OUTPUT_ISO}" > "${OUTPUT_ISO}.sha256"
 ISO_BYTES="$(stat -c%s "${OUTPUT_ISO}")"
 ISO_MB="$(( (ISO_BYTES + 1048575) / 1048576 ))"
 cat > "${OUT_DIR}/${IMAGE_NAME}-${WINUX_PROFILE}-manifest.txt" <<EOF
-WinUx Portable ISO Manifest
+venvWin Portable ISO Manifest
 profile=${WINUX_PROFILE}
+public_product_name=${PUBLIC_PRODUCT_NAME}
+internal_codename=${INTERNAL_CODENAME}
 iso=${OUTPUT_ISO}
 size_mb=${ISO_MB}
 sha256_file=${OUTPUT_ISO}.sha256
 leave_no_trace_default=true
-default_storage=WinUx USB/install drive only
+default_storage=venvWin Portable USB/install drive only
 first_boot_gui=true
 dashboard=true
 dashboard_url=http://127.0.0.1:8787
 dashboard_bind_default=127.0.0.1
 dashboard_lan_mode=explicit_token_required
 first_boot_proof_bundle=true
-first_boot_expected_desktop_files=WinUx-Quick-Start.txt,WinUx-First-Boot-Proof.txt,WinUx-Dashboard.txt,WinUx-First-Boot-Checklist.txt,venvwin-init.txt,venvwin-associate.txt,venvwin-first-run.txt,venvwin-storage.txt,venvwin-doctor.txt
+first_boot_expected_desktop_files=venvWin-Quick-Start.txt,venvWin-First-Boot-Proof.txt,venvWin-Dashboard.txt,venvWin-First-Boot-Checklist.txt,venvwin-init.txt,venvwin-associate.txt,venvwin-first-run.txt,venvwin-storage.txt,venvwin-doctor.txt
 privacy_browser_profile=privacy_only
 standard_profile_policy=lean_runtime_only
 product_gate=first boot must initialize storage, expose status, show setup UI, write proof bundle, and start local dashboard
