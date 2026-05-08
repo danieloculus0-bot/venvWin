@@ -6,7 +6,7 @@ on:
     paths:
       - "README.md"
       - "docs/**"
-      - "winux-portable/**"
+      - "venvwin-portable/**"
       - "src/**"
       - "tests/**"
       - "pyproject.toml"
@@ -32,17 +32,17 @@ jobs:
 
       - name: Shell syntax checks
         run: |
-          bash -n winux-portable/audit-public-branding.sh
-          bash -n winux-portable/pre-iso-readiness.sh
-          bash -n winux-portable/build-iso.sh
-          bash -n winux-portable/build-flash-ready-standard.sh
-          bash -n winux-portable/test-iso-qemu.sh
-          bash -n winux-portable/test-persistence-qemu.sh
+          bash -n venvwin-portable/audit-public-branding.sh
+          bash -n venvwin-portable/pre-iso-readiness.sh
+          bash -n venvwin-portable/build-iso.sh
+          bash -n venvwin-portable/build-flash-ready-standard.sh
+          bash -n venvwin-portable/test-iso-qemu.sh
+          bash -n venvwin-portable/test-persistence-qemu.sh
 
       - name: Public branding audit
         run: |
-          chmod +x winux-portable/audit-public-branding.sh
-          ./winux-portable/audit-public-branding.sh
+          chmod +x venvwin-portable/audit-public-branding.sh
+          ./venvwin-portable/audit-public-branding.sh
 
       - name: Python tests
         run: |
