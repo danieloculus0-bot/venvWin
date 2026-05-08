@@ -1,0 +1,94 @@
+from __future__ import annotations
+
+import os
+import shutil
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
+
+from .associate import default_applications_dir
+from .capsule import list_capsules
+from .paths import capsules_dir, profiles_dir
+
+
+@dataclass(slots=True)
+class HealthCheck:
+    name: str
+    status: str
+    message: str
+
+    def to_dict(self) -> dict[str, str]:
+        return {
+            "name": self.name,
+            "status": self.status,
+            "message": self.message,
+        }
+
+
+def check_path_exists(name: str, path: Path, required: bool = True) -> HealthCheck:
+    if path.exists():
+        return HealthCheck(name, "ok", f"Found: {path}")
+    status = "error" if required else "warn"
+    return HealthCheck(name, status, f"Missing: {path}")
+
+
+def runner_status(runner: str = "wine") -> HealthCheck:
+    found = shutil.which(runner)
+    if found:
+        return HealthCheck("runner", "ok", f"Found {runner}: {found}")
+    return HealthCheck(
+        "runner",
+        "warn",
+        f"Runner not found on PATH: {runner}. venvWin can manage capsules, but cannot launch Windows apps until a runner is installed.",
+    )
+
+
+def association_status(applications_dir: Path) -> HealthCheck:
+    exe = applications_dir / "venvwin-open-exe.desktop"
+    msi = applications_dir / "venvwin-open-msi.desktop"
+    if exe.exists() and msi.exists():
+        return HealthCheck("file-associations", "ok", f"EXE/MSI handlers found in {applications_dir}")
+    return HealthCheck(
+        "file-associations",
+        "warn",
+        "EXE/MSI handlers are missing. Run `venvwin associate` to install user-local handlers.",
+    )
+
+
+def persistence_status(root: Path) -> HealthCheck:
+    env_home = os.environ.get("VENVWIN_HOME")
+    if env_home:
+        return HealthCheck("persistence", "ok", f"VENVWIN_HOME is set: {env_home}")
+    return HealthCheck(
+        "persistence",
+        "warn",
+        f"VENVWIN_HOME is not set. Using default root: {root}. WinUx Portable should set this to persistent storage.",
+    )
+
+
+def capsule_count_status(root: Path) -> HealthCheck:
+    found = list_capsules(capsules_dir(root))
+    return HealthCheck("capsules", "ok", f"Capsules found: {len(found)}")
+
+
+def health_report(root: Path, applications_dir: Path | None = None) -> dict[str, Any]:
+    apps_dir = applications_dir or default_applications_dir()
+    checks = [
+        check_path_exists("runtime-root", root, required=False),
+        check_path_exists("profiles-dir", profiles_dir(root), required=False),
+        check_path_exists("capsules-dir", capsules_dir(root), required=False),
+        runner_status("wine"),
+        association_status(apps_dir),
+        persistence_status(root),
+        capsule_count_status(root),
+    ]
+
+    status_order = {"error": 3, "warn": 2, "ok": 1}
+    worst = max(checks, key=lambda check: status_order[check.status]).status if checks else "ok"
+
+    return {
+        "overall": worst,
+        "root": str(root),
+        "applications_dir": str(apps_dir),
+        "checks": [check.to_dict() for check in checks],
+    }
