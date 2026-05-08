@@ -81,7 +81,7 @@ p7zip-full
 EOF
 fi
 
-if [[ "${WINUX_PROFILE}" == "standard" || "${WINUX_PROFILE}" == "privacy" ]]; then
+if [[ "${WINUX_PROFILE}" == "privacy" ]]; then
 cat > config/package-lists/20-winux-privacy.list.chroot <<'EOF'
 tor
 torsocks
@@ -159,9 +159,9 @@ WARN
 fi
 
 cat <<'ERR'
-Privacy browser is not ready.
-Tor Browser / torbrowser-launcher is missing, and fallback Firefox-over-Tor is unavailable.
-Installing a normal browser and calling it anonymous would be bullshit.
+Privacy browser is not installed in this WinUx profile.
+Use WINUX_PROFILE=privacy for Tor/Firefox tooling.
+Core and Standard stay lean on purpose.
 ERR
 exit 1
 EOF
@@ -236,7 +236,7 @@ cat > config/includes.chroot/usr/share/applications/winux-private-browser.deskto
 [Desktop Entry]
 Type=Application
 Name=WinUx Private Browser
-Comment=Launch Tor Browser or honest Tor fallback without fake privacy claims
+Comment=Privacy browser launcher. Installed only in Privacy profile.
 Exec=/usr/local/bin/winux-private-browser
 Terminal=false
 Categories=Network;WebBrowser;
@@ -319,6 +319,8 @@ default_storage=WinUx USB/install drive only
 first_boot_gui=true
 dashboard=true
 dashboard_url=http://127.0.0.1:8787
+privacy_browser_profile=privacy_only
+standard_profile_policy=lean_runtime_only
 product_gate=first boot must initialize storage, expose status, show setup UI, and start dashboard
 EOF
 
