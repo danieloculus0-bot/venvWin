@@ -1,10 +1,16 @@
-# WinUx Portable First-Boot Product Gate
+# venvWin Portable First-Boot Product Gate
 
 ## Purpose
 
-WinUx Portable must feel functional on first boot. Not theoretical. Not promising. Working.
+venvWin Portable must feel functional on first boot. Not theoretical. Not promising. Working.
 
 The first boot experience is the product gate.
+
+Internal codename:
+
+```text
+WinUx
+```
 
 ## Required first boot sequence
 
@@ -16,7 +22,7 @@ The first boot experience is the product gate.
 5. Leave-no-trace status is visible
 6. User can open capsule folder
 7. User can run doctor
-8. User can launch private browser path
+8. User can launch private browser path when installed in the selected profile
 9. EXE/MSI association setup runs
 10. Quick-start file exists on desktop
 ```
@@ -43,10 +49,11 @@ Fail if:
 Pass if:
 
 - `winux-first-boot-gui` launches
-- GUI title says WinUx Portable
+- GUI title says venvWin Portable
 - storage destination is shown
 - leave-no-trace badge is shown
 - quick actions are visible
+- GUI feels familiar to Windows users without impersonating Windows
 
 Fail if:
 
@@ -81,13 +88,13 @@ Beta pass requires file manager double-click confirmation.
 
 Pass if:
 
-- default capsule storage prefers WinUx-owned USB storage
+- default capsule storage prefers venvWin-owned USB/install storage
 - host writes are not selected silently
 - host-risk is flagged visibly
 
 Fail if:
 
-- WinUx silently chooses a host/internal disk
+- venvWin Portable silently chooses a host/internal disk
 - app state is written to host storage without explicit user choice
 
 ## Size
