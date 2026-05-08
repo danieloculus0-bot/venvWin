@@ -18,13 +18,17 @@ WinUx
 1. Live desktop reaches usable state
 2. First-run setup initializes storage
 3. First-boot GUI opens automatically
-4. Capsule storage path is visible
-5. Leave-no-trace status is visible
-6. User can open capsule folder
-7. User can run doctor
-8. User can launch private browser path when installed in the selected profile
-9. EXE/MSI association setup runs
-10. Quick-start file exists on desktop
+4. Start panel is visible
+5. Capsule storage path is visible
+6. Dashboard URL is visible
+7. Leave-no-trace status is visible
+8. Host write risk is visible
+9. User can open dashboard
+10. User can open capsule folder
+11. User can run doctor
+12. User can launch private browser path when installed in the selected profile
+13. EXE/MSI association setup runs
+14. Quick-start file exists on desktop
 ```
 
 ## Pass criteria
@@ -37,6 +41,7 @@ Pass if:
 - selected path is visible in GUI
 - `venvwin storage` reports leave-no-trace state
 - host-risk warning appears when applicable
+- the user can open the capsule folder from the GUI
 
 Fail if:
 
@@ -50,16 +55,45 @@ Pass if:
 
 - `winux-first-boot-gui` launches
 - GUI title says venvWin Portable
+- Start panel is visible
+- Control Panel section is visible
+- System Status section is visible
 - storage destination is shown
+- dashboard URL is shown
 - leave-no-trace badge is shown
-- quick actions are visible
+- host write risk is shown
+- Initialize Storage action is visible
+- Open Dashboard action is visible
+- Open Capsules action is visible
+- Run Doctor action is visible
+- Private Browser action is visible
 - GUI feels familiar to Windows users without impersonating Windows
 
 Fail if:
 
 - GUI does not open
 - GUI opens but storage status is missing
+- GUI opens but dashboard path is missing
 - user has to understand Linux paths before using the product
+
+## Dashboard
+
+Pass if:
+
+- local dashboard starts automatically
+- dashboard opens at `http://127.0.0.1:8787`
+- GUI exposes an Open Dashboard action
+- dashboard shows storage destination
+- dashboard shows capsule count
+- dashboard shows health checks
+- dashboard shows leave-no-trace status
+- LAN dashboard remains explicit and token-protected
+
+Fail if:
+
+- dashboard does not start
+- dashboard binds to LAN by default
+- dashboard does not show storage risk
 
 ## Doctor
 
@@ -67,6 +101,7 @@ Pass if:
 
 - `venvwin doctor` runs
 - first-run writes doctor output to desktop
+- GUI exposes a Run Doctor action
 - runner/privacy/storage/association status is clear
 
 Fail if:
@@ -91,6 +126,8 @@ Pass if:
 - default capsule storage prefers venvWin-owned USB/install storage
 - host writes are not selected silently
 - host-risk is flagged visibly
+- GUI says where app state goes
+- dashboard and GUI agree on the storage destination
 
 Fail if:
 
@@ -128,8 +165,11 @@ The first $8 candidate must satisfy:
 - Standard profile ISO builds
 - graphical desktop boots
 - first-boot GUI opens automatically
+- Start panel is visible
+- dashboard opens locally
 - storage selection is visible
 - leave-no-trace policy is visible
+- host-risk status is visible
 - capsules survive reboot with USB persistence
 - EXE/MSI handling works
 - doctor works
