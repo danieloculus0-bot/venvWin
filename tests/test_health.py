@@ -15,5 +15,6 @@ def test_health_report_warns_without_associations(tmp_path: Path):
     names = {check["name"] for check in report["checks"]}
     assert "runtime-root" in names
     assert "runner" in names
+    assert "privacy-browser" in names
     assert "file-associations" in names
     assert "persistence" in names
