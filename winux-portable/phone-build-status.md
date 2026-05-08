@@ -21,10 +21,10 @@ WinUx
 ## Latest build attempt
 
 ```text
-status=REQUESTED
+status=REQUESTED_AFTER_STALE_ARTIFACT_FIX
 path=GitHub Actions push trigger
 workflow=flash-ready-standard
-reason=actual flash-ready gate attempt after repo contract sweep
+reason=rerun flash-ready gate after removing stale old artifact/public names
 ```
 
 ## What must happen before Daniel flashes a USB
@@ -123,6 +123,4 @@ capsule still exists
 
 ## Next build target
 
-The next build target is no longer feature creep.
-
-It is the actual `flash-ready-standard` workflow run.
+The next build target is the rerun of `flash-ready-standard` after stale artifact cleanup.
