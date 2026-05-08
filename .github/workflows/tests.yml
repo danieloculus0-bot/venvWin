@@ -47,3 +47,8 @@ jobs:
           venvwin launcher create notepad-plus-plus "Notepad Plus Plus" "C:\\Program Files\\Notepad++\\notepad++.exe"
           venvwin snapshot create notepad-plus-plus --label smoke
           venvwin reset notepad-plus-plus
+
+      - name: Pre-ISO readiness gate
+        run: |
+          chmod +x winux-portable/pre-iso-readiness.sh
+          ./winux-portable/pre-iso-readiness.sh
