@@ -39,6 +39,7 @@ required_files=(
   "winux-portable/compare-profiles.sh"
   "winux-portable/test-iso-qemu.sh"
   "winux-portable/test-persistence-qemu.sh"
+  "winux-portable/usb-flash-guide.md"
   "winux-portable/windows-wsl-build-command.md"
   "winux-portable/workflow-contract.json"
   "winux-portable/first-boot-product-gate.md"
@@ -70,6 +71,12 @@ grep -q "squashfs_static_inspection=pass" winux-portable/build-flash-ready-stand
 grep -q "squashfs-root/etc/skel/Desktop/venvWin-First-Boot.desktop" winux-portable/build-flash-ready-standard.sh
 grep -q "venvwin-portable-alpha-standard.iso" winux-portable/build-flash-ready-standard.sh
 grep -q "venvwin-flash-ready-verdict.txt" winux-portable/build-flash-ready-standard.sh
+
+echo "Checking USB flash guide contract"
+grep -q "status=FLASH_READY" winux-portable/usb-flash-guide.md
+grep -q "sha256sum -c dist/venvwin-portable-alpha-standard.iso.sha256" winux-portable/usb-flash-guide.md
+grep -q "dist/venvwin-portable-alpha-standard.iso" winux-portable/usb-flash-guide.md
+grep -q "dist/venvwin-flash-ready-verdict.txt" winux-portable/usb-flash-guide.md
 
 echo "Checking public branding contract"
 chmod +x winux-portable/audit-public-branding.sh
