@@ -6,9 +6,9 @@ PROFILES=(core standard privacy)
 
 for profile in "${PROFILES[@]}"; do
   echo "========================================"
-  echo "Building WinUx Portable profile: ${profile}"
+  echo "Building venvWin Portable profile: ${profile}"
   echo "========================================"
-  WINUX_PROFILE="${profile}" "${ROOT_DIR}/winux-portable/build-iso.sh"
+  VENVWIN_PORTABLE_PROFILE="${profile}" WINUX_PROFILE="${profile}" "${ROOT_DIR}/winux-portable/build-iso.sh"
 done
 
 "${ROOT_DIR}/winux-portable/compare-profiles.sh"
