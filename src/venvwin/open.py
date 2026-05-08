@@ -10,12 +10,35 @@ from .install import install_into_capsule
 from .profile import RunnerProfile, load_profile
 from .runner import get_runner
 
-INSTALLER_SUFFIXES = {".msi", ".msix", ".exe"}
-PORTABLE_EXE_SUFFIXES = {".exe"}
+WINDOWS_SUFFIXES = {".msi", ".msix", ".exe"}
+INSTALLER_NAME_HINTS = {
+    "install",
+    "installer",
+    "setup",
+    "setup64",
+    "setup32",
+    "update",
+    "updater",
+    "bootstrap",
+    "bootstrapper",
+}
 
 
 def app_name_from_path(path: Path) -> str:
     return path.stem.replace("_", " ").replace("-", " ").strip() or "Windows App"
+
+
+def classify_windows_file(path: Path) -> str:
+    suffix = path.suffix.lower()
+    stem = path.stem.lower()
+
+    if suffix in {".msi", ".msix"}:
+        return "installer"
+    if suffix == ".exe" and any(hint in stem for hint in INSTALLER_NAME_HINTS):
+        return "installer"
+    if suffix == ".exe":
+        return "portable-exe"
+    raise ValueError(f"Unsupported Windows file type: {suffix}")
 
 
 def get_or_create_capsule_for_file(
@@ -46,21 +69,19 @@ def open_windows_file(
     if not file_path.is_file():
         raise ValueError(f"Path is not a file: {file_path}")
 
-    suffix = file_path.suffix.lower()
-    if suffix not in INSTALLER_SUFFIXES:
-        raise ValueError(f"Unsupported Windows file type: {suffix}")
-
+    file_type = classify_windows_file(file_path)
     capsule = get_or_create_capsule_for_file(capsules_root, profiles_root, file_path, profile_name)
 
-    if suffix == ".msi":
-        # MSI support is recorded through the same install path for now.
-        action = "install"
-    else:
-        action = "open"
+    if file_type == "installer":
+        result = install_into_capsule(capsules_root, capsule, file_path, dry_run=dry_run)
+        result["action"] = "install"
+        result["file_type"] = file_type
+        return result
 
     command = get_runner(capsule.profile.runner).prepare_launch(capsule, str(file_path))
     result: dict[str, Any] = {
-        "action": action,
+        "action": "open",
+        "file_type": file_type,
         "capsule_id": capsule.capsule_id,
         "file_path": str(file_path),
         "command": command.args,
@@ -69,9 +90,6 @@ def open_windows_file(
         "exit_code": None,
         "completed_at": None,
     }
-
-    if suffix == ".msi":
-        return install_into_capsule(capsules_root, capsule, file_path, dry_run=dry_run)
 
     capsule.launchers.append(
         {
