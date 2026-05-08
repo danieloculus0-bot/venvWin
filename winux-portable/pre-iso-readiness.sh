@@ -36,6 +36,7 @@ required_files=(
   "winux-portable/build-iso.sh"
   "winux-portable/test-iso-qemu.sh"
   "winux-portable/test-persistence-qemu.sh"
+  "winux-portable/windows-wsl-build-command.md"
   "winux-portable/first-boot-product-gate.md"
   "winux-portable/flash-ready-checklist.md"
   "winux-portable/leave-no-trace.md"
