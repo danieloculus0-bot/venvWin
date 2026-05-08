@@ -37,6 +37,7 @@ jobs:
 
       - name: Run flash-ready standard gate
         run: |
+          echo "flash-ready-standard trigger: v2"
           chmod +x venvwin-portable/pre-iso-readiness.sh
           chmod +x venvwin-portable/build-iso.sh
           chmod +x venvwin-portable/build-flash-ready-standard.sh
