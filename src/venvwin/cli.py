@@ -8,6 +8,7 @@ from pathlib import Path
 from .associate import default_applications_dir, write_file_association_handlers
 from .capsule import create_capsule, list_capsules, load_capsule, save_capsule
 from .desktop import generate_desktop_launcher
+from .health import health_report
 from .install import install_into_capsule
 from .open import open_windows_file
 from .paths import capsules_dir, default_root, ensure_runtime_dirs, profiles_dir
@@ -23,6 +24,10 @@ def build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command", required=True)
 
     sub.add_parser("init", help="Initialize runtime directories and default profile")
+
+    doctor = sub.add_parser("doctor", help="Check venvWin health and setup status")
+    doctor.add_argument("--applications-dir", type=Path)
+    doctor.add_argument("--json", action="store_true", help="Print raw JSON report")
 
     associate = sub.add_parser("associate", help="Install desktop handlers for EXE/MSI double-click support")
     associate.add_argument("--applications-dir", type=Path)
@@ -92,6 +97,20 @@ def cmd_init(root: Path) -> int:
     save_profile(profiles_dir(root), RunnerProfile.default())
     print(f"Initialized venvWin runtime: {root}")
     return 0
+
+
+def cmd_doctor(root: Path, applications_dir: Path | None, as_json: bool) -> int:
+    ensure_runtime_dirs(root)
+    app_dir = applications_dir.expanduser().resolve() if applications_dir else None
+    report = health_report(root, app_dir)
+    if as_json:
+        print(json.dumps(report, indent=2))
+    else:
+        print(f"venvWin health: {report['overall']}")
+        print(f"runtime root: {report['root']}")
+        for check in report["checks"]:
+            print(f"[{check['status']}] {check['name']}: {check['message']}")
+    return 1 if report["overall"] == "error" else 0
 
 
 def cmd_associate(applications_dir: Path | None) -> int:
@@ -235,6 +254,8 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if args.command == "init":
             return cmd_init(root)
+        if args.command == "doctor":
+            return cmd_doctor(root, args.applications_dir, args.json)
         if args.command == "associate":
             return cmd_associate(args.applications_dir)
         if args.command == "open":
