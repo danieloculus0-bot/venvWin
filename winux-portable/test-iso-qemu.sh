@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DIST_DIR="${ROOT_DIR}/dist"
 WINUX_PROFILE="${WINUX_PROFILE:-standard}"
-ISO_PATH="${ISO_PATH:-${DIST_DIR}/winux-portable-alpha-${WINUX_PROFILE}.iso}"
+ISO_PATH="${ISO_PATH:-${DIST_DIR}/venvwin-portable-alpha-${WINUX_PROFILE}.iso}"
 MEMORY="${MEMORY:-4096}"
 CPUS="${CPUS:-2}"
 BOOT_MODE="${BOOT_MODE:-gui}"
@@ -27,7 +27,7 @@ if [[ -f "${ISO_PATH}.sha256" ]]; then
   sha256sum -c "${ISO_PATH}.sha256"
 fi
 
-echo "== WinUx Portable QEMU boot test =="
+echo "== venvWin Portable QEMU boot test =="
 echo "profile=${WINUX_PROFILE}"
 echo "iso=${ISO_PATH}"
 echo "memory_mb=${MEMORY}"
