@@ -21,10 +21,10 @@ WinUx
 ## Latest build attempt
 
 ```text
-status=REQUESTED_AFTER_STALE_ARTIFACT_FIX
+status=REQUESTED_AFTER_AUDIT_HARDENING
 path=GitHub Actions push trigger
 workflow=flash-ready-standard
-reason=rerun flash-ready gate after removing stale old artifact/public names
+reason=run full flash-ready gate after audit hardening commit e18abac390a54582a2db04ebb292707a6f104aa8
 ```
 
 ## What must happen before Daniel flashes a USB
@@ -123,4 +123,4 @@ capsule still exists
 
 ## Next build target
 
-The next build target is the rerun of `flash-ready-standard` after stale artifact cleanup.
+The next build target is the full `flash-ready-standard` run after audit hardening.
