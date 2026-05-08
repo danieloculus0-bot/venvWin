@@ -152,6 +152,12 @@ Manual build trigger from phone:
 Actions > flash-ready-standard > Run workflow > main
 ```
 
+Windows PowerShell WSL build runner:
+
+```powershell
+.\winux-portable\run-wsl-flash-ready.ps1
+```
+
 Local/WSL build guide:
 
 ```text
