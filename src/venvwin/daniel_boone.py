@@ -1,303 +1,258 @@
 from __future__ import annotations
 
-import math
 import random
 import tkinter as tk
-from dataclasses import dataclass
 
-WIDTH = 860
-HEIGHT = 560
-TICK_MS = 16
-BALL_SIZE = 12
-PADDLE_H = 16
+CELL = 24
+COLS = 10
+ROWS = 20
+SIDE = 220
+WIDTH = COLS * CELL + SIDE
+HEIGHT = ROWS * CELL
+TICK_START = 650
 
-BRICK_LABELS = [
-    "BLOAT",
-    "SPYWARE",
-    "FORCED UPDATE",
-    "PREFIX HELL",
-    "OLD DRIVER",
-    "LAG",
-    "TOOLBAR",
-    "OEM CRAP",
-    "CLOUD TAX",
-    "32-BIT GHOST",
-]
+SHAPES = {
+    "I": [[1, 1, 1, 1]],
+    "O": [[1, 1], [1, 1]],
+    "T": [[0, 1, 0], [1, 1, 1]],
+    "S": [[0, 1, 1], [1, 1, 0]],
+    "Z": [[1, 1, 0], [0, 1, 1]],
+    "J": [[1, 0, 0], [1, 1, 1]],
+    "L": [[0, 0, 1], [1, 1, 1]],
+}
 
-POWERUPS = ["WIDE", "SLOW", "LNT", "MULTI"]
-
-
-@dataclass
-class Ball:
-    x: float
-    y: float
-    dx: float
-    dy: float
-    size: int = BALL_SIZE
+COLORS = ["#60a5fa", "#f59e0b", "#22c55e", "#a78bfa", "#ef4444", "#14b8a6", "#eab308"]
+BLOAT_WORDS = ["BLOAT", "LAG", "SPY", "OEM", "UPDATE", "TOOLBAR", "DRIVER", "CLOUD", "PREFIX", "CRAP"]
 
 
-@dataclass
-class Drop:
-    item: int
-    kind: str
-    dy: float = 2.0
+def rotate(shape: list[list[int]]) -> list[list[int]]:
+    return [list(row) for row in zip(*shape[::-1])]
 
 
-class DanielBooneGame:
+class DanielBooneTetris:
     def __init__(self) -> None:
         self.root = tk.Tk()
-        self.root.title("Daniel Boone: Bloat Breaker")
+        self.root.title("Daniel Boone: Bloat Stacker")
         self.root.resizable(False, False)
         self.canvas = tk.Canvas(self.root, width=WIDTH, height=HEIGHT, bg="#0b1020", highlightthickness=0)
         self.canvas.pack()
 
-        self.level = 1
+        self.grid: list[list[str | None]] = [[None for _ in range(COLS)] for _ in range(ROWS)]
         self.score = 0
-        self.lives = 3
-        self.rescue = 0
+        self.lines = 0
+        self.level = 1
         self.running = True
-        self.paddle_w = 128
-        self.paddle_x = WIDTH // 2 - self.paddle_w // 2
-        self.balls: list[Ball] = []
-        self.bricks: list[int] = []
-        self.drops: list[Drop] = []
-        self.flash = ""
-        self.flash_ticks = 0
+        self.game_over = False
+        self.flash = "Stack bloat. Clear lines. Rescue old PCs."
+        self.piece: dict[str, object] = {}
+        self.next_piece: dict[str, object] = self._new_piece()
 
         self._bind()
-        self._reset_level()
-        self.root.after(TICK_MS, self._tick)
+        self._spawn()
+        self._draw()
+        self.root.after(TICK_START, self._tick)
 
     def _bind(self) -> None:
-        self.root.bind("<Left>", lambda _e: self._move(-42))
-        self.root.bind("<Right>", lambda _e: self._move(42))
-        self.root.bind("a", lambda _e: self._move(-42))
-        self.root.bind("A", lambda _e: self._move(-42))
-        self.root.bind("d", lambda _e: self._move(42))
-        self.root.bind("D", lambda _e: self._move(42))
-        self.root.bind("<space>", lambda _e: self._pause())
-        self.root.bind("r", lambda _e: self._new_game())
-        self.root.bind("R", lambda _e: self._new_game())
+        self.root.bind("<Left>", lambda _e: self._move(-1, 0))
+        self.root.bind("<Right>", lambda _e: self._move(1, 0))
+        self.root.bind("<Down>", lambda _e: self._soft_drop())
+        self.root.bind("<Up>", lambda _e: self._rotate_piece())
+        self.root.bind("<space>", lambda _e: self._hard_drop())
+        self.root.bind("p", lambda _e: self._pause())
+        self.root.bind("P", lambda _e: self._pause())
+        self.root.bind("r", lambda _e: self._reset())
+        self.root.bind("R", lambda _e: self._reset())
         self.root.bind("<Escape>", lambda _e: self.root.destroy())
 
-    def _new_game(self) -> None:
-        self.level = 1
-        self.score = 0
-        self.lives = 3
-        self.rescue = 0
-        self.running = True
-        self.paddle_w = 128
-        self._reset_level()
+    def _new_piece(self) -> dict[str, object]:
+        name = random.choice(list(SHAPES))
+        return {
+            "name": name,
+            "shape": [row[:] for row in SHAPES[name]],
+            "x": COLS // 2 - 2,
+            "y": 0,
+            "color": random.choice(COLORS),
+            "word": random.choice(BLOAT_WORDS),
+        }
 
-    def _reset_level(self) -> None:
-        self.canvas.delete("all")
-        self.bricks.clear()
-        self.drops.clear()
-        speed = 4.0 + min(self.level * 0.35, 2.2)
-        self.balls = [Ball(WIDTH / 2, HEIGHT - 92, random.choice([-speed, speed]), -speed)]
-        self.paddle_x = WIDTH // 2 - self.paddle_w // 2
-        self._make_bricks()
-        self._draw()
-        self._say(f"Level {self.level}: rescue the old hardware")
+    def _spawn(self) -> None:
+        self.piece = self.next_piece
+        self.piece["x"] = COLS // 2 - 2
+        self.piece["y"] = 0
+        self.next_piece = self._new_piece()
+        if self._collides(self.piece["shape"], int(self.piece["x"]), int(self.piece["y"])):
+            self.game_over = True
+            self.running = False
+            self.flash = "Bloat won. Press R to reboot the rescue."
 
-    def _make_bricks(self) -> None:
-        rows = min(4 + self.level, 8)
-        cols = 8
-        brick_w = 94
-        brick_h = 24
-        start_x = 31
-        start_y = 88
-        for row in range(rows):
-            for col in range(cols):
-                x1 = start_x + col * (brick_w + 8)
-                y1 = start_y + row * (brick_h + 8)
-                x2 = x1 + brick_w
-                y2 = y1 + brick_h
-                hp = 1 + (1 if self.level >= 3 and row < 2 and random.random() < 0.35 else 0)
-                fill = "#374151" if hp == 1 else "#4b5563"
-                brick = self.canvas.create_rectangle(x1, y1, x2, y2, fill=fill, outline="#93c5fd", tags=("brick", f"hp:{hp}"))
-                self.canvas.create_text(
-                    (x1 + x2) / 2,
-                    (y1 + y2) / 2,
-                    text=random.choice(BRICK_LABELS),
-                    fill="#f9fafb",
-                    font=("Sans", 7, "bold"),
-                    tags=("brick-label", f"label-{brick}"),
-                )
-                self.bricks.append(brick)
+    def _collides(self, shape: list[list[int]], px: int, py: int) -> bool:
+        for y, row in enumerate(shape):
+            for x, filled in enumerate(row):
+                if not filled:
+                    continue
+                gx = px + x
+                gy = py + y
+                if gx < 0 or gx >= COLS or gy >= ROWS:
+                    return True
+                if gy >= 0 and self.grid[gy][gx] is not None:
+                    return True
+        return False
 
-    def _move(self, amount: int) -> None:
-        self.paddle_x = max(12, min(WIDTH - self.paddle_w - 12, self.paddle_x + amount))
-        self._draw()
+    def _move(self, dx: int, dy: int) -> bool:
+        if not self.running or self.game_over:
+            return False
+        nx = int(self.piece["x"]) + dx
+        ny = int(self.piece["y"]) + dy
+        if not self._collides(self.piece["shape"], nx, ny):
+            self.piece["x"] = nx
+            self.piece["y"] = ny
+            self._draw()
+            return True
+        return False
 
-    def _pause(self) -> None:
-        self.running = not self.running
-        self._say("Paused" if not self.running else "Back to work")
-
-    def _say(self, text: str) -> None:
-        self.flash = text
-        self.flash_ticks = 120
-
-    def _draw(self) -> None:
-        self.canvas.delete("hud", "paddle", "ball", "drop", "message")
-        self._draw_background()
-        self.canvas.create_text(WIDTH // 2, 22, text="Daniel Boone: Bloat Breaker", fill="#f9fafb", font=("Sans", 20, "bold"), tags="hud")
-        self.canvas.create_text(WIDTH // 2, 47, text="One easter egg. Zero host-drive bullshit. Smash bloat and rescue old PCs.", fill="#9ca3af", font=("Sans", 10), tags="hud")
-        self.canvas.create_text(76, 24, text=f"Score {self.score}", fill="#d1d5db", font=("Sans", 11, "bold"), tags="hud")
-        self.canvas.create_text(76, 47, text=f"Lives {self.lives}", fill="#d1d5db", font=("Sans", 10), tags="hud")
-        self.canvas.create_text(WIDTH - 78, 24, text=f"Level {self.level}", fill="#d1d5db", font=("Sans", 11, "bold"), tags="hud")
-        self.canvas.create_text(WIDTH - 94, 47, text=f"Rescue {self.rescue}%", fill="#d1d5db", font=("Sans", 10), tags="hud")
-        self._draw_rescue_bar()
-        if self.flash_ticks > 0:
-            self.canvas.create_text(WIDTH // 2, HEIGHT - 28, text=self.flash, fill="#fde68a", font=("Sans", 11, "bold"), tags="message")
+    def _soft_drop(self) -> None:
+        if self._move(0, 1):
+            self.score += 1
         else:
-            self.canvas.create_text(WIDTH // 2, HEIGHT - 28, text="Arrows/A-D move. Space pauses. R resets. Esc quits.", fill="#6b7280", font=("Sans", 9), tags="message")
+            self._lock()
 
-        py = HEIGHT - 68
-        self.canvas.create_rectangle(self.paddle_x, py, self.paddle_x + self.paddle_w, py + PADDLE_H, fill="#f59e0b", outline="#fde68a", tags="paddle")
-        self.canvas.create_text(self.paddle_x + self.paddle_w / 2, py - 13, text="DANIEL BOONE", fill="#fde68a", font=("Sans", 8, "bold"), tags="paddle")
-        for ball in self.balls:
-            self.canvas.create_oval(ball.x, ball.y, ball.x + ball.size, ball.y + ball.size, fill="#60a5fa", outline="#bfdbfe", tags="ball")
-        for drop in self.drops:
-            x1, y1, x2, y2 = self.canvas.coords(drop.item)
-            self.canvas.create_text((x1 + x2) / 2, (y1 + y2) / 2, text=drop.kind, fill="#111827", font=("Sans", 7, "bold"), tags="drop")
+    def _hard_drop(self) -> None:
+        if not self.running or self.game_over:
+            return
+        dropped = 0
+        while self._move(0, 1):
+            dropped += 1
+        self.score += dropped * 2
+        self._lock()
 
-    def _draw_background(self) -> None:
-        self.canvas.delete("bg")
-        for i in range(0, WIDTH, 40):
-            shade = "#101827" if (i // 40) % 2 else "#0f172a"
-            self.canvas.create_rectangle(i, 64, i + 40, HEIGHT, fill=shade, outline="", tags="bg")
-
-    def _draw_rescue_bar(self) -> None:
-        x1, y1, x2, y2 = 250, 62, WIDTH - 250, 72
-        self.canvas.create_rectangle(x1, y1, x2, y2, outline="#374151", fill="#111827", tags="hud")
-        fill_w = (x2 - x1) * max(0, min(self.rescue, 100)) / 100
-        self.canvas.create_rectangle(x1, y1, x1 + fill_w, y2, outline="", fill="#22c55e", tags="hud")
-
-    def _tick(self) -> None:
-        if self.flash_ticks > 0:
-            self.flash_ticks -= 1
-        if self.running:
-            self._move_balls()
-            self._move_drops()
-        self._draw()
-        self.root.after(TICK_MS, self._tick)
-
-    def _move_balls(self) -> None:
-        py = HEIGHT - 68
-        still_alive: list[Ball] = []
-        for ball in self.balls:
-            ball.x += ball.dx
-            ball.y += ball.dy
-            if ball.x <= 0 or ball.x >= WIDTH - ball.size:
-                ball.dx *= -1
-            if ball.y <= 64:
-                ball.dy = abs(ball.dy)
-            if py - ball.size <= ball.y <= py + PADDLE_H and self.paddle_x <= ball.x <= self.paddle_x + self.paddle_w:
-                hit = (ball.x - self.paddle_x) / self.paddle_w - 0.5
-                ball.dx = hit * (7.0 + self.level * 0.2)
-                ball.dy = -abs(ball.dy)
-            self._hit_bricks(ball)
-            if ball.y <= HEIGHT:
-                still_alive.append(ball)
-        self.balls = still_alive
-        if not self.balls:
-            self.lives -= 1
-            if self.lives <= 0:
-                self._game_over("Bloat won. Press R and rescue that old PC again.")
-            else:
-                speed = 4.0 + min(self.level * 0.35, 2.2)
-                self.balls = [Ball(WIDTH / 2, HEIGHT - 92, random.choice([-speed, speed]), -speed)]
-                self._say("Ball lost. Daniel reloads.")
-        if not self.bricks and self.lives > 0:
-            self.level += 1
-            self.rescue = min(100, self.rescue + 20)
-            self.paddle_w = max(96, self.paddle_w - 4)
-            if self.rescue >= 100:
-                self._game_over("All bloat destroyed. Old hardware lives again. Hell yeah.")
-            else:
-                self._reset_level()
-
-    def _hit_bricks(self, ball: Ball) -> None:
-        for brick in list(self.bricks):
-            coords = self.canvas.coords(brick)
-            if not coords:
-                continue
-            x1, y1, x2, y2 = coords
-            if x1 <= ball.x <= x2 and y1 <= ball.y <= y2:
-                tags = self.canvas.gettags(brick)
-                hp = 1
-                for tag in tags:
-                    if tag.startswith("hp:"):
-                        hp = int(tag.split(":", 1)[1])
-                        break
-                if hp > 1:
-                    self.canvas.itemconfig(brick, fill="#6b7280", tags=("brick", f"hp:{hp - 1}"))
-                else:
-                    self.canvas.delete(brick)
-                    self.canvas.delete(f"label-{brick}")
-                    self.bricks.remove(brick)
-                    self.score += 10 * self.level
-                    if random.random() < 0.12:
-                        self._spawn_powerup((x1 + x2) / 2, (y1 + y2) / 2)
-                ball.dy *= -1
+    def _rotate_piece(self) -> None:
+        if not self.running or self.game_over:
+            return
+        rotated = rotate(self.piece["shape"])
+        px = int(self.piece["x"])
+        py = int(self.piece["y"])
+        for kick in (0, -1, 1, -2, 2):
+            if not self._collides(rotated, px + kick, py):
+                self.piece["shape"] = rotated
+                self.piece["x"] = px + kick
+                self._draw()
                 return
 
-    def _spawn_powerup(self, x: float, y: float) -> None:
-        kind = random.choice(POWERUPS)
-        item = self.canvas.create_rectangle(x - 18, y - 10, x + 18, y + 10, fill="#a7f3d0", outline="#34d399")
-        self.drops.append(Drop(item=item, kind=kind, dy=2.2 + self.level * 0.15))
+    def _lock(self) -> None:
+        shape = self.piece["shape"]
+        px = int(self.piece["x"])
+        py = int(self.piece["y"])
+        color = str(self.piece["color"])
+        for y, row in enumerate(shape):
+            for x, filled in enumerate(row):
+                if filled and 0 <= py + y < ROWS:
+                    self.grid[py + y][px + x] = color
+        self._clear_lines()
+        self._spawn()
+        self._draw()
 
-    def _move_drops(self) -> None:
-        py = HEIGHT - 68
-        for drop in list(self.drops):
-            self.canvas.move(drop.item, 0, drop.dy)
-            coords = self.canvas.coords(drop.item)
-            if not coords:
-                self.drops.remove(drop)
-                continue
-            x1, y1, x2, y2 = coords
-            if y2 > HEIGHT:
-                self.canvas.delete(drop.item)
-                self.drops.remove(drop)
-                continue
-            if py <= y2 <= py + PADDLE_H + 8 and self.paddle_x <= (x1 + x2) / 2 <= self.paddle_x + self.paddle_w:
-                self._apply_powerup(drop.kind)
-                self.canvas.delete(drop.item)
-                self.drops.remove(drop)
+    def _clear_lines(self) -> None:
+        new_grid = [row for row in self.grid if any(cell is None for cell in row)]
+        cleared = ROWS - len(new_grid)
+        for _ in range(cleared):
+            new_grid.insert(0, [None for _ in range(COLS)])
+        self.grid = new_grid
+        if cleared:
+            self.lines += cleared
+            self.level = 1 + self.lines // 8
+            self.score += [0, 100, 300, 500, 800][cleared] * self.level
+            self.flash = f"{cleared} line{'s' if cleared > 1 else ''} cleared. Host drive still clean."
 
-    def _apply_powerup(self, kind: str) -> None:
-        if kind == "WIDE":
-            self.paddle_w = min(190, self.paddle_w + 28)
-            self._say("WIDE paddle: more Daniel per pixel")
-        elif kind == "SLOW":
-            for ball in self.balls:
-                ball.dx *= 0.82
-                ball.dy *= 0.82
-            self._say("SLOW: bloat gets less twitchy")
-        elif kind == "LNT":
-            self.score += 75
-            self.rescue = min(100, self.rescue + 5)
-            self._say("LNT: host drive untouched")
-        elif kind == "MULTI":
-            if self.balls:
-                b = self.balls[0]
-                self.balls.append(Ball(b.x, b.y, -b.dx or 4.0, b.dy, b.size))
-            self._say("MULTI: compatibility layer engaged")
+    def _pause(self) -> None:
+        if self.game_over:
+            return
+        self.running = not self.running
+        self.flash = "Paused" if not self.running else "Back to rescuing old PCs"
+        self._draw()
 
-    def _game_over(self, message: str) -> None:
-        self.running = False
-        self.canvas.create_rectangle(90, 200, WIDTH - 90, 330, fill="#030712", outline="#93c5fd", tags="message")
-        self.canvas.create_text(WIDTH // 2, 235, text=message, fill="#f9fafb", font=("Sans", 15, "bold"), tags="message")
-        self.canvas.create_text(WIDTH // 2, 270, text=f"Final score: {self.score}", fill="#d1d5db", font=("Sans", 12), tags="message")
-        self.canvas.create_text(WIDTH // 2, 300, text="Press R to restart or Esc to quit", fill="#9ca3af", font=("Sans", 11), tags="message")
+    def _reset(self) -> None:
+        self.grid = [[None for _ in range(COLS)] for _ in range(ROWS)]
+        self.score = 0
+        self.lines = 0
+        self.level = 1
+        self.running = True
+        self.game_over = False
+        self.flash = "Stack bloat. Clear lines. Rescue old PCs."
+        self.next_piece = self._new_piece()
+        self._spawn()
+        self._draw()
+
+    def _tick(self) -> None:
+        if self.running and not self.game_over:
+            if not self._move(0, 1):
+                self._lock()
+        delay = max(120, TICK_START - (self.level - 1) * 55)
+        self.root.after(delay, self._tick)
+
+    def _draw_cell(self, x: int, y: int, color: str, text: str = "") -> None:
+        x1 = x * CELL
+        y1 = y * CELL
+        self.canvas.create_rectangle(x1 + 1, y1 + 1, x1 + CELL - 1, y1 + CELL - 1, fill=color, outline="#111827")
+        if text:
+            self.canvas.create_text(x1 + CELL / 2, y1 + CELL / 2, text=text[:3], fill="#0b1020", font=("Sans", 6, "bold"))
+
+    def _draw(self) -> None:
+        self.canvas.delete("all")
+        self.canvas.create_rectangle(0, 0, COLS * CELL, HEIGHT, fill="#111827", outline="#374151")
+        for x in range(COLS + 1):
+            self.canvas.create_line(x * CELL, 0, x * CELL, HEIGHT, fill="#1f2937")
+        for y in range(ROWS + 1):
+            self.canvas.create_line(0, y * CELL, COLS * CELL, y * CELL, fill="#1f2937")
+        for y, row in enumerate(self.grid):
+            for x, color in enumerate(row):
+                if color:
+                    self._draw_cell(x, y, color)
+        if not self.game_over:
+            shape = self.piece["shape"]
+            px = int(self.piece["x"])
+            py = int(self.piece["y"])
+            for y, row in enumerate(shape):
+                for x, filled in enumerate(row):
+                    if filled:
+                        self._draw_cell(px + x, py + y, str(self.piece["color"]), str(self.piece["word"]))
+        sx = COLS * CELL + 20
+        self.canvas.create_text(sx, 28, anchor="w", text="Daniel Boone", fill="#f9fafb", font=("Sans", 18, "bold"))
+        self.canvas.create_text(sx, 54, anchor="w", text="Bloat Stacker", fill="#fde68a", font=("Sans", 14, "bold"))
+        self.canvas.create_text(sx, 88, anchor="w", text=f"Score: {self.score}", fill="#d1d5db", font=("Sans", 11))
+        self.canvas.create_text(sx, 112, anchor="w", text=f"Lines: {self.lines}", fill="#d1d5db", font=("Sans", 11))
+        self.canvas.create_text(sx, 136, anchor="w", text=f"Level: {self.level}", fill="#d1d5db", font=("Sans", 11))
+        self.canvas.create_text(sx, 174, anchor="w", text="Next", fill="#9ca3af", font=("Sans", 10, "bold"))
+        self._draw_next(sx, 198)
+        self.canvas.create_text(sx, 315, anchor="w", text="Controls", fill="#9ca3af", font=("Sans", 10, "bold"))
+        controls = ["Left/Right: move", "Up: rotate", "Down: drop", "Space: slam", "P: pause", "R: reset", "Esc: quit"]
+        for i, line in enumerate(controls):
+            self.canvas.create_text(sx, 340 + i * 20, anchor="w", text=line, fill="#d1d5db", font=("Sans", 9))
+        self.canvas.create_text(sx, HEIGHT - 42, anchor="w", text="One easter egg only.", fill="#60a5fa", font=("Sans", 9, "bold"))
+        self.canvas.create_text(sx, HEIGHT - 22, anchor="w", text="No host-drive writes by default.", fill="#22c55e", font=("Sans", 9, "bold"))
+        self.canvas.create_text(COLS * CELL / 2, HEIGHT - 16, text=self.flash, fill="#fde68a", font=("Sans", 9, "bold"))
+        if self.game_over:
+            self.canvas.create_rectangle(18, 190, COLS * CELL - 18, 300, fill="#030712", outline="#93c5fd")
+            self.canvas.create_text(COLS * CELL / 2, 225, text="GAME OVER", fill="#f9fafb", font=("Sans", 20, "bold"))
+            self.canvas.create_text(COLS * CELL / 2, 260, text="Press R to restart", fill="#9ca3af", font=("Sans", 12))
+        elif not self.running:
+            self.canvas.create_text(COLS * CELL / 2, 240, text="PAUSED", fill="#f9fafb", font=("Sans", 20, "bold"))
+
+    def _draw_next(self, sx: int, sy: int) -> None:
+        shape = self.next_piece["shape"]
+        color = str(self.next_piece["color"])
+        for y, row in enumerate(shape):
+            for x, filled in enumerate(row):
+                if filled:
+                    x1 = sx + x * 20
+                    y1 = sy + y * 20
+                    self.canvas.create_rectangle(x1, y1, x1 + 18, y1 + 18, fill=color, outline="#111827")
 
     def run(self) -> None:
         self.root.mainloop()
 
 
 def main() -> None:
-    DanielBooneGame().run()
+    DanielBooneTetris().run()
 
 
 if __name__ == "__main__":
