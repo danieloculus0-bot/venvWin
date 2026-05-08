@@ -52,22 +52,24 @@ required_files=(
   "venvwin-portable/product-gate.md"
   "venvwin-portable/run-flash-ready-from-phone.md"
 )
-
 for file in "${required_files[@]}"; do
   test -f "${file}" || { echo "Missing required file: ${file}" >&2; exit 1; }
 done
 
 echo "Checking shell syntax"
-bash -n venvwin-portable/audit-public-branding.sh
-bash -n venvwin-portable/bootstrap-flash-ready-ubuntu.sh
-bash -n venvwin-portable/build-iso.sh
-bash -n venvwin-portable/compare-profiles.sh
-bash -n venvwin-portable/build-all-profiles.sh
-bash -n venvwin-portable/test-iso-qemu.sh
-bash -n venvwin-portable/test-persistence-qemu.sh
-bash -n venvwin-portable/build-flash-ready-standard.sh
+for script in \
+  venvwin-portable/audit-public-branding.sh \
+  venvwin-portable/bootstrap-flash-ready-ubuntu.sh \
+  venvwin-portable/build-iso.sh \
+  venvwin-portable/compare-profiles.sh \
+  venvwin-portable/build-all-profiles.sh \
+  venvwin-portable/test-iso-qemu.sh \
+  venvwin-portable/test-persistence-qemu.sh \
+  venvwin-portable/build-flash-ready-standard.sh; do
+  bash -n "${script}"
+done
 
-echo "Checking build attempt checklist contract"
+echo "Checking release contract text"
 grep -q "venvWin Portable" venvwin-portable/build-attempt-checklist.md
 grep -q "run-wsl-flash-ready.ps1" venvwin-portable/build-attempt-checklist.md
 grep -q "bootstrap-flash-ready-ubuntu.sh" venvwin-portable/build-attempt-checklist.md
@@ -77,14 +79,12 @@ grep -q "status=FLASH_READY" venvwin-portable/build-attempt-checklist.md
 grep -q "venvwin-portable-alpha-standard.iso" venvwin-portable/build-attempt-checklist.md
 grep -q "venvwin-flash-ready-verdict.txt" venvwin-portable/build-attempt-checklist.md
 
-echo "Checking PowerShell WSL runner contract"
 grep -q "venvWin Portable" venvwin-portable/run-wsl-flash-ready.ps1
 grep -q "bootstrap-flash-ready-ubuntu.sh" venvwin-portable/run-wsl-flash-ready.ps1
 grep -q "status=FLASH_READY" venvwin-portable/run-wsl-flash-ready.ps1
 grep -q "venvwin-portable-alpha-standard.iso" venvwin-portable/run-wsl-flash-ready.ps1
 grep -q "venvwin-flash-ready-verdict.txt" venvwin-portable/run-wsl-flash-ready.ps1
 
-echo "Checking flash-ready static-inspection contract"
 grep -q "unsquashfs -ll" venvwin-portable/build-flash-ready-standard.sh
 grep -q "squashfs_static_inspection=pass" venvwin-portable/build-flash-ready-standard.sh
 grep -q "squashfs-root/etc/skel/Desktop/venvWin-First-Boot.desktop" venvwin-portable/build-flash-ready-standard.sh
@@ -94,7 +94,6 @@ grep -q "storage_source_marker=pass" venvwin-portable/build-flash-ready-standard
 grep -q "venvwin-portable-alpha-standard.iso" venvwin-portable/build-flash-ready-standard.sh
 grep -q "venvwin-flash-ready-verdict.txt" venvwin-portable/build-flash-ready-standard.sh
 
-echo "Checking USB flash guide contract"
 grep -q "status=FLASH_READY" venvwin-portable/usb-flash-guide.md
 grep -q "sha256sum -c dist/venvwin-portable-alpha-standard.iso.sha256" venvwin-portable/usb-flash-guide.md
 grep -q "dist/venvwin-portable-alpha-standard.iso" venvwin-portable/usb-flash-guide.md
@@ -104,7 +103,7 @@ echo "Checking public branding contract"
 chmod +x venvwin-portable/audit-public-branding.sh
 ./venvwin-portable/audit-public-branding.sh
 
-echo "Checking Python imports, GUI model, and dashboard model"
+echo "Checking Python imports, GUI model, dashboard model, and fallback honesty"
 PYTHONPATH=src python3 - <<'PY'
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -144,7 +143,6 @@ with TemporaryDirectory() as tmp:
     for path in (quick_start, first_boot_proof, dashboard_file, checklist_file):
         assert path.exists(), path
     assert (home / ".venvwin-capsule-store").exists()
-    assert (home / ".venvwin-capsule-store-source").exists()
     assert (home / ".venvwin-capsule-store-source").read_text(encoding="utf-8") == "home-fallback"
     assert (home / ".venvwin-persistence-report.json").exists()
     assert "Dashboard:" in quick_start.read_text(encoding="utf-8")
@@ -164,9 +162,9 @@ with TemporaryDirectory() as tmp:
     assert "Where should Windows app state live?" in wizard
     assert "Dashboard: http://127.0.0.1:8787" in wizard
     report = persistence_report(home)
-    assert "chosen" in report
-    assert "leave_no_trace" in report
-    assert "host_write_warning" in report
+    assert report["chosen"]["source"] == "home-fallback"
+    assert report["disposable_warning"] is True
+    assert report["host_write_warning"] is True
     dash = dashboard_model(root=root, home=home)
     assert dash["product_name"] == PUBLIC_PRODUCT_NAME
     assert "storage" in dash
@@ -195,14 +193,14 @@ python3 -m pytest -q
 echo "Checking CLI smoke commands"
 TMP_ROOT="$(mktemp -d)"
 export VENVWIN_HOME="${TMP_ROOT}/venvwin-home"
-export VENVWIN_HOME_SOURCE="advanced-user-selected"
-mkdir -p "${TMP_ROOT}/installers" "${TMP_ROOT}/apps" "${TMP_ROOT}/home"
+export VENVWIN_HOME_SOURCE="VENVWIN_HOME"
+mkdir -p "${TMP_ROOT}/installers" "${TMP_ROOT}/apps" "${TMP_ROOT}/home" "${VENVWIN_HOME}"
 touch "${TMP_ROOT}/installers/setup.exe"
 
 python3 -m venvwin.cli --root "${TMP_ROOT}/runtime" init
 python3 -m venvwin.cli first-run --home "${TMP_ROOT}/home"
 test -f "${TMP_ROOT}/home/.venvwin-capsule-store-source"
-grep -q "advanced-user-selected" "${TMP_ROOT}/home/.venvwin-capsule-store-source"
+grep -q "VENVWIN_HOME" "${TMP_ROOT}/home/.venvwin-capsule-store-source"
 python3 -m venvwin.cli first-run --home "${TMP_ROOT}/home" --wizard-text >/dev/null
 python3 -m venvwin.cli first-run --home "${TMP_ROOT}/home" --json >/dev/null
 python3 -m venvwin.cli storage >/dev/null
