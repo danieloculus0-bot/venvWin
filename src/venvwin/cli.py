@@ -13,6 +13,7 @@ from .open import open_windows_file
 from .paths import capsules_dir, default_root, ensure_runtime_dirs, profiles_dir
 from .profile import RunnerProfile, load_profile, save_profile
 from .runner import get_runner
+from .snapshot import create_snapshot, reset_capsule_prefix, restore_snapshot
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -49,6 +50,18 @@ def build_parser() -> argparse.ArgumentParser:
     install.add_argument("installer_path", type=Path)
     install.add_argument("--dry-run", action="store_true", help="Record and print command without executing")
     install.add_argument("--no-copy", action="store_true", help="Do not copy installer into capsule history")
+
+    snapshot = sub.add_parser("snapshot", help="Create or restore capsule snapshots")
+    snapshot_sub = snapshot.add_subparsers(dest="snapshot_command", required=True)
+    snapshot_create = snapshot_sub.add_parser("create", help="Create a capsule snapshot")
+    snapshot_create.add_argument("capsule_id")
+    snapshot_create.add_argument("--label")
+    snapshot_restore = snapshot_sub.add_parser("restore", help="Restore a capsule snapshot")
+    snapshot_restore.add_argument("capsule_id")
+    snapshot_restore.add_argument("snapshot_file", type=Path)
+
+    reset = sub.add_parser("reset", help="Reset capsule prefix while preserving a backup")
+    reset.add_argument("capsule_id")
 
     install_command = sub.add_parser("install-command", help="Print the install command for an installer")
     install_command.add_argument("capsule_id")
@@ -150,6 +163,29 @@ def cmd_install(root: Path, capsule_id: str, installer_path: Path, dry_run: bool
     return int(result.get("exit_code") or 0)
 
 
+def cmd_snapshot_create(root: Path, capsule_id: str, label: str | None) -> int:
+    ensure_runtime_dirs(root)
+    capsule = load_capsule(capsules_dir(root), capsule_id)
+    record = create_snapshot(capsules_dir(root), capsule, label)
+    print(json.dumps(record, indent=2))
+    return 0
+
+
+def cmd_snapshot_restore(root: Path, capsule_id: str, snapshot_file: Path) -> int:
+    ensure_runtime_dirs(root)
+    record = restore_snapshot(capsules_dir(root), capsule_id, snapshot_file.expanduser().resolve())
+    print(json.dumps(record, indent=2))
+    return 0
+
+
+def cmd_reset(root: Path, capsule_id: str) -> int:
+    ensure_runtime_dirs(root)
+    capsule = load_capsule(capsules_dir(root), capsule_id)
+    record = reset_capsule_prefix(capsules_dir(root), capsule)
+    print(json.dumps(record, indent=2))
+    return 0
+
+
 def cmd_install_command(root: Path, capsule_id: str, installer_path: str) -> int:
     ensure_runtime_dirs(root)
     capsule = load_capsule(capsules_dir(root), capsule_id)
@@ -213,6 +249,12 @@ def main(argv: list[str] | None = None) -> int:
             return cmd_inspect(root, args.capsule_id)
         if args.command == "install":
             return cmd_install(root, args.capsule_id, args.installer_path, args.dry_run, args.no_copy)
+        if args.command == "snapshot" and args.snapshot_command == "create":
+            return cmd_snapshot_create(root, args.capsule_id, args.label)
+        if args.command == "snapshot" and args.snapshot_command == "restore":
+            return cmd_snapshot_restore(root, args.capsule_id, args.snapshot_file)
+        if args.command == "reset":
+            return cmd_reset(root, args.capsule_id)
         if args.command == "install-command":
             return cmd_install_command(root, args.capsule_id, args.installer_path)
         if args.command == "launch-command":
