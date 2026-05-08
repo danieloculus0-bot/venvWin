@@ -12,6 +12,7 @@ from .health import health_report
 from .install import install_into_capsule
 from .open import open_windows_file
 from .paths import capsules_dir, default_root, ensure_runtime_dirs, profiles_dir
+from .persistence import persistence_report
 from .profile import RunnerProfile, load_profile, save_profile
 from .runner import get_runner
 from .snapshot import create_snapshot, reset_capsule_prefix, restore_snapshot
@@ -28,6 +29,9 @@ def build_parser() -> argparse.ArgumentParser:
     doctor = sub.add_parser("doctor", help="Check venvWin health and setup status")
     doctor.add_argument("--applications-dir", type=Path)
     doctor.add_argument("--json", action="store_true", help="Print raw JSON report")
+
+    storage = sub.add_parser("storage", help="Show capsule storage and leave-no-trace status")
+    storage.add_argument("--json", action="store_true", help="Print raw JSON report")
 
     associate = sub.add_parser("associate", help="Install desktop handlers for EXE/MSI double-click support")
     associate.add_argument("--applications-dir", type=Path)
@@ -111,6 +115,30 @@ def cmd_doctor(root: Path, applications_dir: Path | None, as_json: bool) -> int:
         for check in report["checks"]:
             print(f"[{check['status']}] {check['name']}: {check['message']}")
     return 1 if report["overall"] == "error" else 0
+
+
+def cmd_storage(as_json: bool) -> int:
+    report = persistence_report()
+    if as_json:
+        print(json.dumps(report, indent=2))
+        return 0
+
+    chosen = report["chosen"]
+    print("venvWin storage")
+    print(f"chosen: {chosen['path']}")
+    print(f"source: {chosen['source']}")
+    print(f"writable: {chosen['writable']}")
+    print(f"portable-owned: {chosen['portable_owned']}")
+    print(f"host-risk: {chosen['host_risk']}")
+    if report["leave_no_trace"]:
+        print("leave-no-trace: ok, writing to WinUx-owned portable storage")
+    elif report["disposable_warning"]:
+        print("leave-no-trace: warning, no WinUx-owned persistent storage found; this may be disposable")
+    elif report["host_write_warning"]:
+        print("leave-no-trace: warning, selected storage may be a host path; choose that only on purpose")
+    else:
+        print("leave-no-trace: unknown, inspect before trusting this little bastard")
+    return 0
 
 
 def cmd_associate(applications_dir: Path | None) -> int:
@@ -256,6 +284,8 @@ def main(argv: list[str] | None = None) -> int:
             return cmd_init(root)
         if args.command == "doctor":
             return cmd_doctor(root, args.applications_dir, args.json)
+        if args.command == "storage":
+            return cmd_storage(args.json)
         if args.command == "associate":
             return cmd_associate(args.applications_dir)
         if args.command == "open":
