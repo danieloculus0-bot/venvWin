@@ -114,6 +114,7 @@ from venvwin.persistence import persistence_report
 report = persistence_report()
 chosen = report["chosen"]
 Path.home().joinpath(".winux-capsule-store").write_text(chosen["path"], encoding="utf-8")
+Path.home().joinpath(".winux-persistence-report.json").write_text(__import__("json").dumps(report, indent=2), encoding="utf-8")
 print(chosen["path"])
 PY
 EOF
@@ -161,13 +162,21 @@ venvwin init || true
 venvwin associate || true
 venvwin doctor > "$HOME/Desktop/venvwin-doctor.txt" || true
 
+LEAVE_NO_TRACE_NOTE="Leave-no-trace mode: writing to WinUx-owned portable storage. Host machine stays clean."
 DISPOSABLE_NOTE="Persistent capsule store selected: $VENVWIN_HOME"
 if [ "$VENVWIN_HOME" = "$HOME/WinUx-Capsules" ]; then
+  LEAVE_NO_TRACE_NOTE="Leave-no-trace warning: no WinUx-owned persistent storage was found. Do not write to host disks unless you explicitly choose to."
   DISPOSABLE_NOTE="Disposable-session warning: capsule storage is in the live user's home folder. Fine for testing, terrible for keeping your work unless persistence is enabled."
 fi
 
 cat > "$HOME/Desktop/WinUx-Quick-Start.txt" <<MSG
 Welcome to WinUx Portable.
+
+Default rule:
+
+  Write only to the WinUx USB/install drive. Leave the host machine alone.
+
+$LEAVE_NO_TRACE_NOTE
 
 Double-click a Windows EXE/MSI, or run:
 
@@ -286,6 +295,8 @@ profile=${WINUX_PROFILE}
 iso=${OUTPUT_ISO}
 size_mb=${ISO_MB}
 sha256_file=${OUTPUT_ISO}.sha256
+leave_no_trace_default=true
+default_storage=WinUx USB/install drive only
 EOF
 
 echo "Built ISO: ${OUTPUT_ISO}"
