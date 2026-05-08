@@ -32,6 +32,7 @@ required_files=(
   "src/venvwin/health.py"
   "winux-portable/build-iso.sh"
   "winux-portable/test-iso-qemu.sh"
+  "winux-portable/test-persistence-qemu.sh"
   "winux-portable/first-boot-product-gate.md"
   "winux-portable/flash-ready-checklist.md"
   "winux-portable/leave-no-trace.md"
@@ -48,6 +49,7 @@ bash -n winux-portable/build-iso.sh
 bash -n winux-portable/compare-profiles.sh
 bash -n winux-portable/build-all-profiles.sh
 bash -n winux-portable/test-iso-qemu.sh
+bash -n winux-portable/test-persistence-qemu.sh
 bash -n winux-portable/build-flash-ready-standard.sh
 
 echo "Checking Python imports, GUI model, and dashboard model"
