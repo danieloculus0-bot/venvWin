@@ -51,13 +51,25 @@ with TemporaryDirectory() as tmp:
     root = base / "runtime"
     summary = first_run_summary(home)
     assert summary["capsule_store"] == str(home / "WinUx-Capsules")
+    assert summary["dashboard_url"] == "http://127.0.0.1:8787"
     write_first_run_files(home)
-    assert (home / "Desktop" / "WinUx-Quick-Start.txt").exists()
+    quick_start = home / "Desktop" / "WinUx-Quick-Start.txt"
+    first_boot_proof = home / "Desktop" / "WinUx-First-Boot-Proof.txt"
+    assert quick_start.exists()
+    assert first_boot_proof.exists()
     assert (home / ".winux-capsule-store").exists()
+    assert (home / ".winux-persistence-report.json").exists()
+    assert "Dashboard:" in quick_start.read_text(encoding="utf-8")
+    proof_text = first_boot_proof.read_text(encoding="utf-8")
+    assert "WinUx First Boot Proof" in proof_text
+    assert "dashboard_url=http://127.0.0.1:8787" in proof_text
+    assert "capsule_store=" in proof_text
     model = display_model(home)
     assert model["capsule_store"] == str(home / "WinUx-Capsules")
     assert status_color("leave-no-trace-ok") == "#22c55e"
-    assert "Where should Windows app state live?" in wizard_text(home)
+    wizard = wizard_text(home)
+    assert "Where should Windows app state live?" in wizard
+    assert "Dashboard: http://127.0.0.1:8787" in wizard
     report = persistence_report(home)
     assert "chosen" in report
     assert "leave_no_trace" in report
