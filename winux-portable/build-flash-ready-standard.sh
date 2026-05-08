@@ -8,6 +8,8 @@ ISO="dist/venvwin-portable-alpha-standard.iso"
 MANIFEST="dist/venvwin-portable-alpha-standard-manifest.txt"
 SHA="${ISO}.sha256"
 VERDICT="dist/venvwin-flash-ready-verdict.txt"
+SQUASHFS_COPY="/tmp/venvwin-filesystem.squashfs"
+SQUASHFS_LIST="/tmp/venvwin-filesystem-list.txt"
 
 mkdir -p dist
 
@@ -49,31 +51,38 @@ grep -q '^privacy_browser_profile=privacy_only$' "${MANIFEST}"
 grep -q '^standard_profile_policy=lean_runtime_only$' "${MANIFEST}"
 
 echo "Step 5: Static ISO inspection"
-for tool in xorriso qemu-system-x86_64 timeout; do
+for tool in xorriso unsquashfs qemu-system-x86_64 timeout; do
   if ! command -v "${tool}" >/dev/null 2>&1; then
     echo "Missing required tool: ${tool}" >&2
     exit 1
   fi
 done
 
+rm -f "${SQUASHFS_COPY}" "${SQUASHFS_LIST}"
 xorriso -indev "${ISO}" -report_el_torito as_mkisofs >/tmp/venvwin-el-torito.txt
-xorriso -indev "${ISO}" -find / -name filesystem.squashfs -print | grep -q filesystem.squashfs
+SQUASHFS_PATH="$(xorriso -indev "${ISO}" -find / -name filesystem.squashfs -print | head -n 1 || true)"
+test -n "${SQUASHFS_PATH}"
+xorriso -osirrox on -indev "${ISO}" -extract "${SQUASHFS_PATH}" "${SQUASHFS_COPY}" >/tmp/venvwin-squashfs-extract.log 2>&1
+test -f "${SQUASHFS_COPY}"
+unsquashfs -ll "${SQUASHFS_COPY}" > "${SQUASHFS_LIST}"
+
 xorriso -indev "${ISO}" -find / -name vmlinuz -print | head -n 1 | grep -q vmlinuz
 xorriso -indev "${ISO}" -find / -name initrd.img -print | head -n 1 | grep -q initrd.img
-xorriso -indev "${ISO}" -find / -path /usr/local/bin/venvwin -print | grep -q /usr/local/bin/venvwin
-xorriso -indev "${ISO}" -find / -path /usr/local/bin/winux-first-run -print | grep -q /usr/local/bin/winux-first-run
-xorriso -indev "${ISO}" -find / -path /usr/local/bin/winux-first-boot-gui -print | grep -q /usr/local/bin/winux-first-boot-gui
-xorriso -indev "${ISO}" -find / -path /usr/local/bin/winux-dashboard -print | grep -q /usr/local/bin/winux-dashboard
-xorriso -indev "${ISO}" -find / -path /usr/local/bin/winux-dashboard-lan -print | grep -q /usr/local/bin/winux-dashboard-lan
-xorriso -indev "${ISO}" -find / -path /usr/share/applications/winux-dashboard.desktop -print | grep -q /usr/share/applications/winux-dashboard.desktop
-xorriso -indev "${ISO}" -find / -path /usr/share/applications/winux-dashboard-lan.desktop -print | grep -q /usr/share/applications/winux-dashboard-lan.desktop
-xorriso -indev "${ISO}" -find / -path /etc/xdg/autostart/winux-dashboard.desktop -print | grep -q /etc/xdg/autostart/winux-dashboard.desktop
-xorriso -indev "${ISO}" -find / -path /etc/xdg/autostart/winux-first-boot-gui.desktop -print | grep -q /etc/xdg/autostart/winux-first-boot-gui.desktop
-xorriso -indev "${ISO}" -find / -path /etc/skel/Desktop/venvWin-First-Boot.desktop -print | grep -q /etc/skel/Desktop/venvWin-First-Boot.desktop
-xorriso -indev "${ISO}" -find / -path /etc/skel/Desktop/venvWin-Dashboard.desktop -print | grep -q /etc/skel/Desktop/venvWin-Dashboard.desktop
-xorriso -indev "${ISO}" -find / -path /etc/skel/Desktop/venvWin-Capsules.desktop -print | grep -q /etc/skel/Desktop/venvWin-Capsules.desktop
-xorriso -indev "${ISO}" -find / -path /etc/skel/Desktop/venvWin-Doctor.desktop -print | grep -q /etc/skel/Desktop/venvWin-Doctor.desktop
-xorriso -indev "${ISO}" -find / -path /etc/skel/Desktop/venvWin-Private-Browser.desktop -print | grep -q /etc/skel/Desktop/venvWin-Private-Browser.desktop
+
+grep -q 'squashfs-root/usr/local/bin/venvwin' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/usr/local/bin/winux-first-run' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/usr/local/bin/winux-first-boot-gui' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/usr/local/bin/winux-dashboard' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/usr/local/bin/winux-dashboard-lan' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/usr/share/applications/winux-dashboard.desktop' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/usr/share/applications/winux-dashboard-lan.desktop' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/etc/xdg/autostart/winux-dashboard.desktop' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/etc/xdg/autostart/winux-first-boot-gui.desktop' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/etc/skel/Desktop/venvWin-First-Boot.desktop' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/etc/skel/Desktop/venvWin-Dashboard.desktop' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/etc/skel/Desktop/venvWin-Capsules.desktop' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/etc/skel/Desktop/venvWin-Doctor.desktop' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/etc/skel/Desktop/venvWin-Private-Browser.desktop' "${SQUASHFS_LIST}"
 
 echo "Step 6: QEMU boot smoke"
 set +e
@@ -117,6 +126,7 @@ size_mb=${ISO_MB}
 pre_iso_readiness=pass
 manifest_flags=pass
 static_iso_inspection=pass
+squashfs_static_inspection=pass
 qemu_smoke=pass
 leave_no_trace_default=true
 first_boot_gui=true
