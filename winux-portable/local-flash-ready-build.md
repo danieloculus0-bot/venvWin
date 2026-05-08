@@ -20,7 +20,27 @@ QEMU smoke
 flash-ready verdict
 ```
 
-## Fast path
+## Windows PowerShell fast path
+
+From repo root in PowerShell on Windows with WSL Ubuntu installed:
+
+```powershell
+.\winux-portable\run-wsl-flash-ready.ps1
+```
+
+Optional explicit repo path:
+
+```powershell
+.\winux-portable\run-wsl-flash-ready.ps1 -RepoPath "C:\Users\Daniel\venvWin"
+```
+
+The PowerShell runner converts the Windows path to `/mnt/c/...`, runs the Ubuntu bootstrap, reads the verdict, and refuses to call the build flash-ready unless the verdict says:
+
+```text
+status=FLASH_READY
+```
+
+## Ubuntu/WSL fast path
 
 From repo root on Ubuntu/Debian/WSL:
 
