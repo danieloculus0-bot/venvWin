@@ -5,11 +5,21 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUILD_DIR="${ROOT_DIR}/build/winux-portable-iso"
 OUT_DIR="${ROOT_DIR}/dist"
 IMAGE_NAME="winux-portable-alpha"
+WINUX_PROFILE="${WINUX_PROFILE:-standard}"
 
 if ! command -v lb >/dev/null 2>&1; then
   echo "live-build is missing. Install it with: sudo apt-get install -y live-build" >&2
   exit 1
 fi
+
+case "${WINUX_PROFILE}" in
+  core|standard|privacy)
+    ;;
+  *)
+    echo "Unknown WINUX_PROFILE='${WINUX_PROFILE}'. Use core, standard, or privacy." >&2
+    exit 1
+    ;;
+esac
 
 rm -rf "${BUILD_DIR}"
 mkdir -p "${BUILD_DIR}" "${OUT_DIR}"
@@ -36,7 +46,7 @@ mkdir -p \
   config/includes.chroot/etc/xdg/autostart \
   config/hooks/normal
 
-cat > config/package-lists/winux.list.chroot <<'EOF'
+cat > config/package-lists/00-winux-core.list.chroot <<'EOF'
 live-boot
 live-config
 systemd-sysv
@@ -44,33 +54,40 @@ sudo
 network-manager
 xorg
 lightdm
-xfce4
+xfce4-session
+xfce4-panel
+xfce4-settings
+xfwm4
+xfdesktop4
 xfce4-terminal
 thunar
 mousepad
 python3
-python3-venv
-python3-pip
-python3-tk
 xdg-utils
 desktop-file-utils
 shared-mime-info
+curl
+ca-certificates
+rsync
+EOF
+
+if [[ "${WINUX_PROFILE}" == "standard" || "${WINUX_PROFILE}" == "privacy" ]]; then
+cat > config/package-lists/10-winux-runner.list.chroot <<'EOF'
 wine
 wine64
 cabextract
 p7zip-full
-curl
-ca-certificates
-git
-rsync
+EOF
+fi
+
+if [[ "${WINUX_PROFILE}" == "standard" || "${WINUX_PROFILE}" == "privacy" ]]; then
+cat > config/package-lists/20-winux-privacy.list.chroot <<'EOF'
 tor
 torsocks
 firefox-esr
-EOF
-
-cat > config/package-lists/winux-optional-torbrowser.list.chroot <<'EOF'
 torbrowser-launcher
 EOF
+fi
 
 rsync -a \
   --exclude .git \
@@ -237,6 +254,18 @@ update-mime-database /usr/share/mime || true
 EOF
 chmod +x config/hooks/normal/010-winux-setup.chroot
 
+cat > config/hooks/normal/090-winux-trim.chroot <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "Trimming WinUx Portable image fat"
+apt-get clean || true
+rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* || true
+rm -rf /usr/share/doc/* /usr/share/man/* /usr/share/info/* || true
+find /usr/share/locale -mindepth 1 -maxdepth 1 ! -name 'en*' -exec rm -rf {} + || true
+EOF
+chmod +x config/hooks/normal/090-winux-trim.chroot
+
 sudo lb build
 
 ISO_PATH="$(find . -maxdepth 1 \( -name 'live-image-*.iso' -o -name 'live-image-*.hybrid.iso' \) -type f | head -n 1 || true)"
@@ -245,8 +274,25 @@ if [[ -z "${ISO_PATH}" ]]; then
   exit 1
 fi
 
-cp "${ISO_PATH}" "${OUT_DIR}/${IMAGE_NAME}.iso"
-sha256sum "${OUT_DIR}/${IMAGE_NAME}.iso" > "${OUT_DIR}/${IMAGE_NAME}.iso.sha256"
+OUTPUT_ISO="${OUT_DIR}/${IMAGE_NAME}-${WINUX_PROFILE}.iso"
+cp "${ISO_PATH}" "${OUTPUT_ISO}"
+sha256sum "${OUTPUT_ISO}" > "${OUTPUT_ISO}.sha256"
 
-echo "Built ISO: ${OUT_DIR}/${IMAGE_NAME}.iso"
-echo "Checksum: ${OUT_DIR}/${IMAGE_NAME}.iso.sha256"
+ISO_BYTES="$(stat -c%s "${OUTPUT_ISO}")"
+ISO_MB="$(( (ISO_BYTES + 1048575) / 1048576 ))"
+cat > "${OUT_DIR}/${IMAGE_NAME}-${WINUX_PROFILE}-manifest.txt" <<EOF
+WinUx Portable ISO Manifest
+profile=${WINUX_PROFILE}
+iso=${OUTPUT_ISO}
+size_mb=${ISO_MB}
+sha256_file=${OUTPUT_ISO}.sha256
+EOF
+
+echo "Built ISO: ${OUTPUT_ISO}"
+echo "Size: ${ISO_MB} MB"
+echo "Checksum: ${OUTPUT_ISO}.sha256"
+if [[ "${ISO_MB}" -gt 3500 ]]; then
+  echo "Hard concern: ISO is over 3500 MB. This is bloated-goblin territory."
+elif [[ "${ISO_MB}" -gt 2500 ]]; then
+  echo "Soft warning: ISO is over 2500 MB. Alpha can live, but trim this bastard later."
+fi
