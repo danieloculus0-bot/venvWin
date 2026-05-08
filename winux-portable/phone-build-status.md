@@ -1,9 +1,21 @@
-# WinUx Phone Build Status
+# venvWin Portable Phone Build Status
 
 ## Current verdict
 
 ```text
 NOT FLASH READY
+```
+
+## Public name
+
+```text
+venvWin Portable
+```
+
+Internal codename:
+
+```text
+WinUx
 ```
 
 ## What must happen before Daniel flashes a USB
@@ -17,16 +29,16 @@ flash-ready-standard
 It must upload this artifact bundle:
 
 ```text
-winux-portable-flash-ready-standard
+venvwin-portable-flash-ready-standard
 ```
 
 That bundle must contain:
 
 ```text
-winux-portable-alpha-standard.iso
-winux-portable-alpha-standard.iso.sha256
-winux-portable-alpha-standard-manifest.txt
-winux-flash-ready-verdict.txt
+venvwin-portable-alpha-standard.iso
+venvwin-portable-alpha-standard.iso.sha256
+venvwin-portable-alpha-standard-manifest.txt
+venvwin-flash-ready-verdict.txt
 ```
 
 The verdict file must say:
@@ -50,13 +62,13 @@ flash-ready verdict
 ## What first boot should show
 
 ```text
-WinUx desktop
-WinUx First Boot GUI
-WinUx Dashboard at http://127.0.0.1:8787
-WinUx-Quick-Start.txt
-WinUx-First-Boot-Proof.txt
-WinUx-Dashboard.txt
-WinUx-First-Boot-Checklist.txt
+venvWin Portable desktop
+venvWin Portable First Boot GUI
+venvWin Portable Dashboard at http://127.0.0.1:8787
+venvWin-Quick-Start.txt
+venvWin-First-Boot-Proof.txt
+venvWin-Dashboard.txt
+venvWin-First-Boot-Checklist.txt
 venvwin doctor output
 storage status output
 capsule storage path
