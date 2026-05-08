@@ -70,6 +70,7 @@ for script in \
 done
 
 echo "Checking release contract text"
+echo "Checking build attempt checklist contract"
 grep -q "venvWin Portable" venvwin-portable/build-attempt-checklist.md
 grep -q "run-wsl-flash-ready.ps1" venvwin-portable/build-attempt-checklist.md
 grep -q "bootstrap-flash-ready-ubuntu.sh" venvwin-portable/build-attempt-checklist.md
@@ -79,12 +80,14 @@ grep -q "status=FLASH_READY" venvwin-portable/build-attempt-checklist.md
 grep -q "venvwin-portable-alpha-standard.iso" venvwin-portable/build-attempt-checklist.md
 grep -q "venvwin-flash-ready-verdict.txt" venvwin-portable/build-attempt-checklist.md
 
+echo "Checking PowerShell WSL runner contract"
 grep -q "venvWin Portable" venvwin-portable/run-wsl-flash-ready.ps1
 grep -q "bootstrap-flash-ready-ubuntu.sh" venvwin-portable/run-wsl-flash-ready.ps1
 grep -q "status=FLASH_READY" venvwin-portable/run-wsl-flash-ready.ps1
 grep -q "venvwin-portable-alpha-standard.iso" venvwin-portable/run-wsl-flash-ready.ps1
 grep -q "venvwin-flash-ready-verdict.txt" venvwin-portable/run-wsl-flash-ready.ps1
 
+echo "Checking flash-ready gate contract"
 grep -q "unsquashfs -ll" venvwin-portable/build-flash-ready-standard.sh
 grep -q "squashfs_static_inspection=pass" venvwin-portable/build-flash-ready-standard.sh
 grep -q "squashfs-root/etc/skel/Desktop/venvWin-First-Boot.desktop" venvwin-portable/build-flash-ready-standard.sh
@@ -94,6 +97,7 @@ grep -q "storage_source_marker=pass" venvwin-portable/build-flash-ready-standard
 grep -q "venvwin-portable-alpha-standard.iso" venvwin-portable/build-flash-ready-standard.sh
 grep -q "venvwin-flash-ready-verdict.txt" venvwin-portable/build-flash-ready-standard.sh
 
+echo "Checking USB flash guide contract"
 grep -q "status=FLASH_READY" venvwin-portable/usb-flash-guide.md
 grep -q "sha256sum -c dist/venvwin-portable-alpha-standard.iso.sha256" venvwin-portable/usb-flash-guide.md
 grep -q "dist/venvwin-portable-alpha-standard.iso" venvwin-portable/usb-flash-guide.md
