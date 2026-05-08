@@ -36,6 +36,8 @@ echo "Step 4: Required manifest flags"
 grep -q '^profile=standard$' "${MANIFEST}"
 grep -q '^leave_no_trace_default=true$' "${MANIFEST}"
 grep -q '^first_boot_gui=true$' "${MANIFEST}"
+grep -q '^dashboard=true$' "${MANIFEST}"
+grep -q '^dashboard_url=http://127.0.0.1:8787$' "${MANIFEST}"
 
 echo "Step 5: Static ISO inspection"
 for tool in xorriso qemu-system-x86_64 timeout; do
@@ -49,6 +51,13 @@ xorriso -indev "${ISO}" -report_el_torito as_mkisofs >/tmp/winux-el-torito.txt
 xorriso -indev "${ISO}" -find / -name filesystem.squashfs -print | grep -q filesystem.squashfs
 xorriso -indev "${ISO}" -find / -name vmlinuz -print | head -n 1 | grep -q vmlinuz
 xorriso -indev "${ISO}" -find / -name initrd.img -print | head -n 1 | grep -q initrd.img
+xorriso -indev "${ISO}" -find / -path /usr/local/bin/venvwin -print | grep -q /usr/local/bin/venvwin
+xorriso -indev "${ISO}" -find / -path /usr/local/bin/winux-first-run -print | grep -q /usr/local/bin/winux-first-run
+xorriso -indev "${ISO}" -find / -path /usr/local/bin/winux-first-boot-gui -print | grep -q /usr/local/bin/winux-first-boot-gui
+xorriso -indev "${ISO}" -find / -path /usr/local/bin/winux-dashboard -print | grep -q /usr/local/bin/winux-dashboard
+xorriso -indev "${ISO}" -find / -path /usr/share/applications/winux-dashboard.desktop -print | grep -q /usr/share/applications/winux-dashboard.desktop
+xorriso -indev "${ISO}" -find / -path /etc/xdg/autostart/winux-dashboard.desktop -print | grep -q /etc/xdg/autostart/winux-dashboard.desktop
+xorriso -indev "${ISO}" -find / -path /etc/xdg/autostart/winux-first-boot-gui.desktop -print | grep -q /etc/xdg/autostart/winux-first-boot-gui.desktop
 
 echo "Step 6: QEMU boot smoke"
 set +e
@@ -88,10 +97,13 @@ sha256=${SHA}
 manifest=${MANIFEST}
 size_mb=${ISO_MB}
 pre_iso_readiness=pass
+manifest_flags=pass
 static_iso_inspection=pass
 qemu_smoke=pass
 leave_no_trace_default=true
 first_boot_gui=true
+dashboard=true
+dashboard_url=http://127.0.0.1:8787
 PASS
 
 cat "${VERDICT}"
