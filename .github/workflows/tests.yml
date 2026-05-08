@@ -30,6 +30,10 @@ jobs:
           mkdir -p "$RUNNER_TEMP/installers"
           touch "$RUNNER_TEMP/installers/setup.exe"
           venvwin init
+          venvwin storage
+          venvwin storage --json
+          venvwin doctor
+          venvwin doctor --json
           venvwin associate --applications-dir "$RUNNER_TEMP/applications"
           venvwin create "Notepad Plus Plus"
           venvwin list
