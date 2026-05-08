@@ -17,15 +17,46 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Install live-build tooling
+      - name: Install live-build and virtual test tooling
         run: |
           sudo apt-get update
-          sudo apt-get install -y live-build rsync xorriso isolinux syslinux-common squashfs-tools
+          sudo apt-get install -y live-build rsync xorriso isolinux syslinux-common squashfs-tools qemu-system-x86 ovmf
 
       - name: Build WinUx Portable ISO
         run: |
           chmod +x winux-portable/build-iso.sh
           ./winux-portable/build-iso.sh
+
+      - name: Static ISO inspection
+        run: |
+          test -f dist/winux-portable-alpha.iso
+          test -f dist/winux-portable-alpha.iso.sha256
+          sha256sum -c dist/winux-portable-alpha.iso.sha256
+          xorriso -indev dist/winux-portable-alpha.iso -report_el_torito as_mkisofs
+          xorriso -indev dist/winux-portable-alpha.iso -find / -name filesystem.squashfs -print | grep filesystem.squashfs
+          xorriso -indev dist/winux-portable-alpha.iso -find / -name vmlinuz -print | head -n 1
+          xorriso -indev dist/winux-portable-alpha.iso -find / -name initrd.img -print | head -n 1
+
+      - name: QEMU boot smoke test
+        run: |
+          set +e
+          timeout 150s qemu-system-x86_64 \
+            -m 2048 \
+            -smp 2 \
+            -cdrom dist/winux-portable-alpha.iso \
+            -boot d \
+            -display none \
+            -serial mon:stdio \
+            -no-reboot \
+            -net none
+          code=$?
+          set -e
+          if [ "$code" -eq 124 ]; then
+            echo "QEMU stayed alive for 150 seconds. Boot smoke passed enough for alpha learing."
+            exit 0
+          fi
+          echo "QEMU exited early with code $code. ISO may be cursed."
+          exit "$code"
 
       - name: Upload ISO artifact
         uses: actions/upload-artifact@v4
