@@ -4,7 +4,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from .first_run import first_run_summary, write_first_run_files
+from .first_run import PUBLIC_PRODUCT_NAME, first_run_summary, write_first_run_files
 
 try:
     import tkinter as tk
@@ -38,6 +38,8 @@ def status_color(status: str) -> str:
 def display_model(home: Path | None = None) -> dict[str, str]:
     summary = first_run_summary(home)
     return {
+        "product_name": str(summary["product_name"]),
+        "internal_codename": str(summary["internal_codename"]),
         "capsule_store": str(summary["capsule_store"]),
         "storage_status": str(summary["storage_status"]),
         "storage_message": str(summary["storage_message"]),
@@ -47,25 +49,25 @@ def display_model(home: Path | None = None) -> dict[str, str]:
     }
 
 
-class WinUxFirstRunApp:
+class VenvWinFirstRunApp:
     def __init__(self, root, home: Path | None = None) -> None:
         if tk is None:
-            raise RuntimeError("Tkinter is not available. Install python3-tk before launching the WinUx first-boot GUI.")
+            raise RuntimeError(f"Tkinter is not available. Install python3-tk before launching the {PUBLIC_PRODUCT_NAME} first-boot GUI.")
         self.root = root
         self.home = home
         self.model = display_model(home)
         self.summary = first_run_summary(home)
         self.capsule_store = Path(self.summary["capsule_store"])
 
-        self.root.title("WinUx First Boot")
-        self.root.geometry("900x590")
-        self.root.minsize(820, 540)
+        self.root.title(f"{PUBLIC_PRODUCT_NAME} First Boot")
+        self.root.geometry("930x600")
+        self.root.minsize(850, 560)
         self.root.configure(bg=BG)
         self.build_ui()
 
     def label(self, parent, text: str, size: int = 11, color: str = TEXT, bold: bool = False):
         weight = "bold" if bold else "normal"
-        return tk.Label(parent, text=text, bg=parent["bg"], fg=color, font=("Sans", size, weight), anchor="w", justify="left", wraplength=680)
+        return tk.Label(parent, text=text, bg=parent["bg"], fg=color, font=("Sans", size, weight), anchor="w", justify="left", wraplength=700)
 
     def button(self, parent, text: str, command):
         return tk.Button(
@@ -90,16 +92,16 @@ class WinUxFirstRunApp:
 
         header = tk.Frame(shell, bg=BG)
         header.pack(fill="x")
-        self.label(header, "WinUx Portable", 30, TEXT, True).pack(anchor="w")
+        self.label(header, PUBLIC_PRODUCT_NAME, 30, TEXT, True).pack(anchor="w")
         self.label(header, "First boot setup for portable Windows-app capsules.", 13, MUTED).pack(anchor="w", pady=(6, 0))
 
         main = tk.Frame(shell, bg=BG)
-        main.pack(fill="both", expand=True, pady=(24, 0))
+        main.pack(fill="both", expand=True, pady=(22, 0))
 
         left = tk.Frame(main, bg=PANEL, padx=22, pady=22)
         left.pack(side="left", fill="both", expand=True, padx=(0, 16))
 
-        right = tk.Frame(main, bg=PANEL, padx=22, pady=22, width=285)
+        right = tk.Frame(main, bg=PANEL, padx=22, pady=22, width=300)
         right.pack(side="right", fill="y")
         right.pack_propagate(False)
 
@@ -109,7 +111,7 @@ class WinUxFirstRunApp:
 
         footer = tk.Frame(shell, bg=BG)
         footer.pack(fill="x", pady=(18, 0))
-        self.label(footer, "Default promise: write app state to the WinUx drive, keep the host clean, and make every Windows app mess recoverable.", 10, MUTED).pack(anchor="w")
+        self.label(footer, "Default promise: write app state to the portable capsule store, keep the host clean, and make every app mess recoverable.", 10, MUTED).pack(anchor="w")
 
     def storage_card(self, parent) -> None:
         card = tk.Frame(parent, bg=CARD, padx=18, pady=18)
@@ -144,6 +146,10 @@ class WinUxFirstRunApp:
         note.pack(fill="x", pady=(18, 0))
         self.label(note, "If host risk says YES, do not install apps until storage is corrected or intentionally selected.", 10, MUTED).pack(anchor="w")
 
+        codename = tk.Frame(parent, bg=CARD_SOFT, padx=14, pady=14)
+        codename.pack(fill="x", pady=(12, 0))
+        self.label(codename, f"Internal codename: {self.model['internal_codename']}", 10, MUTED).pack(anchor="w")
+
     def badge(self, parent, title: str, value: str, color: str) -> None:
         box = tk.Frame(parent, bg=CARD, padx=14, pady=12)
         box.pack(fill="x", pady=(12, 0))
@@ -152,7 +158,7 @@ class WinUxFirstRunApp:
 
     def initialize(self) -> None:
         summary = write_first_run_files(self.home)
-        messagebox.showinfo("WinUx ready", f"Capsule storage initialized:\n{summary['capsule_store']}")
+        messagebox.showinfo(f"{PUBLIC_PRODUCT_NAME} ready", f"Capsule storage initialized:\n{summary['capsule_store']}")
 
     def open_capsules(self) -> None:
         self.capsule_store.mkdir(parents=True, exist_ok=True)
@@ -180,14 +186,17 @@ class WinUxFirstRunApp:
             messagebox.showwarning("Private browser", "Open a terminal and run: winux-private-browser")
 
 
+WinUxFirstRunApp = VenvWinFirstRunApp
+
+
 def main(argv: list[str] | None = None) -> int:
     if tk is None:
-        print("WinUx first-boot GUI requires Tkinter. Install python3-tk.", file=sys.stderr)
+        print(f"{PUBLIC_PRODUCT_NAME} first-boot GUI requires Tkinter. Install python3-tk.", file=sys.stderr)
         return 1
     args = argv or sys.argv[1:]
     home = Path(args[0]).expanduser().resolve() if args else None
     root = tk.Tk()
-    WinUxFirstRunApp(root, home)
+    VenvWinFirstRunApp(root, home)
     root.mainloop()
     return 0
 
