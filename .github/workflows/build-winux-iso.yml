@@ -12,6 +12,14 @@ on:
           - core
           - standard
           - privacy
+      qemu_smoke:
+        description: "Run QEMU boot smoke test"
+        required: true
+        default: "true"
+        type: choice
+        options:
+          - "true"
+          - "false"
   push:
     paths:
       - "winux-portable/**"
@@ -23,8 +31,13 @@ jobs:
   iso:
     runs-on: ubuntu-latest
     timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        profile: ${{ github.event_name == 'workflow_dispatch' && fromJSON(format('["{0}"]', github.event.inputs.profile)) || fromJSON('["core","standard","privacy"]') }}
     env:
-      WINUX_PROFILE: ${{ github.event.inputs.profile || 'standard' }}
+      WINUX_PROFILE: ${{ matrix.profile }}
+      QEMU_SMOKE: ${{ github.event.inputs.qemu_smoke || 'true' }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -52,6 +65,7 @@ jobs:
           xorriso -indev "$ISO" -find / -name initrd.img -print | head -n 1
 
       - name: QEMU boot smoke test
+        if: env.QEMU_SMOKE == 'true'
         run: |
           ISO="dist/winux-portable-alpha-${WINUX_PROFILE}.iso"
           set +e
