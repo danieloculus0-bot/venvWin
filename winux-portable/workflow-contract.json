@@ -1,0 +1,20 @@
+{
+  "workflow": "flash-ready-standard",
+  "branch": "main",
+  "required_artifact": "winux-portable-flash-ready-standard",
+  "required_files": [
+    "winux-portable-alpha-standard.iso",
+    "winux-portable-alpha-standard.iso.sha256",
+    "winux-portable-alpha-standard-manifest.txt",
+    "winux-flash-ready-verdict.txt"
+  ],
+  "required_verdict": "status=FLASH_READY",
+  "flash_ready_only_after": [
+    "pre_iso_readiness_pass",
+    "standard_iso_build_pass",
+    "checksum_pass",
+    "manifest_flags_pass",
+    "static_iso_inspection_pass",
+    "qemu_smoke_pass"
+  ]
+}
