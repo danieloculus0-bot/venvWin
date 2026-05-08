@@ -18,6 +18,7 @@ required_public=(
   "winux-portable/workflow-contract.json"
   "winux-portable/build-iso.sh"
   "winux-portable/build-flash-ready-standard.sh"
+  "winux-portable/bootstrap-flash-ready-ubuntu.sh"
 )
 
 for file in "${required_public[@]}"; do
@@ -31,6 +32,8 @@ grep -q '"internal_codename": "WinUx"' winux-portable/workflow-contract.json || 
 
 grep -q "venvwin-portable-alpha-standard.iso" winux-portable/build-flash-ready-standard.sh || { echo "Flash gate missing renamed ISO" >&2; exit 1; }
 grep -q "venvwin-flash-ready-verdict.txt" winux-portable/build-flash-ready-standard.sh || { echo "Flash gate missing renamed verdict" >&2; exit 1; }
+grep -q "venvwin-portable-alpha-standard.iso" winux-portable/bootstrap-flash-ready-ubuntu.sh || { echo "Bootstrap missing renamed ISO" >&2; exit 1; }
+grep -q "venvwin-flash-ready-verdict.txt" winux-portable/bootstrap-flash-ready-ubuntu.sh || { echo "Bootstrap missing renamed verdict" >&2; exit 1; }
 grep -q "venvwin-portable-flash-ready-standard" .github/workflows/flash-ready-standard.yml || { echo "Workflow missing renamed artifact" >&2; exit 1; }
 
 bad_artifact_refs="$(grep -RIn --exclude-dir=.git --exclude='audit-public-branding.sh' \
