@@ -2,11 +2,12 @@ from __future__ import annotations
 
 import html
 import json
+import secrets
 import sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlencode, urlparse
 
 from .capsule import list_capsules
 from .first_run import first_run_summary, write_first_run_files
@@ -16,6 +17,7 @@ from .persistence import persistence_report
 
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8787
+TOKEN_FILE = ".winux-dashboard-token"
 
 
 def dashboard_model(root: Path | None = None, home: Path | None = None) -> dict[str, Any]:
@@ -35,13 +37,50 @@ def dashboard_model(root: Path | None = None, home: Path | None = None) -> dict[
     }
 
 
+def get_or_create_token(home: Path | None = None) -> str:
+    user_home = home or Path.home()
+    token_path = user_home / TOKEN_FILE
+    if token_path.exists():
+        token = token_path.read_text(encoding="utf-8").strip()
+        if token:
+            return token
+    token = secrets.token_urlsafe(18)
+    token_path.write_text(token, encoding="utf-8")
+    try:
+        token_path.chmod(0o600)
+    except OSError:
+        pass
+    return token
+
+
+def dashboard_url(host: str, port: int, token: str | None = None) -> str:
+    shown_host = "127.0.0.1" if host in {"0.0.0.0", "::"} else host
+    query = f"?{urlencode({'token': token})}" if token else ""
+    return f"http://{shown_host}:{port}/{query}"
+
+
 def status_badge(value: bool, good: str = "OK", warn: str = "WARNING") -> str:
     klass = "good" if value else "warn"
     text = good if value else warn
     return f'<span class="badge {klass}">{html.escape(text)}</span>'
 
 
-def render_dashboard(model: dict[str, Any]) -> str:
+def token_link(path: str, token: str | None) -> str:
+    if not token:
+        return path
+    separator = "&" if "?" in path else "?"
+    return f"{path}{separator}{urlencode({'token': token})}"
+
+
+def render_locked_page() -> str:
+    return """<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WinUx Dashboard Locked</title>
+<style>body{margin:0;font-family:system-ui;background:#070b10;color:#eef6ff;display:grid;place-items:center;min-height:100vh}.card{background:#111827;border:1px solid #263449;border-radius:18px;padding:28px;max-width:560px}.muted{color:#a7b4c0}.token{background:#070b10;color:#38bdf8;border-radius:10px;padding:10px;overflow-wrap:anywhere}</style></head>
+<body><div class="card"><h1>WinUx Dashboard Locked</h1><p class="muted">LAN dashboard access requires the session token from the WinUx desktop. This keeps the control panel from being open to every device on the network.</p><p class="muted">Open the dashboard from the WinUx desktop launcher or use the printed LAN URL.</p></div></body></html>"""
+
+
+def render_dashboard(model: dict[str, Any], token: str | None = None) -> str:
     chosen = model["storage"]["chosen"]
     leave_no_trace = bool(model["storage"].get("leave_no_trace"))
     host_risk = bool(model["storage"].get("host_write_warning"))
@@ -57,6 +96,10 @@ def render_dashboard(model: dict[str, Any]) -> str:
         f"<div class='check {html.escape(check['status'])}'><strong>{html.escape(check['name'])}</strong><span>{html.escape(check['message'])}</span></div>"
         for check in health["checks"]
     )
+
+    status_href = html.escape(token_link("/api/status", token))
+    doctor_href = html.escape(token_link("/api/doctor", token))
+    init_href = html.escape(token_link("/api/initialize", token))
 
     return f"""<!doctype html>
 <html lang="en">
@@ -114,9 +157,9 @@ def render_dashboard(model: dict[str, Any]) -> str:
         <div class="stat"><div class="label">Capsules</div><div class="value">{model['capsule_count']}</div></div>
       </div>
       <div class="actions">
-        <a class="button" href="/api/status">Status JSON</a>
-        <a class="button" href="/api/doctor">Doctor JSON</a>
-        <a class="button" href="/api/initialize">Initialize storage</a>
+        <a class="button" href="{status_href}">Status JSON</a>
+        <a class="button" href="{doctor_href}">Doctor JSON</a>
+        <a class="button" href="{init_href}">Initialize storage</a>
       </div>
     </section>
 
@@ -141,6 +184,7 @@ def render_dashboard(model: dict[str, Any]) -> str:
 class DashboardHandler(BaseHTTPRequestHandler):
     runtime_root: Path = default_root()
     user_home: Path | None = None
+    access_token: str | None = None
 
     def log_message(self, format: str, *args: object) -> None:
         return
@@ -153,11 +197,27 @@ class DashboardHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(encoded)
 
+    def authorized(self) -> bool:
+        if not self.access_token:
+            return True
+        parsed = urlparse(self.path)
+        supplied = parse_qs(parsed.query).get("token", [""])[0]
+        return secrets.compare_digest(supplied, self.access_token)
+
     def do_GET(self) -> None:  # noqa: N802
         path = urlparse(self.path).path
+        if not self.authorized():
+            self.send_response(403)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            encoded = render_locked_page().encode("utf-8")
+            self.send_header("Content-Length", str(len(encoded)))
+            self.end_headers()
+            self.wfile.write(encoded)
+            return
+
         model = dashboard_model(self.runtime_root, self.user_home)
         if path == "/":
-            self.send_text(render_dashboard(model))
+            self.send_text(render_dashboard(model, self.access_token))
             return
         if path == "/api/status":
             self.send_text(json.dumps(model, indent=2), "application/json; charset=utf-8")
@@ -173,12 +233,19 @@ class DashboardHandler(BaseHTTPRequestHandler):
         self.end_headers()
 
 
-def run_dashboard(host: str = DEFAULT_HOST, port: int = DEFAULT_PORT, root: Path | None = None, home: Path | None = None) -> None:
+def run_dashboard(
+    host: str = DEFAULT_HOST,
+    port: int = DEFAULT_PORT,
+    root: Path | None = None,
+    home: Path | None = None,
+    token: str | None = None,
+) -> None:
     handler = type("ConfiguredDashboardHandler", (DashboardHandler,), {})
     handler.runtime_root = (root or default_root()).expanduser().resolve()
     handler.user_home = home
+    handler.access_token = token
     server = ThreadingHTTPServer((host, port), handler)
-    print(f"WinUx dashboard: http://{host}:{port}")
+    print(f"WinUx dashboard: {dashboard_url(host, port, token)}")
     server.serve_forever()
 
 
@@ -188,6 +255,7 @@ def main(argv: list[str] | None = None) -> int:
     port = DEFAULT_PORT
     root = None
     home = None
+    token = None
     if "--host" in args:
         host = args[args.index("--host") + 1]
     if "--port" in args:
@@ -196,7 +264,14 @@ def main(argv: list[str] | None = None) -> int:
         root = Path(args[args.index("--root") + 1]).expanduser().resolve()
     if "--home" in args:
         home = Path(args[args.index("--home") + 1]).expanduser().resolve()
-    run_dashboard(host=host, port=port, root=root, home=home)
+    if "--token" in args:
+        token = args[args.index("--token") + 1]
+    if "--token-file" in args:
+        token_home = Path(args[args.index("--token-file") + 1]).expanduser().resolve().parent
+        token = get_or_create_token(token_home)
+    if "--lan-token" in args:
+        token = get_or_create_token(home)
+    run_dashboard(host=host, port=port, root=root, home=home, token=token)
     return 0
 
 
