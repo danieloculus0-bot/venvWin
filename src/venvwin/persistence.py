@@ -1,0 +1,84 @@
+from __future__ import annotations
+
+import os
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
+
+
+@dataclass(slots=True)
+class PersistenceCandidate:
+    path: Path
+    source: str
+    writable: bool
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "path": str(self.path),
+            "source": self.source,
+            "writable": self.writable,
+        }
+
+
+def is_writable_directory(path: Path) -> bool:
+    try:
+        path.mkdir(parents=True, exist_ok=True)
+        test_file = path / ".venvwin-write-test"
+        test_file.write_text("ok", encoding="utf-8")
+        test_file.unlink(missing_ok=True)
+        return True
+    except OSError:
+        return False
+
+
+def candidate_paths(home: Path | None = None) -> list[PersistenceCandidate]:
+    user_home = home or Path.home()
+    candidates: list[tuple[Path, str]] = []
+
+    env_home = os.environ.get("VENVWIN_HOME")
+    if env_home:
+        candidates.append((Path(env_home).expanduser(), "VENVWIN_HOME"))
+
+    candidates.extend(
+        [
+            (Path("/run/live/persistence/WinUx-Capsules"), "live-persistence"),
+            (Path("/persistence/WinUx-Capsules"), "persistence-root"),
+            (Path("/mnt/winux-persistence/WinUx-Capsules"), "mounted-winux-persistence"),
+            (Path("/media") / user_home.name / "WINUXDATA" / "WinUx-Capsules", "usb-label-winuxdata"),
+            (Path("/media") / user_home.name / "WinUxData" / "WinUx-Capsules", "usb-label-winuxdata-mixed"),
+            (user_home / "WinUx-Capsules", "home-fallback"),
+        ]
+    )
+
+    seen: set[str] = set()
+    result: list[PersistenceCandidate] = []
+    for path, source in candidates:
+        resolved = str(path.expanduser())
+        if resolved in seen:
+            continue
+        seen.add(resolved)
+        result.append(PersistenceCandidate(path=Path(resolved), source=source, writable=is_writable_directory(Path(resolved))))
+    return result
+
+
+def choose_capsule_store(home: Path | None = None) -> PersistenceCandidate:
+    candidates = candidate_paths(home)
+    for candidate in candidates:
+        if candidate.writable and candidate.source != "home-fallback":
+            return candidate
+    for candidate in candidates:
+        if candidate.writable:
+            return candidate
+    fallback = PersistenceCandidate(path=(home or Path.home()) / "WinUx-Capsules", source="home-fallback", writable=False)
+    return fallback
+
+
+def persistence_report(home: Path | None = None) -> dict[str, Any]:
+    candidates = candidate_paths(home)
+    chosen = choose_capsule_store(home)
+    disposable = chosen.source == "home-fallback" and not os.environ.get("VENVWIN_HOME")
+    return {
+        "chosen": chosen.to_dict(),
+        "disposable_warning": disposable,
+        "candidates": [candidate.to_dict() for candidate in candidates],
+    }
