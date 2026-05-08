@@ -143,12 +143,14 @@ cat > config/includes.chroot/usr/local/bin/winux-select-capsule-store <<'EOF'
 set -euo pipefail
 export PYTHONPATH="/opt/venvwin/src:${PYTHONPATH:-}"
 python3 - <<'PY'
+import json
 from pathlib import Path
 from venvwin.persistence import persistence_report
 report = persistence_report()
 chosen = report["chosen"]
 Path.home().joinpath(".winux-capsule-store").write_text(chosen["path"], encoding="utf-8")
-Path.home().joinpath(".winux-persistence-report.json").write_text(__import__("json").dumps(report, indent=2), encoding="utf-8")
+Path.home().joinpath(".winux-capsule-store-source").write_text(chosen["source"], encoding="utf-8")
+Path.home().joinpath(".winux-persistence-report.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
 print(chosen["path"])
 PY
 EOF
@@ -189,7 +191,9 @@ cat > config/includes.chroot/usr/local/bin/winux-first-run <<'EOF'
 set -euo pipefail
 
 CAPSULE_STORE="$(/usr/local/bin/winux-select-capsule-store)"
+CAPSULE_STORE_SOURCE="$(cat "$HOME/.winux-capsule-store-source" 2>/dev/null || echo unknown)"
 export VENVWIN_HOME="${VENVWIN_HOME:-$CAPSULE_STORE}"
+export VENVWIN_HOME_SOURCE="${VENVWIN_HOME_SOURCE:-$CAPSULE_STORE_SOURCE}"
 FIRST_RUN_MARKER="$HOME/.venvwin-first-run-complete"
 mkdir -p "$HOME/Desktop" "$VENVWIN_HOME"
 
@@ -312,8 +316,12 @@ echo "Setting up venvWin Portable runtime hooks"
 cat > /etc/profile.d/venvwin.sh <<'PROFILE'
 if [ -f "$HOME/.winux-capsule-store" ]; then
   export VENVWIN_HOME="$(cat "$HOME/.winux-capsule-store")"
+  if [ -f "$HOME/.winux-capsule-store-source" ]; then
+    export VENVWIN_HOME_SOURCE="$(cat "$HOME/.winux-capsule-store-source")"
+  fi
 else
   export VENVWIN_HOME="${VENVWIN_HOME:-$HOME/WinUx-Capsules}"
+  export VENVWIN_HOME_SOURCE="${VENVWIN_HOME_SOURCE:-home-fallback}"
 fi
 export PYTHONPATH="/opt/venvwin/src:${PYTHONPATH:-}"
 PROFILE
@@ -369,6 +377,7 @@ first_boot_desktop_launchers=true
 first_boot_desktop_launchers_list=venvWin-First-Boot.desktop,venvWin-Dashboard.desktop,venvWin-Capsules.desktop,venvWin-Doctor.desktop,venvWin-Private-Browser.desktop
 first_boot_proof_bundle=true
 first_boot_expected_desktop_files=venvWin-First-Boot.desktop,venvWin-Dashboard.desktop,venvWin-Capsules.desktop,venvWin-Private-Browser.desktop,venvWin-Quick-Start.txt,venvWin-First-Boot-Proof.txt,venvWin-Dashboard.txt,venvWin-First-Boot-Checklist.txt,venvwin-init.txt,venvwin-associate.txt,venvwin-first-run.txt,venvwin-storage.txt,venvwin-doctor.txt
+storage_source_marker=true
 standard_browser=netsurf-gtk
 privacy_browser_profile=privacy_only
 standard_profile_policy=lean_runtime_only
