@@ -10,7 +10,7 @@ def test_flash_ready_workflow_matches_contract():
     workflow = (ROOT / ".github" / "workflows" / "flash-ready-standard.yml").read_text(encoding="utf-8")
 
     assert contract["public_product_name"] == "venvWin Portable"
-    assert contract["internal_codename"] == "venvWin"
+    assert "internal_codename" not in contract
     assert f"name: {contract['workflow']}" in workflow
     assert "workflow_dispatch:" in workflow
     assert "./venvwin-portable/build-flash-ready-standard.sh" in workflow
@@ -35,7 +35,7 @@ def test_flash_ready_script_writes_required_verdict():
 
     assert contract["required_verdict"] in script
     assert contract["public_product_name"] in script
-    assert f"internal_codename={contract['internal_codename']}" in script
+    assert "internal_codename=" not in script
     assert "pre_iso_readiness=pass" in script
     assert "static_iso_inspection=pass" in script
     assert "squashfs_static_inspection=pass" in script
