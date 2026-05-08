@@ -8,9 +8,11 @@ from .persistence import persistence_report
 
 
 QUICK_START_NAME = "WinUx-Quick-Start.txt"
+FIRST_BOOT_PROOF_NAME = "WinUx-First-Boot-Proof.txt"
 DOCTOR_NAME = "venvwin-doctor.txt"
 STORAGE_MARKER_NAME = ".winux-capsule-store"
 PERSISTENCE_REPORT_NAME = ".winux-persistence-report.json"
+DASHBOARD_URL = "http://127.0.0.1:8787"
 
 
 def first_run_summary(home: Path | None = None) -> dict[str, Any]:
@@ -40,23 +42,13 @@ def first_run_summary(home: Path | None = None) -> dict[str, Any]:
         "leave_no_trace": report["leave_no_trace"],
         "storage_status": storage_status,
         "storage_message": storage_message,
+        "dashboard_url": DASHBOARD_URL,
         "persistence": report,
     }
 
 
-def write_first_run_files(home: Path | None = None) -> dict[str, Any]:
-    user_home = home or Path.home()
-    desktop = user_home / "Desktop"
-    desktop.mkdir(parents=True, exist_ok=True)
-
-    summary = first_run_summary(user_home)
-    capsule_store = Path(summary["capsule_store"])
-    capsule_store.mkdir(parents=True, exist_ok=True)
-
-    (user_home / STORAGE_MARKER_NAME).write_text(str(capsule_store), encoding="utf-8")
-    (user_home / PERSISTENCE_REPORT_NAME).write_text(json.dumps(summary["persistence"], indent=2), encoding="utf-8")
-
-    quick_start = f"""Welcome to WinUx Portable.
+def quick_start_text(summary: dict[str, Any], capsule_store: Path) -> str:
+    return f"""Welcome to WinUx Portable.
 
 Default rule:
 
@@ -69,6 +61,10 @@ Storage status:
 Capsules live here:
 
   {capsule_store}
+
+Dashboard:
+
+  {summary['dashboard_url']}
 
 Double-click a Windows EXE/MSI, or run:
 
@@ -90,7 +86,60 @@ If Windows files are being bullshit, run:
 
   venvwin associate
 """
-    (desktop / QUICK_START_NAME).write_text(quick_start, encoding="utf-8")
+
+
+def first_boot_proof_text(summary: dict[str, Any], capsule_store: Path) -> str:
+    return f"""WinUx First Boot Proof
+
+This file is created by first-run setup so an alpha boot can be verified without guessing.
+
+product=WinUx Portable
+engine=venvWin
+status={summary['storage_status']}
+storage_message={summary['storage_message']}
+capsule_store={capsule_store}
+storage_source={summary['storage_source']}
+writable={summary['writable']}
+portable_owned={summary['portable_owned']}
+host_risk={summary['host_risk']}
+leave_no_trace={summary['leave_no_trace']}
+dashboard_url={summary['dashboard_url']}
+
+Expected desktop proof files:
+
+- {QUICK_START_NAME}
+- {FIRST_BOOT_PROOF_NAME}
+- {DOCTOR_NAME}
+
+Expected hidden home proof files:
+
+- {STORAGE_MARKER_NAME}
+- {PERSISTENCE_REPORT_NAME}
+
+Alpha boot acceptance:
+
+- desktop loads
+- first-run setup creates this file
+- dashboard opens at {summary['dashboard_url']}
+- capsule store is writable
+- storage risk is visible
+- venvwin doctor output exists
+"""
+
+
+def write_first_run_files(home: Path | None = None) -> dict[str, Any]:
+    user_home = home or Path.home()
+    desktop = user_home / "Desktop"
+    desktop.mkdir(parents=True, exist_ok=True)
+
+    summary = first_run_summary(user_home)
+    capsule_store = Path(summary["capsule_store"])
+    capsule_store.mkdir(parents=True, exist_ok=True)
+
+    (user_home / STORAGE_MARKER_NAME).write_text(str(capsule_store), encoding="utf-8")
+    (user_home / PERSISTENCE_REPORT_NAME).write_text(json.dumps(summary["persistence"], indent=2), encoding="utf-8")
+    (desktop / QUICK_START_NAME).write_text(quick_start_text(summary, capsule_store), encoding="utf-8")
+    (desktop / FIRST_BOOT_PROOF_NAME).write_text(first_boot_proof_text(summary, capsule_store), encoding="utf-8")
     return summary
 
 
@@ -105,6 +154,7 @@ def wizard_text(home: Path | None = None) -> str:
         f"Recommended: {chosen}",
         f"Status: {summary['storage_status']}",
         f"Message: {summary['storage_message']}",
+        f"Dashboard: {summary['dashboard_url']}",
         "",
         "Default policy: write to the WinUx USB/install drive and leave the host machine alone.",
         "",
