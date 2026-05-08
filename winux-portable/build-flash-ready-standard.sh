@@ -38,6 +38,11 @@ grep -q '^leave_no_trace_default=true$' "${MANIFEST}"
 grep -q '^first_boot_gui=true$' "${MANIFEST}"
 grep -q '^dashboard=true$' "${MANIFEST}"
 grep -q '^dashboard_url=http://127.0.0.1:8787$' "${MANIFEST}"
+grep -q '^dashboard_bind_default=127.0.0.1$' "${MANIFEST}"
+grep -q '^dashboard_lan_mode=explicit_token_required$' "${MANIFEST}"
+grep -q '^first_boot_proof_bundle=true$' "${MANIFEST}"
+grep -q '^privacy_browser_profile=privacy_only$' "${MANIFEST}"
+grep -q '^standard_profile_policy=lean_runtime_only$' "${MANIFEST}"
 
 echo "Step 5: Static ISO inspection"
 for tool in xorriso qemu-system-x86_64 timeout; do
@@ -55,7 +60,9 @@ xorriso -indev "${ISO}" -find / -path /usr/local/bin/venvwin -print | grep -q /u
 xorriso -indev "${ISO}" -find / -path /usr/local/bin/winux-first-run -print | grep -q /usr/local/bin/winux-first-run
 xorriso -indev "${ISO}" -find / -path /usr/local/bin/winux-first-boot-gui -print | grep -q /usr/local/bin/winux-first-boot-gui
 xorriso -indev "${ISO}" -find / -path /usr/local/bin/winux-dashboard -print | grep -q /usr/local/bin/winux-dashboard
+xorriso -indev "${ISO}" -find / -path /usr/local/bin/winux-dashboard-lan -print | grep -q /usr/local/bin/winux-dashboard-lan
 xorriso -indev "${ISO}" -find / -path /usr/share/applications/winux-dashboard.desktop -print | grep -q /usr/share/applications/winux-dashboard.desktop
+xorriso -indev "${ISO}" -find / -path /usr/share/applications/winux-dashboard-lan.desktop -print | grep -q /usr/share/applications/winux-dashboard-lan.desktop
 xorriso -indev "${ISO}" -find / -path /etc/xdg/autostart/winux-dashboard.desktop -print | grep -q /etc/xdg/autostart/winux-dashboard.desktop
 xorriso -indev "${ISO}" -find / -path /etc/xdg/autostart/winux-first-boot-gui.desktop -print | grep -q /etc/xdg/autostart/winux-first-boot-gui.desktop
 
@@ -104,6 +111,11 @@ leave_no_trace_default=true
 first_boot_gui=true
 dashboard=true
 dashboard_url=http://127.0.0.1:8787
+dashboard_bind_default=127.0.0.1
+dashboard_lan_mode=explicit_token_required
+first_boot_proof_bundle=true
+privacy_browser_profile=privacy_only
+standard_profile_policy=lean_runtime_only
 PASS
 
 cat "${VERDICT}"
