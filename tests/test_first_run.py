@@ -18,7 +18,7 @@ def test_first_run_summary_has_storage_status(tmp_path: Path, monkeypatch):
     summary = first_run_summary(tmp_path)
 
     assert summary["product_name"] == PUBLIC_PRODUCT_NAME
-    assert summary["internal_codename"] == "venvWin"
+    assert "internal_codename" not in summary
     assert "capsule_store" in summary
     assert "storage_status" in summary
     assert "storage_message" in summary
@@ -46,7 +46,7 @@ def test_write_first_run_files(tmp_path: Path, monkeypatch):
     dashboard_text = (desktop / DASHBOARD_NAME).read_text(encoding="utf-8")
 
     assert f"{PUBLIC_PRODUCT_NAME} First Boot Proof" in proof_text
-    assert "internal_codename=venvWin" in proof_text
+    assert "internal_codename=" not in proof_text
     assert DASHBOARD_NAME in proof_text
     assert FIRST_BOOT_CHECKLIST_NAME in proof_text
     assert f"{PUBLIC_PRODUCT_NAME} First Boot Checklist" in checklist_text
