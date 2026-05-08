@@ -4,12 +4,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_readme_names_public_product_and_internal_codename():
+def test_readme_names_public_product_without_alternate_codename():
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
 
     assert "venvWin Portable" in readme
-    assert "Internal codename:" in readme
-    assert "WinUx" in readme
     assert "Wine is allowed as backend number one. Wine is not the product." in readme
 
 
@@ -45,6 +43,10 @@ def test_readme_does_not_use_stale_public_artifact_names():
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
 
     forbidden = [
+        "WinUx",
+        "WINUX",
+        "Winux",
+        "WinUX",
         "WinUx Portable",
         "winux-portable-alpha",
         "winux-flash-ready",
