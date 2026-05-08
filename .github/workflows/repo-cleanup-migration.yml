@@ -24,6 +24,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          echo "repo-cleanup-migration trigger: v2"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
