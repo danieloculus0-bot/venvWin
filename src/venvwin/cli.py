@@ -8,6 +8,7 @@ from pathlib import Path
 from .associate import default_applications_dir, write_file_association_handlers
 from .capsule import create_capsule, list_capsules, load_capsule, save_capsule
 from .desktop import generate_desktop_launcher
+from .first_run import wizard_text, write_first_run_files
 from .health import health_report
 from .install import install_into_capsule
 from .open import open_windows_file
@@ -25,6 +26,11 @@ def build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command", required=True)
 
     sub.add_parser("init", help="Initialize runtime directories and default profile")
+
+    first_run = sub.add_parser("first-run", help="Create first-run files and show storage summary")
+    first_run.add_argument("--home", type=Path, help="Override home path for testing")
+    first_run.add_argument("--wizard-text", action="store_true", help="Print planned GUI-lite wizard text")
+    first_run.add_argument("--json", action="store_true", help="Print raw JSON summary")
 
     doctor = sub.add_parser("doctor", help="Check venvWin health and setup status")
     doctor.add_argument("--applications-dir", type=Path)
@@ -100,6 +106,22 @@ def cmd_init(root: Path) -> int:
     ensure_runtime_dirs(root)
     save_profile(profiles_dir(root), RunnerProfile.default())
     print(f"Initialized venvWin runtime: {root}")
+    return 0
+
+
+def cmd_first_run(home: Path | None, wizard: bool, as_json: bool) -> int:
+    target_home = home.expanduser().resolve() if home else None
+    if wizard:
+        print(wizard_text(target_home))
+        return 0
+    summary = write_first_run_files(target_home)
+    if as_json:
+        print(json.dumps(summary, indent=2))
+    else:
+        print("WinUx first-run files created")
+        print(f"capsule store: {summary['capsule_store']}")
+        print(f"storage: {summary['storage_status']}")
+        print(summary["storage_message"])
     return 0
 
 
@@ -282,6 +304,8 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if args.command == "init":
             return cmd_init(root)
+        if args.command == "first-run":
+            return cmd_first_run(args.home, args.wizard_text, args.json)
         if args.command == "doctor":
             return cmd_doctor(root, args.applications_dir, args.json)
         if args.command == "storage":
