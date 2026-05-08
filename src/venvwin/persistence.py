@@ -123,10 +123,11 @@ def persistence_report(home: Path | None = None) -> dict[str, Any]:
     candidates = candidate_paths(home)
     chosen = choose_capsule_store(home)
     disposable = chosen.source == "home-fallback" and not os.environ.get("VENVWIN_HOME")
-    leave_no_trace = chosen.portable_owned and not chosen.host_risk
+    traceable_portable_state = chosen.portable_owned and not chosen.host_risk
     return {
         "chosen": chosen.to_dict(),
-        "leave_no_trace": leave_no_trace,
+        "traceable_portable_state": traceable_portable_state,
+        "leave_no_trace": traceable_portable_state,
         "disposable_warning": disposable,
         "host_write_warning": chosen.host_risk,
         "candidates": [candidate.to_dict() for candidate in candidates],
