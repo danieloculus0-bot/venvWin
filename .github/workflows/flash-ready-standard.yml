@@ -4,11 +4,9 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - "winux-portable/build-flash-ready-standard.sh"
-      - "winux-portable/pre-iso-readiness.sh"
-      - "winux-portable/build-iso.sh"
-      - "winux-portable/workflow-contract.json"
-      - "docs/branding.md"
+      - "README.md"
+      - "docs/**"
+      - "winux-portable/**"
       - "src/**"
       - "tests/**"
       - "pyproject.toml"
