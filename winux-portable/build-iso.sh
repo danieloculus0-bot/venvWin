@@ -63,6 +63,13 @@ curl
 ca-certificates
 git
 rsync
+tor
+torsocks
+firefox-esr
+EOF
+
+cat > config/package-lists/winux-optional-torbrowser.list.chroot <<'EOF'
+torbrowser-launcher
 EOF
 
 rsync -a \
@@ -79,6 +86,36 @@ export PYTHONPATH="/opt/venvwin/src:${PYTHONPATH:-}"
 exec python3 -m venvwin.cli "$@"
 EOF
 chmod +x config/includes.chroot/usr/local/bin/venvwin
+
+cat > config/includes.chroot/usr/local/bin/winux-private-browser <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+
+if command -v torbrowser-launcher >/dev/null 2>&1; then
+  exec torbrowser-launcher
+fi
+
+if command -v tor-browser >/dev/null 2>&1; then
+  exec tor-browser
+fi
+
+if command -v torsocks >/dev/null 2>&1 && command -v firefox-esr >/dev/null 2>&1; then
+  cat <<'WARN'
+Tor Browser is missing. Starting Firefox ESR through torsocks as a fallback.
+This is not Tor Browser. It may reduce direct exposure, but it is not hardened anonymity.
+Useful for testing, not spy-movie bullshit.
+WARN
+  exec torsocks firefox-esr --new-instance --profile "$HOME/.winux-firefox-tor-fallback"
+fi
+
+cat <<'ERR'
+Privacy browser is not ready.
+Tor Browser / torbrowser-launcher is missing, and fallback Firefox-over-Tor is unavailable.
+Installing a normal browser and calling it anonymous would be bullshit.
+ERR
+exit 1
+EOF
+chmod +x config/includes.chroot/usr/local/bin/winux-private-browser
 
 cat > config/includes.chroot/usr/local/bin/winux-first-run <<'EOF'
 #!/usr/bin/env bash
@@ -106,6 +143,10 @@ Run health check:
 
   venvwin doctor
 
+Private browser:
+
+  winux-private-browser
+
 If Windows files are being bullshit, run:
 
   venvwin associate
@@ -121,6 +162,16 @@ Comment=Initialize venvWin capsule storage and double-click handlers
 Exec=/usr/local/bin/winux-first-run
 Terminal=false
 X-GNOME-Autostart-enabled=true
+EOF
+
+cat > config/includes.chroot/usr/share/applications/winux-private-browser.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=WinUx Private Browser
+Comment=Launch Tor Browser or honest Tor fallback without fake privacy bullshit
+Exec=/usr/local/bin/winux-private-browser
+Terminal=false
+Categories=Network;WebBrowser;
 EOF
 
 cat > config/includes.chroot/usr/share/applications/venvwin-doctor.desktop <<'EOF'
