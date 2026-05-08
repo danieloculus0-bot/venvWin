@@ -47,6 +47,7 @@ mkdir -p \
   config/includes.chroot/usr/share/applications \
   config/includes.chroot/etc/xdg/autostart \
   config/includes.chroot/etc/skel/Desktop \
+  config/includes.chroot/etc/lightdm/lightdm.conf.d \
   config/hooks/normal
 
 cat > config/package-lists/00-winux-core.list.chroot <<'EOF'
@@ -58,6 +59,7 @@ network-manager
 network-manager-gnome
 xorg
 lightdm
+lightdm-gtk-greeter
 xfce4-session
 xfce4-panel
 xfce4-settings
@@ -106,6 +108,14 @@ rsync -a \
   --exclude .pytest_cache \
   --exclude __pycache__ \
   "${ROOT_DIR}/" "config/includes.chroot/opt/venvwin/"
+
+cat > config/includes.chroot/etc/lightdm/lightdm.conf.d/50-venvwin-live-autologin.conf <<'EOF'
+[Seat:*]
+autologin-user=user
+autologin-user-timeout=0
+user-session=xfce
+greeter-session=lightdm-gtk-greeter
+EOF
 
 cat > config/includes.chroot/usr/local/bin/venvwin <<'EOF'
 #!/usr/bin/env bash
@@ -368,6 +378,7 @@ sha256_file=${OUTPUT_ISO}.sha256
 leave_no_trace_default=true
 default_storage=venvWin Portable USB/install drive only
 boot_toram_default=false
+live_user_autologin=true
 first_boot_gui=true
 dashboard=true
 dashboard_url=http://127.0.0.1:8787
