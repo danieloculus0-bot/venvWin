@@ -47,6 +47,30 @@ chmod +x winux-portable/bootstrap-flash-ready-ubuntu.sh
 ./winux-portable/bootstrap-flash-ready-ubuntu.sh
 ```
 
+## GitHub Actions path
+
+Manual trigger from phone:
+
+```text
+GitHub repo > Actions > flash-ready-standard > Run workflow > main
+```
+
+If no run appears after a push or manual trigger, check:
+
+```text
+Settings > Actions > General
+```
+
+Expected:
+
+```text
+Actions enabled
+Allow all actions and reusable workflows
+Workflow permissions allow read/write when artifact/log access is needed
+```
+
+If Actions still refuses to show a run, use the Windows PowerShell path above. Do not burn time staring at an empty Actions tab like it owes you money.
+
 ## What the build attempts
 
 ```text
