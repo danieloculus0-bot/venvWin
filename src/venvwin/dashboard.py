@@ -17,7 +17,7 @@ from .persistence import persistence_report
 
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8787
-TOKEN_FILE = ".winux-dashboard-token"
+TOKEN_FILE = ".venvwin-dashboard-token"
 
 
 def dashboard_model(root: Path | None = None, home: Path | None = None) -> dict[str, Any]:
