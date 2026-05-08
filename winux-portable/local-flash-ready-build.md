@@ -4,6 +4,8 @@
 
 This is the local Linux/WSL equivalent of the phone-runnable GitHub Actions workflow.
 
+Use this path when GitHub Actions is disabled, invisible, or being a flaky little goblin.
+
 It runs the same gate:
 
 ```text
@@ -16,7 +18,18 @@ QEMU smoke
 flash-ready verdict
 ```
 
-## Required host
+## Fast path
+
+From repo root on Ubuntu/Debian/WSL:
+
+```bash
+chmod +x winux-portable/bootstrap-flash-ready-ubuntu.sh
+./winux-portable/bootstrap-flash-ready-ubuntu.sh
+```
+
+That script installs the required system packages, installs the Python package/test tools, runs the flash-ready gate, and prints the verdict.
+
+## Manual path
 
 Use Linux or WSL with sudo access.
 
@@ -24,24 +37,20 @@ Ubuntu/Debian package setup:
 
 ```bash
 sudo apt-get update
-sudo apt-get install -y python3 python3-pip python3-venv live-build rsync xorriso isolinux syslinux-common squashfs-tools qemu-system-x86 ovmf curl
+sudo apt-get install -y python3 python3-pip python3-venv python3-full live-build rsync xorriso isolinux syslinux-common squashfs-tools qemu-system-x86 ovmf curl ca-certificates
 ```
 
-## Python setup
-
-From repo root:
+Python setup from repo root:
 
 ```bash
-python3 -m pip install --upgrade pip
-python3 -m pip install -e . pytest
+python3 -m pip install --break-system-packages --upgrade pip || python3 -m pip install --upgrade pip
+python3 -m pip install --break-system-packages -e . pytest || python3 -m pip install -e . pytest
 ```
 
-## Build command
-
-From repo root:
+Build command from repo root:
 
 ```bash
-chmod +x winux-portable/pre-iso-readiness.sh winux-portable/build-iso.sh winux-portable/build-flash-ready-standard.sh
+chmod +x winux-portable/audit-public-branding.sh winux-portable/pre-iso-readiness.sh winux-portable/build-iso.sh winux-portable/build-flash-ready-standard.sh
 ./winux-portable/build-flash-ready-standard.sh
 ```
 
