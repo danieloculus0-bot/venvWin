@@ -9,6 +9,8 @@ from .persistence import persistence_report
 
 QUICK_START_NAME = "WinUx-Quick-Start.txt"
 FIRST_BOOT_PROOF_NAME = "WinUx-First-Boot-Proof.txt"
+DASHBOARD_NAME = "WinUx-Dashboard.txt"
+FIRST_BOOT_CHECKLIST_NAME = "WinUx-First-Boot-Checklist.txt"
 DOCTOR_NAME = "venvwin-doctor.txt"
 STORAGE_MARKER_NAME = ".winux-capsule-store"
 PERSISTENCE_REPORT_NAME = ".winux-persistence-report.json"
@@ -88,6 +90,77 @@ If Windows files are being bullshit, run:
 """
 
 
+def dashboard_text(summary: dict[str, Any]) -> str:
+    return f"""WinUx Dashboard
+
+Local dashboard:
+
+  {summary['dashboard_url']}
+
+Default behavior:
+
+  Local-only dashboard on this WinUx session.
+
+Phone/LAN behavior:
+
+  Use LAN mode only when intentionally started. LAN dashboard access requires a token.
+
+Useful endpoints:
+
+  {summary['dashboard_url']}/api/status
+  {summary['dashboard_url']}/api/doctor
+
+What it shows:
+
+- capsule storage path
+- leave-no-trace state
+- host write risk
+- capsule list
+- doctor status
+- first-run state
+
+If the dashboard is not available, run:
+
+  winux-dashboard
+"""
+
+
+def checklist_text(summary: dict[str, Any], capsule_store: Path) -> str:
+    return f"""WinUx First Boot Checklist
+
+Use this checklist before calling an ISO flash-ready.
+
+[ ] Desktop loaded
+[ ] WinUx First Boot GUI opened
+[ ] WinUx Dashboard opens at {summary['dashboard_url']}
+[ ] Capsule storage path is visible
+[ ] Capsule storage path exists: {capsule_store}
+[ ] Leave-no-trace status is visible
+[ ] Host-risk status is visible
+[ ] Quick Start file exists
+[ ] First Boot Proof file exists
+[ ] Dashboard info file exists
+[ ] Storage marker exists: ~/{STORAGE_MARKER_NAME}
+[ ] Persistence report exists: ~/{PERSISTENCE_REPORT_NAME}
+[ ] venvwin storage runs
+[ ] venvwin doctor runs
+[ ] EXE/MSI association setup ran or logged failure visibly
+[ ] Dummy EXE dry-run routes through venvwin open
+
+Current first-run summary:
+
+status={summary['storage_status']}
+storage_message={summary['storage_message']}
+capsule_store={capsule_store}
+storage_source={summary['storage_source']}
+writable={summary['writable']}
+portable_owned={summary['portable_owned']}
+host_risk={summary['host_risk']}
+leave_no_trace={summary['leave_no_trace']}
+dashboard_url={summary['dashboard_url']}
+"""
+
+
 def first_boot_proof_text(summary: dict[str, Any], capsule_store: Path) -> str:
     return f"""WinUx First Boot Proof
 
@@ -109,6 +182,8 @@ Expected desktop proof files:
 
 - {QUICK_START_NAME}
 - {FIRST_BOOT_PROOF_NAME}
+- {DASHBOARD_NAME}
+- {FIRST_BOOT_CHECKLIST_NAME}
 - {DOCTOR_NAME}
 
 Expected hidden home proof files:
@@ -140,6 +215,8 @@ def write_first_run_files(home: Path | None = None) -> dict[str, Any]:
     (user_home / PERSISTENCE_REPORT_NAME).write_text(json.dumps(summary["persistence"], indent=2), encoding="utf-8")
     (desktop / QUICK_START_NAME).write_text(quick_start_text(summary, capsule_store), encoding="utf-8")
     (desktop / FIRST_BOOT_PROOF_NAME).write_text(first_boot_proof_text(summary, capsule_store), encoding="utf-8")
+    (desktop / DASHBOARD_NAME).write_text(dashboard_text(summary), encoding="utf-8")
+    (desktop / FIRST_BOOT_CHECKLIST_NAME).write_text(checklist_text(summary, capsule_store), encoding="utf-8")
     return summary
 
 
