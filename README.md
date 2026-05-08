@@ -4,12 +4,6 @@ venvWin is the Windows-app compatibility capsule engine for venvWin Portable.
 
 venvWin Portable is the lightweight Linux-based portable OS shell. It is meant to extend the usable life of older PCs by giving them a familiar desktop, portable storage behavior, and managed compatibility paths for old Windows apps, obsolete tech, and legacy workflows.
 
-Internal codename:
-
-```text
-WinUx
-```
-
 venvWin is the subsystem that manages isolated Windows-like app environments on Linux. It owns capsules, runner profiles, install routing, launch routing, snapshots, recovery, and compatibility backend selection.
 
 The goal is not to rebuild Windows from scratch. The goal is to make older hardware useful again with a small, familiar Linux system where compatibility is boring, repeatable, isolated, recoverable, and easy enough that a normal user can install an app without spelunking through prefix hell.
