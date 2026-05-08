@@ -55,6 +55,7 @@ leave_no_trace_default=true
 first_boot_gui=true
 dashboard=true
 dashboard_url=http://127.0.0.1:8787
+first_boot_desktop_launchers=true
 ```
 
 ## Required static inspection
@@ -71,6 +72,11 @@ The ISO must contain:
 - `winux-dashboard`
 - `winux-dashboard-lan`
 - desktop launcher entries
+- `/etc/skel/Desktop/venvWin-First-Boot.desktop`
+- `/etc/skel/Desktop/venvWin-Dashboard.desktop`
+- `/etc/skel/Desktop/venvWin-Capsules.desktop`
+- `/etc/skel/Desktop/venvWin-Doctor.desktop`
+- `/etc/skel/Desktop/venvWin-Private-Browser.desktop`
 
 ## Required smoke pass
 
@@ -85,6 +91,7 @@ On real hardware, first boot must show:
 
 - venvWin Portable desktop
 - first-boot GUI opens automatically
+- visible desktop shortcuts are present
 - Start panel is visible
 - Control Panel section is visible
 - System Status section is visible
@@ -100,6 +107,16 @@ On real hardware, first boot must show:
 - Run Doctor button works
 - Private Browser button works when installed in the selected profile
 - Quick Start file exists on desktop
+
+Required visible desktop shortcuts:
+
+```text
+venvWin-First-Boot.desktop
+venvWin-Dashboard.desktop
+venvWin-Capsules.desktop
+venvWin-Doctor.desktop
+venvWin-Private-Browser.desktop
+```
 
 ## USB persistence requirement
 
