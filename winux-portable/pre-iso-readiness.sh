@@ -133,8 +133,7 @@ with TemporaryDirectory() as tmp:
     home.mkdir(parents=True, exist_ok=True)
     summary = first_run_summary(home)
     assert summary["product_name"] == PUBLIC_PRODUCT_NAME
-    assert summary["internal_codename"] == "WinUx"
-    assert summary["capsule_store"] == str(home / "WinUx-Capsules")
+    assert summary["capsule_store"] == str(home / "venvWin-Capsules")
     assert summary["dashboard_url"] == "http://127.0.0.1:8787"
     write_first_run_files(home)
     desktop = home / "Desktop"
@@ -144,14 +143,13 @@ with TemporaryDirectory() as tmp:
     checklist_file = desktop / FIRST_BOOT_CHECKLIST_NAME
     for path in (quick_start, first_boot_proof, dashboard_file, checklist_file):
         assert path.exists(), path
-    assert (home / ".winux-capsule-store").exists()
-    assert (home / ".winux-capsule-store-source").exists()
-    assert (home / ".winux-capsule-store-source").read_text(encoding="utf-8") == "home-fallback"
-    assert (home / ".winux-persistence-report.json").exists()
+    assert (home / ".venvwin-capsule-store").exists()
+    assert (home / ".venvwin-capsule-store-source").exists()
+    assert (home / ".venvwin-capsule-store-source").read_text(encoding="utf-8") == "home-fallback"
+    assert (home / ".venvwin-persistence-report.json").exists()
     assert "Dashboard:" in quick_start.read_text(encoding="utf-8")
     proof_text = first_boot_proof.read_text(encoding="utf-8")
     assert f"{PUBLIC_PRODUCT_NAME} First Boot Proof" in proof_text
-    assert "internal_codename=WinUx" in proof_text
     assert DASHBOARD_NAME in proof_text
     assert FIRST_BOOT_CHECKLIST_NAME in proof_text
     assert "dashboard_url=http://127.0.0.1:8787" in proof_text
@@ -159,7 +157,7 @@ with TemporaryDirectory() as tmp:
     assert f"{PUBLIC_PRODUCT_NAME} Dashboard" in dashboard_file.read_text(encoding="utf-8")
     assert f"{PUBLIC_PRODUCT_NAME} First Boot Checklist" in checklist_file.read_text(encoding="utf-8")
     model = display_model(home)
-    assert model["capsule_store"] == str(home / "WinUx-Capsules")
+    assert model["capsule_store"] == str(home / "venvWin-Capsules")
     assert status_color("leave-no-trace-ok") == "#22c55e"
     wizard = wizard_text(home)
     assert f"{PUBLIC_PRODUCT_NAME} First Run" in wizard
@@ -186,7 +184,7 @@ with TemporaryDirectory() as tmp:
     second_token = get_or_create_token(home)
     assert first_token == second_token
     assert len(first_token) >= 20
-    assert (home / ".winux-dashboard-token").exists()
+    assert (home / ".venvwin-dashboard-token").exists()
 
 print("Python readiness checks passed")
 PY
@@ -203,13 +201,13 @@ touch "${TMP_ROOT}/installers/setup.exe"
 
 python3 -m venvwin.cli --root "${TMP_ROOT}/runtime" init
 python3 -m venvwin.cli first-run --home "${TMP_ROOT}/home"
-test -f "${TMP_ROOT}/home/.winux-capsule-store-source"
-grep -q "advanced-user-selected" "${TMP_ROOT}/home/.winux-capsule-store-source"
+test -f "${TMP_ROOT}/home/.venvwin-capsule-store-source"
+grep -q "advanced-user-selected" "${TMP_ROOT}/home/.venvwin-capsule-store-source"
 python3 -m venvwin.cli first-run --home "${TMP_ROOT}/home" --wizard-text >/dev/null
 python3 -m venvwin.cli first-run --home "${TMP_ROOT}/home" --json >/dev/null
 python3 -m venvwin.cli storage >/dev/null
 python3 -m venvwin.cli storage --json >/dev/null
-PYTHONPATH=src python3 -m venvwin.dashboard --root "${TMP_ROOT}/runtime" --home "${TMP_ROOT}/home" --port 9878 >/tmp/winux-dashboard-smoke.log 2>&1 &
+PYTHONPATH=src python3 -m venvwin.dashboard --root "${TMP_ROOT}/runtime" --home "${TMP_ROOT}/home" --port 9878 >/tmp/venvwin-dashboard-smoke.log 2>&1 &
 DASH_PID=$!
 sleep 1
 curl -fsS http://127.0.0.1:9878/ >/dev/null
@@ -218,7 +216,7 @@ curl -fsS http://127.0.0.1:9878/api/doctor >/dev/null
 kill "${DASH_PID}" || true
 DASH_PID=""
 
-PYTHONPATH=src python3 -m venvwin.dashboard --root "${TMP_ROOT}/runtime" --home "${TMP_ROOT}/home" --port 9879 --token testtoken >/tmp/winux-dashboard-token-smoke.log 2>&1 &
+PYTHONPATH=src python3 -m venvwin.dashboard --root "${TMP_ROOT}/runtime" --home "${TMP_ROOT}/home" --port 9879 --token testtoken >/tmp/venvwin-dashboard-token-smoke.log 2>&1 &
 TOKEN_DASH_PID=$!
 sleep 1
 LOCK_CODE="$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:9879/)"
