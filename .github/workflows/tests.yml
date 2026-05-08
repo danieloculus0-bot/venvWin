@@ -30,6 +30,9 @@ jobs:
           mkdir -p "$RUNNER_TEMP/installers"
           touch "$RUNNER_TEMP/installers/setup.exe"
           venvwin init
+          venvwin first-run --home "$RUNNER_TEMP/home"
+          venvwin first-run --home "$RUNNER_TEMP/home" --wizard-text
+          venvwin first-run --home "$RUNNER_TEMP/home" --json
           venvwin storage
           venvwin storage --json
           venvwin doctor
