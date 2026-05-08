@@ -12,12 +12,25 @@ PORTABLE_SOURCES = {
     "mounted-winux-persistence",
     "usb-label-winuxdata",
     "usb-label-winuxdata-mixed",
+    "live-home-overlay",
 }
 
 HOST_RISK_SOURCES = {
     "home-fallback",
     "advanced-user-selected",
 }
+
+DISPOSABLE_SOURCES = {
+    "home-fallback",
+    "live-home-overlay",
+}
+
+LIVE_MEDIA_MARKERS = (
+    Path("/run/live/medium"),
+    Path("/run/live/persistence"),
+    Path("/lib/live/mount/medium"),
+    Path("/lib/live/mount/persistence"),
+)
 
 
 @dataclass(slots=True)
@@ -36,6 +49,10 @@ class PersistenceCandidate:
             "portable_owned": self.portable_owned,
             "host_risk": self.host_risk,
         }
+
+
+def running_from_live_media() -> bool:
+    return any(marker.exists() for marker in LIVE_MEDIA_MARKERS)
 
 
 def classify_candidate(path: Path, source: str) -> tuple[bool, bool]:
@@ -71,13 +88,17 @@ def make_candidate(path: Path, source: str) -> PersistenceCandidate:
     )
 
 
+def env_home_source() -> str:
+    return os.environ.get("VENVWIN_HOME_SOURCE") or "VENVWIN_HOME"
+
+
 def candidate_paths(home: Path | None = None) -> list[PersistenceCandidate]:
     user_home = home or Path.home()
     candidates: list[tuple[Path, str]] = []
 
     env_home = os.environ.get("VENVWIN_HOME")
     if env_home:
-        candidates.append((Path(env_home).expanduser(), "VENVWIN_HOME"))
+        candidates.append((Path(env_home).expanduser(), env_home_source()))
 
     candidates.extend(
         [
@@ -86,17 +107,22 @@ def candidate_paths(home: Path | None = None) -> list[PersistenceCandidate]:
             (Path("/mnt/winux-persistence/WinUx-Capsules"), "mounted-winux-persistence"),
             (Path("/media") / user_home.name / "WINUXDATA" / "WinUx-Capsules", "usb-label-winuxdata"),
             (Path("/media") / user_home.name / "WinUxData" / "WinUx-Capsules", "usb-label-winuxdata-mixed"),
-            (user_home / "WinUx-Capsules", "home-fallback"),
         ]
     )
+
+    if running_from_live_media():
+        candidates.append((user_home / "WinUx-Capsules", "live-home-overlay"))
+
+    candidates.append((user_home / "WinUx-Capsules", "home-fallback"))
 
     seen: set[str] = set()
     result: list[PersistenceCandidate] = []
     for path, source in candidates:
         resolved = str(path.expanduser())
-        if resolved in seen:
+        seen_key = f"{source}:{resolved}"
+        if seen_key in seen:
             continue
-        seen.add(resolved)
+        seen.add(seen_key)
         result.append(make_candidate(Path(resolved), source))
     return result
 
@@ -122,7 +148,7 @@ def choose_capsule_store(home: Path | None = None) -> PersistenceCandidate:
 def persistence_report(home: Path | None = None) -> dict[str, Any]:
     candidates = candidate_paths(home)
     chosen = choose_capsule_store(home)
-    disposable = chosen.source == "home-fallback" and not os.environ.get("VENVWIN_HOME")
+    disposable = chosen.source in DISPOSABLE_SOURCES
     traceable_portable_state = chosen.portable_owned and not chosen.host_risk
     return {
         "chosen": chosen.to_dict(),
