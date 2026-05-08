@@ -25,6 +25,7 @@ WARN = "#f59e0b"
 BAD = "#ef4444"
 BUTTON = "#263449"
 BUTTON_ACTIVE = "#334762"
+START = "#1f6feb"
 
 
 def status_color(status: str) -> str:
@@ -43,6 +44,7 @@ def display_model(home: Path | None = None) -> dict[str, str]:
         "capsule_store": str(summary["capsule_store"]),
         "storage_status": str(summary["storage_status"]),
         "storage_message": str(summary["storage_message"]),
+        "dashboard_url": str(summary["dashboard_url"]),
         "leave_no_trace": "ON" if summary["leave_no_trace"] else "CHECK STORAGE",
         "portable_owned": "YES" if summary["portable_owned"] else "NO",
         "host_risk": "YES" if summary["host_risk"] else "NO",
@@ -60,34 +62,34 @@ class VenvWinFirstRunApp:
         self.capsule_store = Path(self.summary["capsule_store"])
 
         self.root.title(f"{PUBLIC_PRODUCT_NAME} First Boot")
-        self.root.geometry("930x600")
-        self.root.minsize(850, 560)
+        self.root.geometry("980x640")
+        self.root.minsize(900, 590)
         self.root.configure(bg=BG)
         self.build_ui()
 
-    def label(self, parent, text: str, size: int = 11, color: str = TEXT, bold: bool = False):
+    def label(self, parent, text: str, size: int = 11, color: str = TEXT, bold: bool = False, wrap: int = 720):
         weight = "bold" if bold else "normal"
-        return tk.Label(parent, text=text, bg=parent["bg"], fg=color, font=("Sans", size, weight), anchor="w", justify="left", wraplength=700)
+        return tk.Label(parent, text=text, bg=parent["bg"], fg=color, font=("Sans", size, weight), anchor="w", justify="left", wraplength=wrap)
 
-    def button(self, parent, text: str, command):
+    def button(self, parent, text: str, command, primary: bool = False):
         return tk.Button(
             parent,
             text=text,
             command=command,
-            bg=BUTTON,
+            bg=START if primary else BUTTON,
             fg=TEXT,
             activebackground=BUTTON_ACTIVE,
             activeforeground=TEXT,
             relief="flat",
             bd=0,
-            padx=18,
+            padx=16,
             pady=10,
             font=("Sans", 10, "bold"),
             cursor="hand2",
         )
 
     def build_ui(self) -> None:
-        shell = tk.Frame(self.root, bg=BG, padx=30, pady=28)
+        shell = tk.Frame(self.root, bg=BG, padx=26, pady=24)
         shell.pack(fill="both", expand=True)
 
         header = tk.Frame(shell, bg=BG)
@@ -96,59 +98,83 @@ class VenvWinFirstRunApp:
         self.label(header, "First boot setup for portable Windows-app capsules.", 13, MUTED).pack(anchor="w", pady=(6, 0))
 
         main = tk.Frame(shell, bg=BG)
-        main.pack(fill="both", expand=True, pady=(22, 0))
+        main.pack(fill="both", expand=True, pady=(20, 0))
 
-        left = tk.Frame(main, bg=PANEL, padx=22, pady=22)
-        left.pack(side="left", fill="both", expand=True, padx=(0, 16))
+        start_panel = tk.Frame(main, bg=PANEL, padx=16, pady=16, width=220)
+        start_panel.pack(side="left", fill="y", padx=(0, 14))
+        start_panel.pack_propagate(False)
 
-        right = tk.Frame(main, bg=PANEL, padx=22, pady=22, width=300)
+        center = tk.Frame(main, bg=PANEL, padx=20, pady=20)
+        center.pack(side="left", fill="both", expand=True, padx=(0, 14))
+
+        right = tk.Frame(main, bg=PANEL, padx=20, pady=20, width=300)
         right.pack(side="right", fill="y")
         right.pack_propagate(False)
 
-        self.storage_card(left)
-        self.action_card(left)
+        self.start_panel(start_panel)
+        self.storage_card(center)
+        self.action_card(center)
         self.status_panel(right)
 
         footer = tk.Frame(shell, bg=BG)
-        footer.pack(fill="x", pady=(18, 0))
-        self.label(footer, "Default promise: write app state to the portable capsule store, keep the host clean, and make every app mess recoverable.", 10, MUTED).pack(anchor="w")
+        footer.pack(fill="x", pady=(14, 0))
+        self.label(footer, "Default promise: app state goes to the portable capsule store, host storage stays clean, and broken app bullshit stays recoverable.", 10, MUTED).pack(anchor="w")
+
+    def start_panel(self, parent) -> None:
+        self.label(parent, "Start", 18, TEXT, True).pack(anchor="w")
+        self.label(parent, "Quick launch", 10, MUTED).pack(anchor="w", pady=(2, 12))
+        self.button(parent, "Initialize Storage", self.initialize, True).pack(fill="x", pady=(0, 9))
+        self.button(parent, "Open Dashboard", self.open_dashboard).pack(fill="x", pady=(0, 9))
+        self.button(parent, "Open Capsules", self.open_capsules).pack(fill="x", pady=(0, 9))
+        self.button(parent, "Run Doctor", self.run_doctor).pack(fill="x", pady=(0, 9))
+        self.button(parent, "Private Browser", self.private_browser).pack(fill="x")
+
+        spacer = tk.Frame(parent, bg=PANEL)
+        spacer.pack(fill="both", expand=True)
+        info = tk.Frame(parent, bg=CARD_SOFT, padx=12, pady=12)
+        info.pack(fill="x", pady=(14, 0))
+        self.label(info, "Familiar desktop flow. Not a Windows clone.", 9, MUTED, wrap=170).pack(anchor="w")
 
     def storage_card(self, parent) -> None:
         card = tk.Frame(parent, bg=CARD, padx=18, pady=18)
         card.pack(fill="x")
-        self.label(card, "Storage destination", 17, TEXT, True).pack(anchor="w")
+        self.label(card, "This PC: Capsule Storage", 17, TEXT, True).pack(anchor="w")
         self.label(card, self.model["storage_message"], 11, MUTED).pack(anchor="w", pady=(8, 14))
 
         path = tk.Frame(card, bg=BG, padx=12, pady=12)
         path.pack(fill="x")
         self.label(path, self.model["capsule_store"], 10, ACCENT).pack(anchor="w")
 
+        dash = tk.Frame(card, bg=CARD_SOFT, padx=12, pady=10)
+        dash.pack(fill="x", pady=(12, 0))
+        self.label(dash, f"Dashboard: {self.model['dashboard_url']}", 10, MUTED).pack(anchor="w")
+
     def action_card(self, parent) -> None:
         card = tk.Frame(parent, bg=CARD, padx=18, pady=18)
         card.pack(fill="x", pady=(16, 0))
-        self.label(card, "First boot actions", 17, TEXT, True).pack(anchor="w")
+        self.label(card, "Control Panel", 17, TEXT, True).pack(anchor="w")
         self.label(card, "Initialize storage, verify the system, then run apps from capsules.", 11, MUTED).pack(anchor="w", pady=(7, 12))
 
         row = tk.Frame(card, bg=CARD)
         row.pack(fill="x")
-        self.button(row, "Initialize", self.initialize).pack(side="left", padx=(0, 10))
-        self.button(row, "Open Capsules", self.open_capsules).pack(side="left", padx=(0, 10))
-        self.button(row, "Run Doctor", self.run_doctor).pack(side="left", padx=(0, 10))
-        self.button(row, "Private Browser", self.private_browser).pack(side="left")
+        self.button(row, "Initialize", self.initialize, True).pack(side="left", padx=(0, 10))
+        self.button(row, "Dashboard", self.open_dashboard).pack(side="left", padx=(0, 10))
+        self.button(row, "Doctor", self.run_doctor).pack(side="left", padx=(0, 10))
+        self.button(row, "Capsules", self.open_capsules).pack(side="left")
 
     def status_panel(self, parent) -> None:
-        self.label(parent, "Boot posture", 17, TEXT, True).pack(anchor="w")
+        self.label(parent, "System Status", 17, TEXT, True).pack(anchor="w")
         self.badge(parent, "Leave no trace", self.model["leave_no_trace"], status_color(self.model["storage_status"]))
         self.badge(parent, "Portable storage", self.model["portable_owned"], GOOD if self.model["portable_owned"] == "YES" else WARN)
         self.badge(parent, "Host write risk", self.model["host_risk"], BAD if self.model["host_risk"] == "YES" else GOOD)
 
         note = tk.Frame(parent, bg=CARD_SOFT, padx=14, pady=14)
         note.pack(fill="x", pady=(18, 0))
-        self.label(note, "If host risk says YES, do not install apps until storage is corrected or intentionally selected.", 10, MUTED).pack(anchor="w")
+        self.label(note, "If host risk says YES, do not install apps until storage is corrected or intentionally selected.", 10, MUTED, wrap=250).pack(anchor="w")
 
         codename = tk.Frame(parent, bg=CARD_SOFT, padx=14, pady=14)
         codename.pack(fill="x", pady=(12, 0))
-        self.label(codename, f"Internal codename: {self.model['internal_codename']}", 10, MUTED).pack(anchor="w")
+        self.label(codename, f"Internal codename: {self.model['internal_codename']}", 10, MUTED, wrap=250).pack(anchor="w")
 
     def badge(self, parent, title: str, value: str, color: str) -> None:
         box = tk.Frame(parent, bg=CARD, padx=14, pady=12)
@@ -159,6 +185,15 @@ class VenvWinFirstRunApp:
     def initialize(self) -> None:
         summary = write_first_run_files(self.home)
         messagebox.showinfo(f"{PUBLIC_PRODUCT_NAME} ready", f"Capsule storage initialized:\n{summary['capsule_store']}")
+
+    def open_dashboard(self) -> None:
+        for command in (["xdg-open", self.model["dashboard_url"]],):
+            try:
+                subprocess.Popen(command)
+                return
+            except OSError:
+                continue
+        messagebox.showwarning("Open dashboard", f"Open manually:\n{self.model['dashboard_url']}")
 
     def open_capsules(self) -> None:
         self.capsule_store.mkdir(parents=True, exist_ok=True)
