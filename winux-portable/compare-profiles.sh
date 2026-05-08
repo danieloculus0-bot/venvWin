@@ -3,21 +3,21 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DIST_DIR="${ROOT_DIR}/dist"
-REPORT="${DIST_DIR}/winux-profile-comparison.txt"
+REPORT="${DIST_DIR}/venvwin-profile-comparison.txt"
 PROFILES=(core standard privacy)
 
 mkdir -p "${DIST_DIR}"
 
 cat > "${REPORT}" <<'HEAD'
-WinUx Portable Profile Comparison
+venvWin Portable Profile Comparison
 
 This report compares locally available ISO artifacts.
 
 HEAD
 
 for profile in "${PROFILES[@]}"; do
-  iso="${DIST_DIR}/winux-portable-alpha-${profile}.iso"
-  manifest="${DIST_DIR}/winux-portable-alpha-${profile}-manifest.txt"
+  iso="${DIST_DIR}/venvwin-portable-alpha-${profile}.iso"
+  manifest="${DIST_DIR}/venvwin-portable-alpha-${profile}-manifest.txt"
   checksum="${iso}.sha256"
 
   echo "== ${profile} ==" >> "${REPORT}"
