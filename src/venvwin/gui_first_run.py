@@ -40,7 +40,6 @@ def display_model(home: Path | None = None) -> dict[str, str]:
     summary = first_run_summary(home)
     return {
         "product_name": str(summary["product_name"]),
-        "internal_codename": str(summary["internal_codename"]),
         "capsule_store": str(summary["capsule_store"]),
         "storage_status": str(summary["storage_status"]),
         "storage_message": str(summary["storage_message"]),
@@ -172,10 +171,6 @@ class VenvWinFirstRunApp:
         note.pack(fill="x", pady=(18, 0))
         self.label(note, "If host risk says YES, do not install apps until storage is corrected or intentionally selected.", 10, MUTED, wrap=250).pack(anchor="w")
 
-        codename = tk.Frame(parent, bg=CARD_SOFT, padx=14, pady=14)
-        codename.pack(fill="x", pady=(12, 0))
-        self.label(codename, f"Internal codename: {self.model['internal_codename']}", 10, MUTED, wrap=250).pack(anchor="w")
-
     def badge(self, parent, title: str, value: str, color: str) -> None:
         box = tk.Frame(parent, bg=CARD, padx=14, pady=12)
         box.pack(fill="x", pady=(12, 0))
@@ -216,12 +211,9 @@ class VenvWinFirstRunApp:
 
     def private_browser(self) -> None:
         try:
-            subprocess.Popen(["winux-private-browser"])
+            subprocess.Popen(["venvwin-private-browser"])
         except OSError:
-            messagebox.showwarning("Private browser", "Open a terminal and run: winux-private-browser")
-
-
-WinUxFirstRunApp = VenvWinFirstRunApp
+            messagebox.showwarning("Private browser", "Open a terminal and run: venvwin-private-browser")
 
 
 def main(argv: list[str] | None = None) -> int:
