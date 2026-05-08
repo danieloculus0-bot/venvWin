@@ -50,5 +50,5 @@ jobs:
 
       - name: Pre-ISO readiness gate
         run: |
-          chmod +x winux-portable/pre-iso-readiness.sh
-          ./winux-portable/pre-iso-readiness.sh
+          chmod +x venvwin-portable/pre-iso-readiness.sh
+          ./venvwin-portable/pre-iso-readiness.sh
