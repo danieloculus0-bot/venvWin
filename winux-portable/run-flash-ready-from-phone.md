@@ -1,4 +1,4 @@
-# Run WinUx Flash-Ready Build From Phone
+# Run venvWin Portable Flash-Ready Build From Phone
 
 ## Current verdict
 
@@ -46,16 +46,16 @@ main
 The run must complete green and upload artifact:
 
 ```text
-winux-portable-flash-ready-standard
+venvwin-portable-flash-ready-standard
 ```
 
 Inside that artifact must be:
 
 ```text
-winux-portable-alpha-standard.iso
-winux-portable-alpha-standard.iso.sha256
-winux-portable-alpha-standard-manifest.txt
-winux-flash-ready-verdict.txt
+venvwin-portable-alpha-standard.iso
+venvwin-portable-alpha-standard.iso.sha256
+venvwin-portable-alpha-standard-manifest.txt
+venvwin-flash-ready-verdict.txt
 ```
 
 The verdict file must say:
