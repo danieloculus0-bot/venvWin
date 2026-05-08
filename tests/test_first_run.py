@@ -4,6 +4,7 @@ from venvwin.first_run import (
     DASHBOARD_NAME,
     FIRST_BOOT_CHECKLIST_NAME,
     FIRST_BOOT_PROOF_NAME,
+    PUBLIC_PRODUCT_NAME,
     QUICK_START_NAME,
     first_run_summary,
     wizard_text,
@@ -16,6 +17,8 @@ def test_first_run_summary_has_storage_status(tmp_path: Path, monkeypatch):
 
     summary = first_run_summary(tmp_path)
 
+    assert summary["product_name"] == PUBLIC_PRODUCT_NAME
+    assert summary["internal_codename"] == "WinUx"
     assert "capsule_store" in summary
     assert "storage_status" in summary
     assert "storage_message" in summary
@@ -42,11 +45,12 @@ def test_write_first_run_files(tmp_path: Path, monkeypatch):
     checklist_text = (desktop / FIRST_BOOT_CHECKLIST_NAME).read_text(encoding="utf-8")
     dashboard_text = (desktop / DASHBOARD_NAME).read_text(encoding="utf-8")
 
-    assert "WinUx First Boot Proof" in proof_text
-    assert "WinUx-Dashboard.txt" in proof_text
-    assert "WinUx-First-Boot-Checklist.txt" in proof_text
-    assert "WinUx First Boot Checklist" in checklist_text
-    assert "WinUx Dashboard" in dashboard_text
+    assert f"{PUBLIC_PRODUCT_NAME} First Boot Proof" in proof_text
+    assert "internal_codename=WinUx" in proof_text
+    assert DASHBOARD_NAME in proof_text
+    assert FIRST_BOOT_CHECKLIST_NAME in proof_text
+    assert f"{PUBLIC_PRODUCT_NAME} First Boot Checklist" in checklist_text
+    assert f"{PUBLIC_PRODUCT_NAME} Dashboard" in dashboard_text
     assert "http://127.0.0.1:8787" in dashboard_text
 
 
@@ -55,7 +59,7 @@ def test_wizard_text(tmp_path: Path, monkeypatch):
 
     text = wizard_text(tmp_path)
 
-    assert "WinUx First Run" in text
+    assert f"{PUBLIC_PRODUCT_NAME} First Run" in text
     assert "Where should Windows app state live?" in text
-    assert "Leave the host machine alone" in text
+    assert "leave the host machine alone" in text
     assert "Dashboard: http://127.0.0.1:8787" in text
