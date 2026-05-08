@@ -107,6 +107,57 @@ Build and prove a boot-tested venvWin Portable Alpha ISO:
 - doctor/status output is visible
 - first-boot proof bundle appears in the venvWin Portable session
 
+## Build gates
+
+Two GitHub Actions workflows exist:
+
+```text
+preflight-lite
+flash-ready-standard
+```
+
+If workflow runs do not appear after commits, check:
+
+```text
+Settings > Actions > General
+```
+
+Expected:
+
+```text
+Actions enabled
+workflow_dispatch available
+push workflows allowed
+artifact upload allowed
+```
+
+Manual build trigger from phone:
+
+```text
+Actions > flash-ready-standard > Run workflow > main
+```
+
+Flash-ready artifact bundle:
+
+```text
+venvwin-portable-flash-ready-standard
+```
+
+Required files:
+
+```text
+venvwin-portable-alpha-standard.iso
+venvwin-portable-alpha-standard.iso.sha256
+venvwin-portable-alpha-standard-manifest.txt
+venvwin-flash-ready-verdict.txt
+```
+
+Do not flash until the verdict file says:
+
+```text
+status=FLASH_READY
+```
+
 ## Backend philosophy
 
 venvWin must not collapse into "Wine with a hat."
