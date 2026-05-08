@@ -21,6 +21,13 @@ def test_readme_links_build_and_flash_guides():
     assert "status=FLASH_READY" in readme
 
 
+def test_readme_names_direct_powershell_wsl_runner():
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+
+    assert "Windows PowerShell WSL build runner" in readme
+    assert ".\\winux-portable\\run-wsl-flash-ready.ps1" in readme
+
+
 def test_readme_requires_visible_first_boot_shortcuts():
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
 
