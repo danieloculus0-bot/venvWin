@@ -1,0 +1,84 @@
+name: repo-cleanup-migration
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/repo-cleanup-migration.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Migrate retired project naming
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          old_lower="wi""nux"
+          old_title="Wi""nUx"
+          old_title2="Wi""nux"
+          old_upper="WI""NUX"
+          new_lower="venvwin"
+          new_public="venvWin"
+          new_portable="venvwin-portable"
+          old_portable="${old_lower}-portable"
+          old_app="${old_lower}-app"
+          new_app="venvwin-app"
+
+          if [[ -d "${old_portable}" && ! -d "${new_portable}" ]]; then
+            git mv "${old_portable}" "${new_portable}"
+          fi
+          if [[ -d "${old_app}" && ! -d "${new_app}" ]]; then
+            git mv "${old_app}" "${new_app}"
+          fi
+          if [[ -f ".github/workflows/build-${old_lower}-iso.yml" ]]; then
+            git mv ".github/workflows/build-${old_lower}-iso.yml" ".github/workflows/build-venvwin-iso.yml"
+          fi
+
+          mapfile -t text_files < <(git grep -Il -e "${old_title}" -e "${old_upper}" -e "${old_title2}" -e "${old_lower}" -- . || true)
+          if [[ "${#text_files[@]}" -gt 0 ]]; then
+            for file in "${text_files[@]}"; do
+              perl -0pi \
+                -e "s/${old_title}/${new_public}/g" \
+                -e "s/${old_title2}/${new_public}/g" \
+                -e "s/${old_upper}/VENVWIN/g" \
+                -e "s/${old_lower}/${new_lower}/g" \
+                "$file"
+            done
+          fi
+
+          while IFS= read -r path; do
+            [[ -z "$path" ]] && continue
+            new_path="$path"
+            new_path="${new_path//${old_title}/${new_public}}"
+            new_path="${new_path//${old_title2}/${new_public}}"
+            new_path="${new_path//${old_upper}/VENVWIN}"
+            new_path="${new_path//${old_lower}/${new_lower}}"
+            if [[ "$new_path" != "$path" ]]; then
+              mkdir -p "$(dirname "$new_path")"
+              git mv "$path" "$new_path"
+            fi
+          done < <(git ls-files | grep -E "${old_title}|${old_upper}|${old_title2}|${old_lower}" || true)
+
+          if git diff --quiet --cached && git diff --quiet; then
+            echo "No cleanup changes needed."
+            exit 0
+          fi
+
+          git status --short
+          git add -A
+          git commit -m "Complete venvWin repo naming migration"
+          git push
