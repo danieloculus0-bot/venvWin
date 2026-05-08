@@ -87,6 +87,21 @@ exec python3 -m venvwin.cli "$@"
 EOF
 chmod +x config/includes.chroot/usr/local/bin/venvwin
 
+cat > config/includes.chroot/usr/local/bin/winux-select-capsule-store <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+export PYTHONPATH="/opt/venvwin/src:${PYTHONPATH:-}"
+python3 - <<'PY'
+from pathlib import Path
+from venvwin.persistence import persistence_report
+report = persistence_report()
+chosen = report["chosen"]
+Path.home().joinpath(".winux-capsule-store").write_text(chosen["path"], encoding="utf-8")
+print(chosen["path"])
+PY
+EOF
+chmod +x config/includes.chroot/usr/local/bin/winux-select-capsule-store
+
 cat > config/includes.chroot/usr/local/bin/winux-private-browser <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
@@ -121,14 +136,20 @@ cat > config/includes.chroot/usr/local/bin/winux-first-run <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 
-export VENVWIN_HOME="${VENVWIN_HOME:-$HOME/WinUx-Capsules}"
+CAPSULE_STORE="$(/usr/local/bin/winux-select-capsule-store)"
+export VENVWIN_HOME="${VENVWIN_HOME:-$CAPSULE_STORE}"
 mkdir -p "$HOME/Desktop" "$VENVWIN_HOME"
 
 venvwin init || true
 venvwin associate || true
 venvwin doctor > "$HOME/Desktop/venvwin-doctor.txt" || true
 
-cat > "$HOME/Desktop/WinUx-Quick-Start.txt" <<'MSG'
+DISPOSABLE_NOTE="Persistent capsule store selected: $VENVWIN_HOME"
+if [ "$VENVWIN_HOME" = "$HOME/WinUx-Capsules" ]; then
+  DISPOSABLE_NOTE="Disposable-session warning: capsule storage is in the live user's home folder. Fine for testing, terrible for keeping your work unless persistence is enabled."
+fi
+
+cat > "$HOME/Desktop/WinUx-Quick-Start.txt" <<MSG
 Welcome to WinUx Portable.
 
 Double-click a Windows EXE/MSI, or run:
@@ -137,7 +158,9 @@ Double-click a Windows EXE/MSI, or run:
 
 Capsules live here:
 
-  ~/WinUx-Capsules
+  $VENVWIN_HOME
+
+$DISPOSABLE_NOTE
 
 Run health check:
 
@@ -189,7 +212,7 @@ cat > config/includes.chroot/usr/share/applications/venvwin-capsules.desktop <<'
 Type=Application
 Name=venvWin Capsules
 Comment=Open venvWin capsule storage
-Exec=thunar /home/user/WinUx-Capsules
+Exec=sh -c 'thunar "$(cat "$HOME/.winux-capsule-store" 2>/dev/null || echo "$HOME/WinUx-Capsules")"'
 Terminal=false
 Categories=Utility;
 EOF
@@ -201,7 +224,11 @@ set -euo pipefail
 echo "Setting up WinUx Portable runtime hooks"
 
 cat > /etc/profile.d/venvwin.sh <<'PROFILE'
-export VENVWIN_HOME="${VENVWIN_HOME:-$HOME/WinUx-Capsules}"
+if [ -f "$HOME/.winux-capsule-store" ]; then
+  export VENVWIN_HOME="$(cat "$HOME/.winux-capsule-store")"
+else
+  export VENVWIN_HOME="${VENVWIN_HOME:-$HOME/WinUx-Capsules}"
+fi
 export PYTHONPATH="/opt/venvwin/src:${PYTHONPATH:-}"
 PROFILE
 
