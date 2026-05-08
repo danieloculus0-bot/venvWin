@@ -24,6 +24,25 @@ def test_build_iso_creates_visible_desktop_launchers():
         assert launcher in script
 
 
+def test_build_iso_disables_toram_and_adds_live_autologin():
+    script = (ROOT / "winux-portable" / "build-iso.sh").read_text(encoding="utf-8")
+
+    assert '--bootappend-live "boot=live components quiet splash persistence"' in script
+    assert " toram" not in script
+    assert "lightdm-gtk-greeter" in script
+    assert "50-venvwin-live-autologin.conf" in script
+    assert "autologin-user=user" in script
+    assert "live_user_autologin=true" in script
+
+
+def test_build_iso_keeps_storage_source_visible():
+    script = (ROOT / "winux-portable" / "build-iso.sh").read_text(encoding="utf-8")
+
+    assert ".winux-capsule-store-source" in script
+    assert "VENVWIN_HOME_SOURCE" in script
+    assert "storage_source_marker=true" in script
+
+
 def test_flash_ready_gate_requires_visible_desktop_launchers_inside_squashfs():
     script = (ROOT / "winux-portable" / "build-flash-ready-standard.sh").read_text(encoding="utf-8")
 
@@ -46,6 +65,18 @@ def test_flash_ready_gate_does_not_assume_chroot_files_live_at_iso_root():
 
     for bad in bad_direct_checks:
         assert bad not in script
+
+
+def test_flash_ready_gate_checks_boot_and_autologin_contracts():
+    script = (ROOT / "winux-portable" / "build-flash-ready-standard.sh").read_text(encoding="utf-8")
+
+    assert "^boot_toram_default=false$" in script
+    assert "BOOT_CONFIG_TEXT" in script
+    assert "toram" in script
+    assert "boot_toram_absent=pass" in script
+    assert "squashfs-root/etc/lightdm/lightdm.conf.d/50-venvwin-live-autologin.conf" in script
+    assert "live_user_autologin=pass" in script
+    assert "storage_source_marker=pass" in script
 
 
 def test_manifest_contract_names_visible_desktop_launchers():
