@@ -9,9 +9,9 @@ PORTABLE_SOURCES = {
     "VENVWIN_HOME",
     "live-persistence",
     "persistence-root",
-    "mounted-winux-persistence",
-    "usb-label-winuxdata",
-    "usb-label-winuxdata-mixed",
+    "mounted-venvwin-persistence",
+    "usb-label-venvwindata",
+    "usb-label-venvwindata-mixed",
     "live-home-overlay",
 }
 
@@ -61,7 +61,7 @@ def classify_candidate(path: Path, source: str) -> tuple[bool, bool]:
     if source in HOST_RISK_SOURCES:
         return False, True
     path_text = str(path)
-    if "/WINUXDATA/" in path_text or "/WinUxData/" in path_text:
+    if "/VENVWINDATA/" in path_text or "/venvWinData/" in path_text:
         return True, False
     return False, True
 
@@ -102,18 +102,18 @@ def candidate_paths(home: Path | None = None) -> list[PersistenceCandidate]:
 
     candidates.extend(
         [
-            (Path("/run/live/persistence/WinUx-Capsules"), "live-persistence"),
-            (Path("/persistence/WinUx-Capsules"), "persistence-root"),
-            (Path("/mnt/winux-persistence/WinUx-Capsules"), "mounted-winux-persistence"),
-            (Path("/media") / user_home.name / "WINUXDATA" / "WinUx-Capsules", "usb-label-winuxdata"),
-            (Path("/media") / user_home.name / "WinUxData" / "WinUx-Capsules", "usb-label-winuxdata-mixed"),
+            (Path("/run/live/persistence/venvWin-Capsules"), "live-persistence"),
+            (Path("/persistence/venvWin-Capsules"), "persistence-root"),
+            (Path("/mnt/venvwin-persistence/venvWin-Capsules"), "mounted-venvwin-persistence"),
+            (Path("/media") / user_home.name / "VENVWINDATA" / "venvWin-Capsules", "usb-label-venvwindata"),
+            (Path("/media") / user_home.name / "venvWinData" / "venvWin-Capsules", "usb-label-venvwindata-mixed"),
         ]
     )
 
     if running_from_live_media():
-        candidates.append((user_home / "WinUx-Capsules", "live-home-overlay"))
+        candidates.append((user_home / "venvWin-Capsules", "live-home-overlay"))
 
-    candidates.append((user_home / "WinUx-Capsules", "home-fallback"))
+    candidates.append((user_home / "venvWin-Capsules", "home-fallback"))
 
     seen: set[str] = set()
     result: list[PersistenceCandidate] = []
@@ -136,7 +136,7 @@ def choose_capsule_store(home: Path | None = None) -> PersistenceCandidate:
         if candidate.writable and candidate.source == "home-fallback":
             return candidate
     fallback = PersistenceCandidate(
-        path=(home or Path.home()) / "WinUx-Capsules",
+        path=(home or Path.home()) / "venvWin-Capsules",
         source="home-fallback",
         writable=False,
         portable_owned=False,
