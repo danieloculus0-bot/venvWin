@@ -7,6 +7,8 @@ on:
       - "winux-portable/build-flash-ready-standard.sh"
       - "winux-portable/pre-iso-readiness.sh"
       - "winux-portable/build-iso.sh"
+      - "winux-portable/workflow-contract.json"
+      - "docs/branding.md"
       - "src/**"
       - "tests/**"
       - "pyproject.toml"
@@ -45,10 +47,10 @@ jobs:
       - name: Upload flash-ready artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: winux-portable-flash-ready-standard
+          name: venvwin-portable-flash-ready-standard
           path: |
-            dist/winux-portable-alpha-standard.iso
-            dist/winux-portable-alpha-standard.iso.sha256
-            dist/winux-portable-alpha-standard-manifest.txt
-            dist/winux-flash-ready-verdict.txt
+            dist/venvwin-portable-alpha-standard.iso
+            dist/venvwin-portable-alpha-standard.iso.sha256
+            dist/venvwin-portable-alpha-standard-manifest.txt
+            dist/venvwin-flash-ready-verdict.txt
           if-no-files-found: error
