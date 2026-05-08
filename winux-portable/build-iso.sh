@@ -35,7 +35,7 @@ lb config \
   --archive-areas "main contrib non-free non-free-firmware" \
   --debian-installer false \
   --memtest none \
-  --bootappend-live "boot=live components quiet splash persistence toram" \
+  --bootappend-live "boot=live components quiet splash persistence" \
   --iso-application "${PUBLIC_PRODUCT_NAME}" \
   --iso-publisher "venvWin" \
   --iso-volume "VENVWIN_PORTABLE"
@@ -55,6 +55,7 @@ live-config
 systemd-sysv
 sudo
 network-manager
+network-manager-gnome
 xorg
 lightdm
 xfce4-session
@@ -64,15 +65,20 @@ xfwm4
 xfdesktop4
 xfce4-terminal
 thunar
+gvfs
 mousepad
 python3
 python3-tk
 xdg-utils
+xdg-user-dirs
 desktop-file-utils
 shared-mime-info
 curl
 ca-certificates
 rsync
+netsurf-gtk
+adwaita-icon-theme
+hicolor-icon-theme
 EOF
 
 if [[ "${WINUX_PROFILE}" == "standard" || "${WINUX_PROFILE}" == "privacy" ]]; then
@@ -164,7 +170,7 @@ if command -v torsocks >/dev/null 2>&1 && command -v firefox-esr >/dev/null 2>&1
   cat <<'WARN'
 Tor Browser is missing. Starting Firefox ESR through torsocks as a fallback.
 This is not Tor Browser. It may reduce direct exposure, but it is not hardened anonymity.
-Useful for testing, not spy-movie bullshit.
+Useful for testing, not for production privacy claims.
 WARN
   exec torsocks firefox-esr --new-instance --profile "$HOME/.winux-firefox-tor-fallback"
 fi
@@ -184,7 +190,12 @@ set -euo pipefail
 
 CAPSULE_STORE="$(/usr/local/bin/winux-select-capsule-store)"
 export VENVWIN_HOME="${VENVWIN_HOME:-$CAPSULE_STORE}"
+FIRST_RUN_MARKER="$HOME/.venvwin-first-run-complete"
 mkdir -p "$HOME/Desktop" "$VENVWIN_HOME"
+
+if [[ -f "${FIRST_RUN_MARKER}" ]]; then
+  exit 0
+fi
 
 venvwin init > "$HOME/Desktop/venvwin-init.txt" 2>&1 || true
 venvwin associate > "$HOME/Desktop/venvwin-associate.txt" 2>&1 || true
@@ -192,50 +203,7 @@ venvwin first-run > "$HOME/Desktop/venvwin-first-run.txt" 2>&1 || true
 venvwin storage > "$HOME/Desktop/venvwin-storage.txt" 2>&1 || true
 venvwin doctor > "$HOME/Desktop/venvwin-doctor.txt" 2>&1 || true
 
-cat > "$HOME/Desktop/venvWin-Dashboard.txt" <<DASH
-venvWin Portable Dashboard
-
-Local URL:
-
-  http://127.0.0.1:8787
-
-Default dashboard mode is local-only.
-LAN mode requires the explicit tokenized launcher:
-
-  winux-dashboard-lan
-
-Internal codename: WinUx
-DASH
-
-cat > "$HOME/Desktop/venvWin-First-Boot-Checklist.txt" <<CHECK
-venvWin Portable First Boot Checklist
-
-Expected files on this desktop:
-
-- venvWin-First-Boot.desktop
-- venvWin-Dashboard.desktop
-- venvWin-Capsules.desktop
-- venvWin-Doctor.desktop
-- venvWin-Private-Browser.desktop
-- venvWin-Quick-Start.txt
-- venvWin-First-Boot-Proof.txt
-- venvWin-Dashboard.txt
-- venvWin-First-Boot-Checklist.txt
-- venvwin-init.txt
-- venvwin-associate.txt
-- venvwin-first-run.txt
-- venvwin-storage.txt
-- venvwin-doctor.txt
-
-Acceptance checks:
-
-- Desktop loaded
-- Dashboard opens at http://127.0.0.1:8787
-- Capsule storage exists: ${CAPSULE_STORE}
-- venvWin doctor output exists
-- EXE/MSI associations attempted
-- Storage risk is visible in proof/storage files
-CHECK
+date -Iseconds > "${FIRST_RUN_MARKER}"
 EOF
 chmod +x config/includes.chroot/usr/local/bin/winux-first-run
 
@@ -284,7 +252,7 @@ cat > config/includes.chroot/usr/share/applications/winux-dashboard.desktop <<'E
 Type=Application
 Name=venvWin Portable Dashboard
 Comment=Open the local venvWin Portable dashboard in the browser
-Exec=xdg-open http://127.0.0.1:8787
+Exec=sh -c 'xdg-open http://127.0.0.1:8787 >/dev/null 2>&1 || sensible-browser http://127.0.0.1:8787 >/dev/null 2>&1 || netsurf-gtk http://127.0.0.1:8787'
 Terminal=false
 Categories=Utility;
 EOF
@@ -294,7 +262,7 @@ cat > config/includes.chroot/usr/share/applications/winux-dashboard-lan.desktop 
 Type=Application
 Name=venvWin Portable Dashboard LAN Mode
 Comment=Start token-protected LAN dashboard access
-Exec=xfce4-terminal -e "winux-dashboard-lan"
+Exec=xfce4-terminal --command="winux-dashboard-lan"
 Terminal=false
 Categories=Utility;
 EOF
@@ -314,7 +282,7 @@ cat > config/includes.chroot/usr/share/applications/venvwin-doctor.desktop <<'EO
 Type=Application
 Name=venvWin Doctor
 Comment=Check venvWin health and setup status
-Exec=xfce4-terminal -e "venvwin doctor"
+Exec=xfce4-terminal --command="venvwin doctor"
 Terminal=false
 Categories=Utility;
 EOF
@@ -391,6 +359,7 @@ size_mb=${ISO_MB}
 sha256_file=${OUTPUT_ISO}.sha256
 leave_no_trace_default=true
 default_storage=venvWin Portable USB/install drive only
+boot_toram_default=false
 first_boot_gui=true
 dashboard=true
 dashboard_url=http://127.0.0.1:8787
@@ -399,7 +368,8 @@ dashboard_lan_mode=explicit_token_required
 first_boot_desktop_launchers=true
 first_boot_desktop_launchers_list=venvWin-First-Boot.desktop,venvWin-Dashboard.desktop,venvWin-Capsules.desktop,venvWin-Doctor.desktop,venvWin-Private-Browser.desktop
 first_boot_proof_bundle=true
-first_boot_expected_desktop_files=venvWin-First-Boot.desktop,venvWin-Dashboard.desktop,venvWin-Capsules.desktop,venvWin-Doctor.desktop,venvWin-Private-Browser.desktop,venvWin-Quick-Start.txt,venvWin-First-Boot-Proof.txt,venvWin-Dashboard.txt,venvWin-First-Boot-Checklist.txt,venvwin-init.txt,venvwin-associate.txt,venvwin-first-run.txt,venvwin-storage.txt,venvwin-doctor.txt
+first_boot_expected_desktop_files=venvWin-First-Boot.desktop,venvWin-Dashboard.desktop,venvWin-Capsules.desktop,venvWin-Private-Browser.desktop,venvWin-Quick-Start.txt,venvWin-First-Boot-Proof.txt,venvWin-Dashboard.txt,venvWin-First-Boot-Checklist.txt,venvwin-init.txt,venvwin-associate.txt,venvwin-first-run.txt,venvwin-storage.txt,venvwin-doctor.txt
+standard_browser=netsurf-gtk
 privacy_browser_profile=privacy_only
 standard_profile_policy=lean_runtime_only
 product_gate=first boot must initialize storage, expose status, show setup UI, write proof bundle, show desktop launchers, and start local dashboard
