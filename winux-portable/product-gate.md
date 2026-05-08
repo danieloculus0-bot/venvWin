@@ -29,6 +29,19 @@ Passing means:
 - first-run summary files are written
 - the user can see where Windows app state will live
 - the first-run flow does not silently write into unsafe host paths without warning
+- the desktop contains a first-boot proof bundle
+
+Expected first-boot proof bundle:
+
+- `WinUx-Quick-Start.txt`
+- `WinUx-First-Boot-Proof.txt`
+- `WinUx-Dashboard.txt`
+- `WinUx-First-Boot-Checklist.txt`
+- `venvwin-init.txt`
+- `venvwin-associate.txt`
+- `venvwin-first-run.txt`
+- `venvwin-storage.txt`
+- `venvwin-doctor.txt`
 
 ### 3. Leave-no-trace gate
 
@@ -101,6 +114,7 @@ The WinUx dashboard must expose product state in a human-usable way.
 Passing means:
 
 - dashboard launches locally
+- dashboard binds to `127.0.0.1` by default
 - dashboard shows capsule count
 - dashboard shows storage destination
 - dashboard shows leave-no-trace status
@@ -157,10 +171,12 @@ The next hard milestone is a boot-tested Alpha ISO with screenshots or logs prov
 
 - first boot desktop loads
 - first-run setup completes
-- dashboard opens
-- doctor output is visible
+- dashboard opens at `http://127.0.0.1:8787`
+- doctor output is visible in `venvwin-doctor.txt`
 - capsule storage is writable
-- EXE/MSI handlers are installed
+- EXE/MSI handlers are installed or attempted with visible output
 - one dummy installer dry-run is routed into a capsule
+- `WinUx-First-Boot-Proof.txt` exists on the desktop
+- `WinUx-First-Boot-Checklist.txt` exists on the desktop
 
 Until that evidence exists, the project is pre-alpha with a strong skeleton. Once that evidence exists, it becomes WinUx Portable Alpha.
