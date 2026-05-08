@@ -24,6 +24,7 @@ Target direction:
 
 - bootable portable OS
 - Windows-familiar shell and launcher flow without impersonating Windows
+- visible desktop shortcuts on first boot
 - useful on older 2010-ish PCs where practical
 - compatibility layer for obsolete tech and legacy apps
 - low background overhead
@@ -45,6 +46,7 @@ Pre-alpha skeleton with real plumbing:
 - installer recording
 - EXE/MSI file classification
 - desktop handler generation
+- visible first-boot desktop launchers
 - launcher generation
 - capsule snapshots and reset backups
 - first-run storage flow
@@ -62,6 +64,7 @@ venvWin Portable
   Lightweight bootable Linux OS shell
   Windows-familiar desktop flow
   First-boot setup
+  Visible desktop shortcuts
   Local dashboard
   App launcher UX
   System settings direction
@@ -98,6 +101,8 @@ Build and prove a boot-tested venvWin Portable Alpha ISO:
 
 - ISO boots to a usable lightweight desktop
 - first-run setup completes
+- first-boot GUI opens automatically
+- visible desktop shortcuts are present
 - dashboard opens locally
 - storage destination is visible
 - host write risk is reported
@@ -106,6 +111,16 @@ Build and prove a boot-tested venvWin Portable Alpha ISO:
 - capsule create/list/inspect/install dry-run works
 - doctor/status output is visible
 - first-boot proof bundle appears in the venvWin Portable session
+
+Required first-boot desktop shortcuts:
+
+```text
+venvWin-First-Boot.desktop
+venvWin-Dashboard.desktop
+venvWin-Capsules.desktop
+venvWin-Doctor.desktop
+venvWin-Private-Browser.desktop
+```
 
 ## Build gates
 
