@@ -1,8 +1,8 @@
-# WinUx Portable Product Plan
+# venvWin Portable Product Plan
 
 ## Product concept
 
-WinUx Portable is the first sellable version of the WinUx idea.
+venvWin Portable is the first sellable version of the venvWin idea.
 
 It is a lightweight bootable Linux USB image with venvWin preinstalled, dark premium desktop styling, and EXE/MSI double-click handling.
 
@@ -19,7 +19,7 @@ The goal is impulse-buy pricing for tinkerers, repair people, Linux users, maker
 ```text
 Download image.
 Flash USB.
-Boot WinUx Portable.
+Boot venvWin Portable.
 Double-click Windows installers/apps.
 Keep state in venvWin capsules.
 ```

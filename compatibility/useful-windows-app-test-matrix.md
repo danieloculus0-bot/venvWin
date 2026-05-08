@@ -36,7 +36,7 @@ State persists after reboot
 
 ### Lane 2: Graphics / 3D / CAD utility apps
 
-Important for WinUx because the product should be useful to makers.
+Important for venvWin because the product should be useful to makers.
 
 Examples:
 
@@ -115,7 +115,7 @@ Each app gets scored:
 
 ## Minimum useful app proof
 
-Before product release, WinUx/venvWin should prove at least:
+Before product release, venvWin/venvWin should prove at least:
 
 ```text
 one text/editor utility

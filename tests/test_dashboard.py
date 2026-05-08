@@ -5,7 +5,7 @@ from venvwin.first_run import PUBLIC_PRODUCT_NAME
 
 
 def test_dashboard_model_has_required_sections(tmp_path: Path, monkeypatch):
-    monkeypatch.setenv("VENVWIN_HOME", str(tmp_path / "WINUXDATA" / "WinUx-Capsules"))
+    monkeypatch.setenv("VENVWIN_HOME", str(tmp_path / "VENVWINDATA" / "venvWin-Capsules"))
 
     model = dashboard_model(root=tmp_path / "runtime", home=tmp_path / "home")
 
@@ -20,7 +20,7 @@ def test_dashboard_model_has_required_sections(tmp_path: Path, monkeypatch):
 
 
 def test_dashboard_render_contains_product_signals(tmp_path: Path, monkeypatch):
-    monkeypatch.setenv("VENVWIN_HOME", str(tmp_path / "WINUXDATA" / "WinUx-Capsules"))
+    monkeypatch.setenv("VENVWIN_HOME", str(tmp_path / "VENVWINDATA" / "venvWin-Capsules"))
 
     model = dashboard_model(root=tmp_path / "runtime", home=tmp_path / "home")
     html = render_dashboard(model)
@@ -50,11 +50,11 @@ def test_get_or_create_token_persists(tmp_path: Path):
 
     assert first == second
     assert len(first) >= 20
-    assert (tmp_path / ".winux-dashboard-token").exists()
+    assert (tmp_path / ".venvwin-dashboard-token").exists()
 
 
 def test_dashboard_render_includes_tokenized_api_links(tmp_path: Path, monkeypatch):
-    monkeypatch.setenv("VENVWIN_HOME", str(tmp_path / "WINUXDATA" / "WinUx-Capsules"))
+    monkeypatch.setenv("VENVWIN_HOME", str(tmp_path / "VENVWINDATA" / "venvWin-Capsules"))
 
     model = dashboard_model(root=tmp_path / "runtime", home=tmp_path / "home")
     html = render_dashboard(model, token="abc")

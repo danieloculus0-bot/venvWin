@@ -83,7 +83,7 @@ venvWin
 
 The hard definition of "real" lives here:
 
-`winux-portable/product-gate.md`
+`venvwin-portable/product-gate.md`
 
 venvWin Portable Alpha is real when a user can boot the image, see venvWin controls, initialize storage, double-click or route a Windows installer into a capsule, inspect the capsule, and understand where the app state lives.
 
@@ -149,25 +149,25 @@ Actions > flash-ready-standard > Run workflow > main
 Build attempt checklist:
 
 ```text
-winux-portable/build-attempt-checklist.md
+venvwin-portable/build-attempt-checklist.md
 ```
 
 Windows PowerShell WSL build runner:
 
 ```powershell
-.\winux-portable\run-wsl-flash-ready.ps1
+.\venvwin-portable\run-wsl-flash-ready.ps1
 ```
 
 Local/WSL build guide:
 
 ```text
-winux-portable/local-flash-ready-build.md
+venvwin-portable/local-flash-ready-build.md
 ```
 
 USB flash guide:
 
 ```text
-winux-portable/usb-flash-guide.md
+venvwin-portable/usb-flash-guide.md
 ```
 
 Flash-ready artifact bundle:

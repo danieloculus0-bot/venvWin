@@ -5,18 +5,18 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_build_attempt_checklist_names_product_and_safe_paths():
-    checklist = (ROOT / "winux-portable" / "build-attempt-checklist.md").read_text(encoding="utf-8")
+    checklist = (ROOT / "venvwin-portable" / "build-attempt-checklist.md").read_text(encoding="utf-8")
 
     assert "venvWin Portable Build Attempt Checklist" in checklist
     assert "venvWin Portable" in checklist
     assert "Internal codename:" in checklist
-    assert "WinUx" in checklist
-    assert ".\\winux-portable\\run-wsl-flash-ready.ps1" in checklist
+    assert "venvWin" in checklist
+    assert ".\\venvwin-portable\\run-wsl-flash-ready.ps1" in checklist
     assert "bootstrap-flash-ready-ubuntu.sh" in checklist
 
 
 def test_build_attempt_checklist_requires_flash_ready_verdict_and_artifacts():
-    checklist = (ROOT / "winux-portable" / "build-attempt-checklist.md").read_text(encoding="utf-8")
+    checklist = (ROOT / "venvwin-portable" / "build-attempt-checklist.md").read_text(encoding="utf-8")
 
     required = [
         "status=FLASH_READY",
@@ -31,7 +31,7 @@ def test_build_attempt_checklist_requires_flash_ready_verdict_and_artifacts():
 
 
 def test_build_attempt_checklist_requires_gate_markers():
-    checklist = (ROOT / "winux-portable" / "build-attempt-checklist.md").read_text(encoding="utf-8")
+    checklist = (ROOT / "venvwin-portable" / "build-attempt-checklist.md").read_text(encoding="utf-8")
 
     required = [
         "PUBLIC BRANDING AUDIT: PASS",
@@ -46,7 +46,7 @@ def test_build_attempt_checklist_requires_gate_markers():
 
 
 def test_build_attempt_checklist_keeps_failure_capture_rules():
-    checklist = (ROOT / "winux-portable" / "build-attempt-checklist.md").read_text(encoding="utf-8")
+    checklist = (ROOT / "venvwin-portable" / "build-attempt-checklist.md").read_text(encoding="utf-8")
 
     assert "last visible error block" in checklist
     assert "which step failed" in checklist
@@ -55,9 +55,9 @@ def test_build_attempt_checklist_keeps_failure_capture_rules():
 
 
 def test_preflight_requires_build_attempt_checklist_contract():
-    preflight = (ROOT / "winux-portable" / "pre-iso-readiness.sh").read_text(encoding="utf-8")
+    preflight = (ROOT / "venvwin-portable" / "pre-iso-readiness.sh").read_text(encoding="utf-8")
 
-    assert '"winux-portable/build-attempt-checklist.md"' in preflight
+    assert '"venvwin-portable/build-attempt-checklist.md"' in preflight
     assert "Checking build attempt checklist contract" in preflight
     assert "run-wsl-flash-ready.ps1" in preflight
     assert "bootstrap-flash-ready-ubuntu.sh" in preflight

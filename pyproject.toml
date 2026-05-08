@@ -8,7 +8,7 @@ license = { text = "GPL-3.0-or-later" }
 authors = [
   { name = "Daniel Boone" }
 ]
-keywords = ["linux", "windows", "compatibility", "winux", "wine", "capsules"]
+keywords = ["linux", "windows", "compatibility", "venvwin", "wine", "capsules"]
 classifiers = [
   "Development Status :: 2 - Pre-Alpha",
   "Environment :: Console",

@@ -1,8 +1,8 @@
-# WinUx / venvWin Product Voice
+# venvWin / venvWin Product Voice
 
 ## Goal
 
-WinUx and venvWin should not sound like sterile enterprise software written by a committee that hates oxygen.
+venvWin and venvWin should not sound like sterile enterprise software written by a committee that hates oxygen.
 
 The product voice should be:
 
@@ -31,7 +31,7 @@ Good places:
 - first-run screen
 - error summaries
 - docs aimed at normal users
-- WinUx Portable quick-start guide
+- venvWin Portable quick-start guide
 
 Bad places:
 
@@ -101,7 +101,7 @@ A dark, clean interface with one sharp line is better than a pile of meme text.
 
 ## Commercial rule
 
-WinUx Portable can be weird enough to be memorable, but not so weird that an $8 customer thinks it is malware, vaporware, or a joke project.
+venvWin Portable can be weird enough to be memorable, but not so weird that an $8 customer thinks it is malware, vaporware, or a joke project.
 
 ## Hard boundary
 

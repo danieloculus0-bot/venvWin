@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document reserves a future extension seam for AI-assisted behavior inside venvWin / WinUx.
+This document reserves a future extension seam for AI-assisted behavior inside venvWin / venvWin.
 
 It is not a backdoor. It is not remote access. It is not a hidden control channel. It is not a self-modification system.
 

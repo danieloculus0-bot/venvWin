@@ -5,7 +5,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_powershell_wsl_runner_points_to_bootstrap_and_artifacts():
-    script = (ROOT / "winux-portable" / "run-wsl-flash-ready.ps1").read_text(encoding="utf-8")
+    script = (ROOT / "venvwin-portable" / "run-wsl-flash-ready.ps1").read_text(encoding="utf-8")
 
     assert "venvWin Portable Windows WSL flash-ready runner" in script
     assert "bootstrap-flash-ready-ubuntu.sh" in script
@@ -16,7 +16,7 @@ def test_powershell_wsl_runner_points_to_bootstrap_and_artifacts():
 
 
 def test_powershell_wsl_runner_converts_windows_path_to_wsl_path():
-    script = (ROOT / "winux-portable" / "run-wsl-flash-ready.ps1").read_text(encoding="utf-8")
+    script = (ROOT / "venvwin-portable" / "run-wsl-flash-ready.ps1").read_text(encoding="utf-8")
 
     assert "wsl.exe" in script
     assert "/mnt/$drive/$rest" in script
@@ -25,7 +25,7 @@ def test_powershell_wsl_runner_converts_windows_path_to_wsl_path():
 
 
 def test_powershell_wsl_runner_refuses_non_flash_ready_verdict():
-    script = (ROOT / "winux-portable" / "run-wsl-flash-ready.ps1").read_text(encoding="utf-8")
+    script = (ROOT / "venvwin-portable" / "run-wsl-flash-ready.ps1").read_text(encoding="utf-8")
 
     assert "Build completed but verdict is not FLASH_READY. Do not flash." in script
     assert "Missing verdict file" in script
@@ -34,9 +34,9 @@ def test_powershell_wsl_runner_refuses_non_flash_ready_verdict():
 
 
 def test_preflight_requires_powershell_wsl_runner_contract():
-    preflight = (ROOT / "winux-portable" / "pre-iso-readiness.sh").read_text(encoding="utf-8")
+    preflight = (ROOT / "venvwin-portable" / "pre-iso-readiness.sh").read_text(encoding="utf-8")
 
-    assert '"winux-portable/run-wsl-flash-ready.ps1"' in preflight
+    assert '"venvwin-portable/run-wsl-flash-ready.ps1"' in preflight
     assert "Checking PowerShell WSL runner contract" in preflight
     assert "bootstrap-flash-ready-ubuntu.sh" in preflight
     assert "status=FLASH_READY" in preflight

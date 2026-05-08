@@ -1,8 +1,8 @@
-# WinUx Portable Live Boot
+# venvWin Portable Live Boot
 
 ## Goal
 
-WinUx Portable should support a bootable USB mode that can optionally load the OS into RAM while keeping venvWin capsules persistent.
+venvWin Portable should support a bootable USB mode that can optionally load the OS into RAM while keeping venvWin capsules persistent.
 
 ```text
 Boot from USB
@@ -11,13 +11,13 @@ Keep venvWin capsules persistent on USB or chosen storage
 Double-click EXE/MSI and route into venvWin
 ```
 
-This is a WinUx OS-wrapper feature. venvWin only needs to respect runtime paths and capsule storage locations.
+This is a venvWin OS-wrapper feature. venvWin only needs to respect runtime paths and capsule storage locations.
 
 ## Product promise
 
 ```text
 Plug in USB.
-Boot WinUx Portable.
+Boot venvWin Portable.
 Open Windows apps through venvWin capsules.
 Keep app state.
 Leave the host machine mostly untouched.
@@ -65,7 +65,7 @@ Rule: RAM mode accelerates the OS. It should not make app state fragile.
 ```text
 USB drive
   EFI/boot partition
-  compressed WinUx live image
+  compressed venvWin live image
   persistence partition
   venvWin capsule store
 
@@ -89,14 +89,14 @@ venvWin must support:
 - `VENVWIN_HOME`
 - user-local default path
 - portable USB capsule path
-- later WinUx-managed storage discovery
+- later venvWin-managed storage discovery
 
 ## First practical target
 
 ```text
 Debian or Ubuntu-family live image
 XFCE or similarly lightweight desktop
-dark premium WinUx theme
+dark premium venvWin theme
 venvWin preinstalled
 EXE/MSI file association enabled
 persistent capsule partition
@@ -105,7 +105,7 @@ optional RAM boot flag
 
 ## Jetson-friendly target
 
-WinUx Portable should avoid:
+venvWin Portable should avoid:
 
 - heavy desktop effects
 - Electron-first control panels
@@ -115,4 +115,4 @@ WinUx Portable should avoid:
 
 ## Hard rule
 
-WinUx Portable is allowed to be clever. It is not allowed to become fragile wizard bullshit.
+venvWin Portable is allowed to be clever. It is not allowed to become fragile wizard bullshit.

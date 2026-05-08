@@ -6,14 +6,14 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_flash_ready_workflow_matches_contract():
-    contract = json.loads((ROOT / "winux-portable" / "workflow-contract.json").read_text(encoding="utf-8"))
+    contract = json.loads((ROOT / "venvwin-portable" / "workflow-contract.json").read_text(encoding="utf-8"))
     workflow = (ROOT / ".github" / "workflows" / "flash-ready-standard.yml").read_text(encoding="utf-8")
 
     assert contract["public_product_name"] == "venvWin Portable"
-    assert contract["internal_codename"] == "WinUx"
+    assert contract["internal_codename"] == "venvWin"
     assert f"name: {contract['workflow']}" in workflow
     assert "workflow_dispatch:" in workflow
-    assert "./winux-portable/build-flash-ready-standard.sh" in workflow
+    assert "./venvwin-portable/build-flash-ready-standard.sh" in workflow
     assert f"name: {contract['required_artifact']}" in workflow
 
     for required_file in contract["required_files"]:
@@ -22,7 +22,7 @@ def test_flash_ready_workflow_matches_contract():
 
 def test_flash_ready_workflow_installs_squashfs_tools_for_unsquashfs_gate():
     workflow = (ROOT / ".github" / "workflows" / "flash-ready-standard.yml").read_text(encoding="utf-8")
-    script = (ROOT / "winux-portable" / "build-flash-ready-standard.sh").read_text(encoding="utf-8")
+    script = (ROOT / "venvwin-portable" / "build-flash-ready-standard.sh").read_text(encoding="utf-8")
 
     assert "squashfs-tools" in workflow
     assert "unsquashfs" in script
@@ -30,8 +30,8 @@ def test_flash_ready_workflow_installs_squashfs_tools_for_unsquashfs_gate():
 
 
 def test_flash_ready_script_writes_required_verdict():
-    contract = json.loads((ROOT / "winux-portable" / "workflow-contract.json").read_text(encoding="utf-8"))
-    script = (ROOT / "winux-portable" / "build-flash-ready-standard.sh").read_text(encoding="utf-8")
+    contract = json.loads((ROOT / "venvwin-portable" / "workflow-contract.json").read_text(encoding="utf-8"))
+    script = (ROOT / "venvwin-portable" / "build-flash-ready-standard.sh").read_text(encoding="utf-8")
 
     assert contract["required_verdict"] in script
     assert contract["public_product_name"] in script

@@ -1,21 +1,21 @@
-# WinUx Product Doctrine
+# venvWin Product Doctrine
 
 ## Core rule
 
-WinUx is not LinuxDIY.
+venvWin is not LinuxDIY.
 
-WinUx is not an alacarte distro stuffed with every clever package we can find.
+venvWin is not an alacarte distro stuffed with every clever package we can find.
 
-WinUx is a working, neat, lightweight Linux-based OS wrapper for venvWin.
+venvWin is a working, neat, lightweight Linux-based OS wrapper for venvWin.
 
 ```text
 Everything needed.
 Nothing extra.
 ```
 
-## What WinUx is
+## What venvWin is
 
-WinUx is:
+venvWin is:
 
 - bootable
 - clean
@@ -28,9 +28,9 @@ WinUx is:
 - readable by normal users
 - repairable by technical users
 
-## What WinUx is not
+## What venvWin is not
 
-WinUx is not:
+venvWin is not:
 
 - a bloated rescue distro
 - a pile of random tools
@@ -104,19 +104,19 @@ storage safety
 privacy browser path
 ```
 
-If a package does not serve one of those, it does not belong in core WinUx.
+If a package does not serve one of those, it does not belong in core venvWin.
 
 ## Edition rule
 
 Future editions may exist.
 
-### WinUx Portable
+### venvWin Portable
 
 Core product.
 
 Lean. Useful. Sellable. Minimal.
 
-### WinUx Maker
+### venvWin Maker
 
 Possible future edition with maker tools and 3D workflows.
 
@@ -126,7 +126,7 @@ Possible future fork/edition.
 
 Broad utility distro. More tools. More bloat allowed intentionally.
 
-SwissArmyLinux must not contaminate core WinUx.
+SwissArmyLinux must not contaminate core venvWin.
 
 ## Size rule
 
@@ -151,7 +151,7 @@ The target is to keep only what the product needs.
 On first boot, the user should see:
 
 ```text
-WinUx is running.
+venvWin is running.
 venvWin is ready or tells me what is missing.
 My app state location is visible.
 Host write risk is visible.
@@ -163,7 +163,7 @@ Anything beyond that must earn its place.
 
 ## Summary
 
-WinUx is the clean OS wrapper.
+venvWin is the clean OS wrapper.
 
 venvWin is the method.
 

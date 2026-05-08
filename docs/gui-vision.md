@@ -1,4 +1,4 @@
-# WinUx / venvWin GUI Vision
+# venvWin / venvWin GUI Vision
 
 ## Design target
 
@@ -17,7 +17,7 @@ The vibe is:
 ## Product split
 
 ```text
-WinUx Shell
+venvWin Shell
   Desktop wrapper
   Start/menu experience
   system settings
@@ -32,7 +32,7 @@ venvWin GUI
   repair/reset/snapshot controls
 ```
 
-The first GUI should be a venvWin capsule manager. The full WinUx shell comes later.
+The first GUI should be a venvWin capsule manager. The full venvWin shell comes later.
 
 ## UI principles
 
@@ -116,9 +116,9 @@ The first graphical MVP should do five things:
 
 Everything else can wait.
 
-## Future WinUx shell goals
+## Future venvWin shell goals
 
-WinUx should eventually expose venvWin capsules as normal apps:
+venvWin should eventually expose venvWin capsules as normal apps:
 
 - searchable launcher entries
 - right-click repair/reset

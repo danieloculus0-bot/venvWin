@@ -1,4 +1,4 @@
-# venvWin / WinUx Roadmap
+# venvWin / venvWin Roadmap
 
 ## Phase 0: Foundation
 
@@ -6,14 +6,14 @@ Status: in progress
 
 Goals:
 
-- Define WinUx and venvWin boundary
+- Define venvWin and venvWin boundary
 - Build Python CLI skeleton
 - Create capsule metadata model
 - Create runner profile model
 - Generate runner commands without executing them
 - Add basic tests and CI
 
-## Phase 1: WinUx Portable MVP
+## Phase 1: venvWin Portable MVP
 
 Status: first shippable target
 
@@ -87,12 +87,12 @@ Goals:
 
 Design doc: `docs/gui-vision.md`
 
-## Phase 7: WinUx shell integration
+## Phase 7: venvWin shell integration
 
 Goals:
 
 - Provide venvWin API/service layer
-- Surface capsules in WinUx app launcher
+- Surface capsules in venvWin app launcher
 - Add graphical install flow
 - Add health/report view
 - Expose venvWin apps as normal desktop applications
@@ -109,4 +109,4 @@ Goals:
 
 venvWin should not claim magic compatibility. It should claim controlled compatibility: isolated, repairable, profile-driven app environments that feel native from the user's perspective.
 
-WinUx Portable should be the first sellable form because it is smaller, clearer, and easier to test than a full OS replacement.
+venvWin Portable should be the first sellable form because it is smaller, clearer, and easier to test than a full OS replacement.

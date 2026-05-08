@@ -4,7 +4,7 @@
 
 venvWin is a capsule manager for Windows applications on Linux.
 
-It does not try to become Windows. It creates reproducible, isolated, per-application environments that can be installed, repaired, snapshotted, launched, exported, and eventually surfaced through WinUx.
+It does not try to become Windows. It creates reproducible, isolated, per-application environments that can be installed, repaired, snapshotted, launched, exported, and eventually surfaced through venvWin.
 
 ## Core philosophy
 
@@ -26,7 +26,7 @@ Each application receives a capsule containing:
 ## Product boundary
 
 ```text
-WinUx
+venvWin
   The Linux-based OS wrapper and desktop product.
   It owns the user's operating experience.
 
@@ -96,4 +96,4 @@ A successful MVP can:
 6. generate launch commands
 7. keep each app isolated
 
-After that, WinUx can wrap it in a friendly shell.
+After that, venvWin can wrap it in a friendly shell.

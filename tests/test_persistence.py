@@ -10,7 +10,7 @@ def test_choose_capsule_store_uses_home_fallback(tmp_path: Path, monkeypatch):
     chosen = choose_capsule_store(tmp_path)
 
     assert chosen.source == "home-fallback"
-    assert chosen.path == tmp_path / "WinUx-Capsules"
+    assert chosen.path == tmp_path / "venvWin-Capsules"
     assert chosen.writable is True
     assert chosen.portable_owned is False
     assert chosen.host_risk is True
@@ -31,7 +31,7 @@ def test_choose_capsule_store_prefers_env(tmp_path: Path, monkeypatch):
 
 
 def test_env_source_preserves_home_fallback_risk(tmp_path: Path, monkeypatch):
-    target = tmp_path / "WinUx-Capsules"
+    target = tmp_path / "venvWin-Capsules"
     monkeypatch.setenv("VENVWIN_HOME", str(target))
     monkeypatch.setenv("VENVWIN_HOME_SOURCE", "home-fallback")
 
@@ -47,7 +47,7 @@ def test_env_source_preserves_home_fallback_risk(tmp_path: Path, monkeypatch):
 
 
 def test_env_source_can_mark_live_home_overlay_disposable(tmp_path: Path, monkeypatch):
-    target = tmp_path / "WinUx-Capsules"
+    target = tmp_path / "venvWin-Capsules"
     monkeypatch.setenv("VENVWIN_HOME", str(target))
     monkeypatch.setenv("VENVWIN_HOME_SOURCE", "live-home-overlay")
 

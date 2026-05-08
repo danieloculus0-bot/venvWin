@@ -14,8 +14,8 @@ def test_readme_names_public_product_without_alternate_codename():
 def test_readme_links_build_and_flash_guides():
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
 
-    assert "winux-portable/local-flash-ready-build.md" in readme
-    assert "winux-portable/usb-flash-guide.md" in readme
+    assert "venvwin-portable/local-flash-ready-build.md" in readme
+    assert "venvwin-portable/usb-flash-guide.md" in readme
     assert "status=FLASH_READY" in readme
 
 
@@ -23,7 +23,7 @@ def test_readme_names_direct_powershell_wsl_runner():
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
 
     assert "Windows PowerShell WSL build runner" in readme
-    assert ".\\winux-portable\\run-wsl-flash-ready.ps1" in readme
+    assert ".\\venvwin-portable\\run-wsl-flash-ready.ps1" in readme
 
 
 def test_readme_requires_visible_first_boot_shortcuts():
@@ -43,14 +43,14 @@ def test_readme_does_not_use_stale_public_artifact_names():
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
 
     forbidden = [
-        "WinUx",
-        "WINUX",
-        "Winux",
+        "venvWin",
+        "VENVWIN",
+        "venvWin",
         "WinUX",
-        "WinUx Portable",
-        "winux-portable-alpha",
-        "winux-flash-ready",
-        "winux-portable-flash-ready-standard",
+        "venvWin Portable",
+        "venvwin-portable-alpha",
+        "venvwin-flash-ready",
+        "venvwin-portable-flash-ready-standard",
     ]
 
     for text in forbidden:
