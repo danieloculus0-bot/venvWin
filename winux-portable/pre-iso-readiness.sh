@@ -31,6 +31,7 @@ required_files=(
   "src/venvwin/gui_first_run.py"
   "src/venvwin/persistence.py"
   "src/venvwin/health.py"
+  "winux-portable/audit-public-branding.sh"
   "winux-portable/build-iso.sh"
   "winux-portable/test-iso-qemu.sh"
   "winux-portable/test-persistence-qemu.sh"
@@ -46,12 +47,17 @@ for file in "${required_files[@]}"; do
 done
 
 echo "Checking shell syntax"
+bash -n winux-portable/audit-public-branding.sh
 bash -n winux-portable/build-iso.sh
 bash -n winux-portable/compare-profiles.sh
 bash -n winux-portable/build-all-profiles.sh
 bash -n winux-portable/test-iso-qemu.sh
 bash -n winux-portable/test-persistence-qemu.sh
 bash -n winux-portable/build-flash-ready-standard.sh
+
+echo "Checking public branding contract"
+chmod +x winux-portable/audit-public-branding.sh
+./winux-portable/audit-public-branding.sh
 
 echo "Checking Python imports, GUI model, and dashboard model"
 PYTHONPATH=src python3 - <<'PY'
