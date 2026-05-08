@@ -88,6 +88,9 @@ echo "Checking flash-ready static-inspection contract"
 grep -q "unsquashfs -ll" winux-portable/build-flash-ready-standard.sh
 grep -q "squashfs_static_inspection=pass" winux-portable/build-flash-ready-standard.sh
 grep -q "squashfs-root/etc/skel/Desktop/venvWin-First-Boot.desktop" winux-portable/build-flash-ready-standard.sh
+grep -q "boot_toram_absent=pass" winux-portable/build-flash-ready-standard.sh
+grep -q "live_user_autologin=pass" winux-portable/build-flash-ready-standard.sh
+grep -q "storage_source_marker=pass" winux-portable/build-flash-ready-standard.sh
 grep -q "venvwin-portable-alpha-standard.iso" winux-portable/build-flash-ready-standard.sh
 grep -q "venvwin-flash-ready-verdict.txt" winux-portable/build-flash-ready-standard.sh
 
@@ -142,6 +145,8 @@ with TemporaryDirectory() as tmp:
     for path in (quick_start, first_boot_proof, dashboard_file, checklist_file):
         assert path.exists(), path
     assert (home / ".winux-capsule-store").exists()
+    assert (home / ".winux-capsule-store-source").exists()
+    assert (home / ".winux-capsule-store-source").read_text(encoding="utf-8") == "home-fallback"
     assert (home / ".winux-persistence-report.json").exists()
     assert "Dashboard:" in quick_start.read_text(encoding="utf-8")
     proof_text = first_boot_proof.read_text(encoding="utf-8")
@@ -192,11 +197,14 @@ python3 -m pytest -q
 echo "Checking CLI smoke commands"
 TMP_ROOT="$(mktemp -d)"
 export VENVWIN_HOME="${TMP_ROOT}/venvwin-home"
+export VENVWIN_HOME_SOURCE="advanced-user-selected"
 mkdir -p "${TMP_ROOT}/installers" "${TMP_ROOT}/apps" "${TMP_ROOT}/home"
 touch "${TMP_ROOT}/installers/setup.exe"
 
 python3 -m venvwin.cli --root "${TMP_ROOT}/runtime" init
 python3 -m venvwin.cli first-run --home "${TMP_ROOT}/home"
+test -f "${TMP_ROOT}/home/.winux-capsule-store-source"
+grep -q "advanced-user-selected" "${TMP_ROOT}/home/.winux-capsule-store-source"
 python3 -m venvwin.cli first-run --home "${TMP_ROOT}/home" --wizard-text >/dev/null
 python3 -m venvwin.cli first-run --home "${TMP_ROOT}/home" --json >/dev/null
 python3 -m venvwin.cli storage >/dev/null
