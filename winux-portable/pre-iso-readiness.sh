@@ -10,6 +10,7 @@ echo "Checking required files"
 required_files=(
   "pyproject.toml"
   "src/venvwin/cli.py"
+  "src/venvwin/dashboard.py"
   "src/venvwin/first_run.py"
   "src/venvwin/gui_first_run.py"
   "src/venvwin/persistence.py"
@@ -31,12 +32,13 @@ if [[ -f winux-portable/test-iso-qemu.sh ]]; then
   bash -n winux-portable/test-iso-qemu.sh
 fi
 
-echo "Checking Python imports and GUI model"
+echo "Checking Python imports, GUI model, and dashboard model"
 PYTHONPATH=src python3 - <<'PY'
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from venvwin.cli import build_parser
+from venvwin.dashboard import dashboard_model, render_dashboard
 from venvwin.first_run import first_run_summary, wizard_text, write_first_run_files
 from venvwin.gui_first_run import display_model, status_color
 from venvwin.persistence import persistence_report
@@ -44,7 +46,9 @@ from venvwin.persistence import persistence_report
 build_parser()
 
 with TemporaryDirectory() as tmp:
-    home = Path(tmp)
+    base = Path(tmp)
+    home = base / "home"
+    root = base / "runtime"
     summary = first_run_summary(home)
     assert summary["capsule_store"] == str(home / "WinUx-Capsules")
     write_first_run_files(home)
@@ -58,6 +62,13 @@ with TemporaryDirectory() as tmp:
     assert "chosen" in report
     assert "leave_no_trace" in report
     assert "host_write_warning" in report
+    dash = dashboard_model(root=root, home=home)
+    assert "storage" in dash
+    assert "health" in dash
+    assert "capsules" in dash
+    rendered = render_dashboard(dash)
+    assert "WinUx Dashboard" in rendered
+    assert "Leave no trace" in rendered
 
 print("Python readiness checks passed")
 PY
@@ -77,6 +88,13 @@ python3 -m venvwin.cli first-run --home "${TMP_ROOT}/home" --wizard-text >/dev/n
 python3 -m venvwin.cli first-run --home "${TMP_ROOT}/home" --json >/dev/null
 python3 -m venvwin.cli storage >/dev/null
 python3 -m venvwin.cli storage --json >/dev/null
+PYTHONPATH=src python3 -m venvwin.dashboard --root "${TMP_ROOT}/runtime" --home "${TMP_ROOT}/home" --port 9878 >/tmp/winux-dashboard-smoke.log 2>&1 &
+DASH_PID=$!
+sleep 1
+curl -fsS http://127.0.0.1:9878/ >/dev/null
+curl -fsS http://127.0.0.1:9878/api/status >/dev/null
+curl -fsS http://127.0.0.1:9878/api/doctor >/dev/null
+kill "${DASH_PID}" || true
 python3 -m venvwin.cli --root "${TMP_ROOT}/runtime" doctor >/dev/null || true
 python3 -m venvwin.cli --root "${TMP_ROOT}/runtime" doctor --json >/dev/null || true
 python3 -m venvwin.cli associate --applications-dir "${TMP_ROOT}/apps" >/dev/null
