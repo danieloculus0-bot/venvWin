@@ -28,7 +28,7 @@ chmod +x winux-portable/pre-iso-readiness.sh
 
 echo "Step 2: Build standard ISO"
 chmod +x winux-portable/build-iso.sh
-WINUX_PROFILE=standard ./winux-portable/build-iso.sh
+VENVWIN_PORTABLE_PROFILE=standard ./winux-portable/build-iso.sh
 
 echo "Step 3: Required artifact check"
 test -f "${ISO}"
@@ -39,7 +39,6 @@ sha256sum -c "${SHA}"
 echo "Step 4: Required manifest flags"
 grep -q '^profile=standard$' "${MANIFEST}"
 grep -q '^public_product_name=venvWin Portable$' "${MANIFEST}"
-grep -q '^internal_codename=WinUx$' "${MANIFEST}"
 grep -q '^leave_no_trace_default=true$' "${MANIFEST}"
 grep -q '^boot_toram_default=false$' "${MANIFEST}"
 grep -q '^live_user_autologin=true$' "${MANIFEST}"
@@ -96,18 +95,18 @@ xorriso -indev "${ISO}" -find / -name vmlinuz -print | head -n 1 | grep -q vmlin
 xorriso -indev "${ISO}" -find / -name initrd.img -print | head -n 1 | grep -q initrd.img
 
 grep -q 'squashfs-root/usr/local/bin/venvwin' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/usr/local/bin/winux-first-run' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/usr/local/bin/winux-first-boot-gui' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/usr/local/bin/winux-dashboard' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/usr/local/bin/winux-dashboard-lan' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/usr/local/bin/winux-select-capsule-store' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/usr/local/bin/winux-private-browser' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/usr/share/applications/winux-dashboard.desktop' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/usr/share/applications/winux-dashboard-lan.desktop' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/usr/share/applications/winux-private-browser.desktop' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/etc/xdg/autostart/winux-dashboard.desktop' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/etc/xdg/autostart/winux-first-run.desktop' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/etc/xdg/autostart/winux-first-boot-gui.desktop' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/usr/local/bin/venvwin-first-run' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/usr/local/bin/venvwin-first-boot-gui' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/usr/local/bin/venvwin-dashboard' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/usr/local/bin/venvwin-dashboard-lan' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/usr/local/bin/venvwin-select-capsule-store' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/usr/local/bin/venvwin-private-browser' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/usr/share/applications/venvwin-dashboard.desktop' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/usr/share/applications/venvwin-dashboard-lan.desktop' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/usr/share/applications/venvwin-private-browser.desktop' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/etc/xdg/autostart/venvwin-dashboard.desktop' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/etc/xdg/autostart/venvwin-first-run.desktop' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/etc/xdg/autostart/venvwin-first-boot-gui.desktop' "${SQUASHFS_LIST}"
 grep -q 'squashfs-root/etc/lightdm/lightdm.conf.d/50-venvwin-live-autologin.conf' "${SQUASHFS_LIST}"
 grep -q 'squashfs-root/etc/profile.d/venvwin.sh' "${SQUASHFS_LIST}"
 grep -q 'squashfs-root/etc/skel/Desktop/venvWin-First-Boot.desktop' "${SQUASHFS_LIST}"
@@ -150,7 +149,6 @@ venvWin Portable Flash-Ready Verdict
 status=FLASH_READY
 profile=standard
 public_product_name=venvWin Portable
-internal_codename=WinUx
 iso=${ISO}
 sha256=${SHA}
 manifest=${MANIFEST}
