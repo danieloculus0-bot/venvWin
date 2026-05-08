@@ -2,6 +2,16 @@ name: build-winux-iso
 
 on:
   workflow_dispatch:
+    inputs:
+      profile:
+        description: "WinUx package profile"
+        required: true
+        default: "standard"
+        type: choice
+        options:
+          - core
+          - standard
+          - privacy
   push:
     paths:
       - "winux-portable/**"
@@ -13,6 +23,8 @@ jobs:
   iso:
     runs-on: ubuntu-latest
     timeout-minutes: 90
+    env:
+      WINUX_PROFILE: ${{ github.event.inputs.profile || 'standard' }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -29,21 +41,24 @@ jobs:
 
       - name: Static ISO inspection
         run: |
-          test -f dist/winux-portable-alpha.iso
-          test -f dist/winux-portable-alpha.iso.sha256
-          sha256sum -c dist/winux-portable-alpha.iso.sha256
-          xorriso -indev dist/winux-portable-alpha.iso -report_el_torito as_mkisofs
-          xorriso -indev dist/winux-portable-alpha.iso -find / -name filesystem.squashfs -print | grep filesystem.squashfs
-          xorriso -indev dist/winux-portable-alpha.iso -find / -name vmlinuz -print | head -n 1
-          xorriso -indev dist/winux-portable-alpha.iso -find / -name initrd.img -print | head -n 1
+          ISO="dist/winux-portable-alpha-${WINUX_PROFILE}.iso"
+          test -f "$ISO"
+          test -f "$ISO.sha256"
+          sha256sum -c "$ISO.sha256"
+          cat "dist/winux-portable-alpha-${WINUX_PROFILE}-manifest.txt"
+          xorriso -indev "$ISO" -report_el_torito as_mkisofs
+          xorriso -indev "$ISO" -find / -name filesystem.squashfs -print | grep filesystem.squashfs
+          xorriso -indev "$ISO" -find / -name vmlinuz -print | head -n 1
+          xorriso -indev "$ISO" -find / -name initrd.img -print | head -n 1
 
       - name: QEMU boot smoke test
         run: |
+          ISO="dist/winux-portable-alpha-${WINUX_PROFILE}.iso"
           set +e
           timeout 150s qemu-system-x86_64 \
             -m 2048 \
             -smp 2 \
-            -cdrom dist/winux-portable-alpha.iso \
+            -cdrom "$ISO" \
             -boot d \
             -display none \
             -serial mon:stdio \
@@ -61,8 +76,9 @@ jobs:
       - name: Upload ISO artifact
         uses: actions/upload-artifact@v4
         with:
-          name: winux-portable-alpha-iso
+          name: winux-portable-alpha-${{ env.WINUX_PROFILE }}-iso
           path: |
-            dist/winux-portable-alpha.iso
-            dist/winux-portable-alpha.iso.sha256
+            dist/winux-portable-alpha-${{ env.WINUX_PROFILE }}.iso
+            dist/winux-portable-alpha-${{ env.WINUX_PROFILE }}.iso.sha256
+            dist/winux-portable-alpha-${{ env.WINUX_PROFILE }}-manifest.txt
           if-no-files-found: error
