@@ -32,6 +32,7 @@ required_files=(
   "src/venvwin/persistence.py"
   "src/venvwin/health.py"
   "winux-portable/audit-public-branding.sh"
+  "winux-portable/bootstrap-flash-ready-ubuntu.sh"
   "winux-portable/build-iso.sh"
   "winux-portable/test-iso-qemu.sh"
   "winux-portable/test-persistence-qemu.sh"
@@ -48,6 +49,7 @@ done
 
 echo "Checking shell syntax"
 bash -n winux-portable/audit-public-branding.sh
+bash -n winux-portable/bootstrap-flash-ready-ubuntu.sh
 bash -n winux-portable/build-iso.sh
 bash -n winux-portable/compare-profiles.sh
 bash -n winux-portable/build-all-profiles.sh
