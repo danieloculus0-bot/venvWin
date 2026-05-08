@@ -117,9 +117,17 @@ cat > config/includes.chroot/usr/local/bin/winux-dashboard <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 export PYTHONPATH="/opt/venvwin/src:${PYTHONPATH:-}"
-exec python3 -m venvwin.dashboard --host 0.0.0.0 --port 8787
+exec python3 -m venvwin.dashboard --host 127.0.0.1 --port 8787
 EOF
 chmod +x config/includes.chroot/usr/local/bin/winux-dashboard
+
+cat > config/includes.chroot/usr/local/bin/winux-dashboard-lan <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+export PYTHONPATH="/opt/venvwin/src:${PYTHONPATH:-}"
+exec python3 -m venvwin.dashboard --host 0.0.0.0 --port 8787 --lan-token
+EOF
+chmod +x config/includes.chroot/usr/local/bin/winux-dashboard-lan
 
 cat > config/includes.chroot/usr/local/bin/winux-select-capsule-store <<'EOF'
 #!/usr/bin/env bash
@@ -206,7 +214,7 @@ cat > config/includes.chroot/etc/xdg/autostart/winux-dashboard.desktop <<'EOF'
 [Desktop Entry]
 Type=Application
 Name=WinUx Dashboard Service
-Comment=Start local WinUx dashboard on port 8787
+Comment=Start local-only WinUx dashboard on port 8787
 Exec=/usr/local/bin/winux-dashboard
 Terminal=false
 X-GNOME-Autostart-enabled=true
@@ -226,8 +234,18 @@ cat > config/includes.chroot/usr/share/applications/winux-dashboard.desktop <<'E
 [Desktop Entry]
 Type=Application
 Name=WinUx Dashboard
-Comment=Open the WinUx dashboard in the browser
+Comment=Open the local WinUx dashboard in the browser
 Exec=xdg-open http://127.0.0.1:8787
+Terminal=false
+Categories=Utility;
+EOF
+
+cat > config/includes.chroot/usr/share/applications/winux-dashboard-lan.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=WinUx Dashboard LAN Mode
+Comment=Start token-protected LAN dashboard access
+Exec=xfce4-terminal -e "winux-dashboard-lan"
 Terminal=false
 Categories=Utility;
 EOF
@@ -319,9 +337,11 @@ default_storage=WinUx USB/install drive only
 first_boot_gui=true
 dashboard=true
 dashboard_url=http://127.0.0.1:8787
+dashboard_bind_default=127.0.0.1
+dashboard_lan_mode=explicit_token_required
 privacy_browser_profile=privacy_only
 standard_profile_policy=lean_runtime_only
-product_gate=first boot must initialize storage, expose status, show setup UI, and start dashboard
+product_gate=first boot must initialize storage, expose status, show setup UI, and start local dashboard
 EOF
 
 echo "Built ISO: ${OUTPUT_ISO}"
