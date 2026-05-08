@@ -2,19 +2,23 @@
 
 ## Public product naming
 
-Do not ship the OS wrapper publicly as WinUx.
-
-Use this split:
+Use one public product name:
 
 ```text
-venvWin = compatibility capsule engine
-venvWin Portable = bootable portable OS shell / live USB product
-WinUx = internal codename only
+venvWin Portable
 ```
+
+Use one subsystem name:
+
+```text
+venvWin
+```
+
+Do not ship, document, or present the portable OS under alternate product names.
 
 ## Why
 
-WinUx/Winux is already too close to existing public Linux distro branding. The project can still use WinUx internally as a codename, but public UI, docs, manifests, first-boot screens, and release artifacts should prefer venvWin Portable.
+The product needs one clean name for users, artifacts, first-boot screens, manifests, help text, and release notes. Alternate names make the project look unfinished and confuse the flash-ready gate.
 
 ## Product position
 
