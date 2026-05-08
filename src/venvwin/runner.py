@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import shlex
 from dataclasses import dataclass
 
 from .capsule import Capsule
@@ -11,8 +12,8 @@ class PreparedCommand:
     args: list[str]
 
     def shell_preview(self) -> str:
-        env_part = " ".join(f'{key}="{value}"' for key, value in self.env.items())
-        arg_part = " ".join(self.args)
+        env_part = " ".join(f"{key}={shlex.quote(value)}" for key, value in self.env.items())
+        arg_part = " ".join(shlex.quote(arg) for arg in self.args)
         return f"{env_part} {arg_part}".strip()
 
 
