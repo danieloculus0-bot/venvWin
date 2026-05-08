@@ -152,6 +152,18 @@ Manual build trigger from phone:
 Actions > flash-ready-standard > Run workflow > main
 ```
 
+Local/WSL build guide:
+
+```text
+winux-portable/local-flash-ready-build.md
+```
+
+USB flash guide:
+
+```text
+winux-portable/usb-flash-guide.md
+```
+
 Flash-ready artifact bundle:
 
 ```text
