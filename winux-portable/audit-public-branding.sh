@@ -51,7 +51,9 @@ grep -q "venvwin-flash-ready-verdict.txt" winux-portable/usb-flash-guide.md || {
 grep -q "status=FLASH_READY" winux-portable/usb-flash-guide.md || { echo "USB flash guide missing flash-ready status gate" >&2; exit 1; }
 grep -q "venvwin-portable-flash-ready-standard" .github/workflows/flash-ready-standard.yml || { echo "Workflow missing renamed artifact" >&2; exit 1; }
 
-bad_artifact_refs="$(grep -RIn --exclude-dir=.git --exclude='audit-public-branding.sh' \
+bad_artifact_refs="$(grep -RIn --exclude-dir=.git \
+  --exclude='audit-public-branding.sh' \
+  --exclude='test_readme_product_contract.py' \
   -e 'winux-portable-alpha' \
   -e 'winux-flash-ready' \
   -e 'winux-portable-flash-ready-standard' \
@@ -63,7 +65,9 @@ if [[ -n "${bad_artifact_refs}" ]]; then
   exit 1
 fi
 
-bad_public_refs="$(grep -RIn --exclude-dir=.git --exclude='audit-public-branding.sh' \
+bad_public_refs="$(grep -RIn --exclude-dir=.git \
+  --exclude='audit-public-branding.sh' \
+  --exclude='test_readme_product_contract.py' \
   -e 'WinUx Portable' \
   . || true)"
 
