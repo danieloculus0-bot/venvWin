@@ -5,20 +5,19 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUILD_DIR="${ROOT_DIR}/build/venvwin-portable-iso"
 OUT_DIR="${ROOT_DIR}/dist"
 IMAGE_NAME="venvwin-portable-alpha"
-WINUX_PROFILE="${WINUX_PROFILE:-standard}"
+PROFILE="${VENVWIN_PORTABLE_PROFILE:-standard}"
 PUBLIC_PRODUCT_NAME="venvWin Portable"
-INTERNAL_CODENAME="WinUx"
 
 if ! command -v lb >/dev/null 2>&1; then
   echo "live-build is missing. Install it with: sudo apt-get install -y live-build" >&2
   exit 1
 fi
 
-case "${WINUX_PROFILE}" in
+case "${PROFILE}" in
   core|standard|privacy)
     ;;
   *)
-    echo "Unknown WINUX_PROFILE='${WINUX_PROFILE}'. Use core, standard, or privacy." >&2
+    echo "Unknown VENVWIN_PORTABLE_PROFILE='${PROFILE}'. Use core, standard, or privacy." >&2
     exit 1
     ;;
 esac
@@ -50,7 +49,7 @@ mkdir -p \
   config/includes.chroot/etc/lightdm/lightdm.conf.d \
   config/hooks/normal
 
-cat > config/package-lists/00-winux-core.list.chroot <<'EOF'
+cat > config/package-lists/00-venvwin-core.list.chroot <<'EOF'
 live-boot
 live-config
 systemd-sysv
@@ -83,8 +82,8 @@ adwaita-icon-theme
 hicolor-icon-theme
 EOF
 
-if [[ "${WINUX_PROFILE}" == "standard" || "${WINUX_PROFILE}" == "privacy" ]]; then
-cat > config/package-lists/10-winux-runner.list.chroot <<'EOF'
+if [[ "${PROFILE}" == "standard" || "${PROFILE}" == "privacy" ]]; then
+cat > config/package-lists/10-venvwin-runner.list.chroot <<'EOF'
 wine
 wine64
 cabextract
@@ -92,8 +91,8 @@ p7zip-full
 EOF
 fi
 
-if [[ "${WINUX_PROFILE}" == "privacy" ]]; then
-cat > config/package-lists/20-winux-privacy.list.chroot <<'EOF'
+if [[ "${PROFILE}" == "privacy" ]]; then
+cat > config/package-lists/20-venvwin-privacy.list.chroot <<'EOF'
 tor
 torsocks
 firefox-esr
@@ -124,31 +123,31 @@ exec python3 -m venvwin.cli "$@"
 EOF
 chmod +x config/includes.chroot/usr/local/bin/venvwin
 
-cat > config/includes.chroot/usr/local/bin/winux-first-boot-gui <<'EOF'
+cat > config/includes.chroot/usr/local/bin/venvwin-first-boot-gui <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 export PYTHONPATH="/opt/venvwin/src:${PYTHONPATH:-}"
 exec python3 -m venvwin.gui_first_run
 EOF
-chmod +x config/includes.chroot/usr/local/bin/winux-first-boot-gui
+chmod +x config/includes.chroot/usr/local/bin/venvwin-first-boot-gui
 
-cat > config/includes.chroot/usr/local/bin/winux-dashboard <<'EOF'
+cat > config/includes.chroot/usr/local/bin/venvwin-dashboard <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 export PYTHONPATH="/opt/venvwin/src:${PYTHONPATH:-}"
 exec python3 -m venvwin.dashboard --host 127.0.0.1 --port 8787
 EOF
-chmod +x config/includes.chroot/usr/local/bin/winux-dashboard
+chmod +x config/includes.chroot/usr/local/bin/venvwin-dashboard
 
-cat > config/includes.chroot/usr/local/bin/winux-dashboard-lan <<'EOF'
+cat > config/includes.chroot/usr/local/bin/venvwin-dashboard-lan <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 export PYTHONPATH="/opt/venvwin/src:${PYTHONPATH:-}"
 exec python3 -m venvwin.dashboard --host 0.0.0.0 --port 8787 --lan-token
 EOF
-chmod +x config/includes.chroot/usr/local/bin/winux-dashboard-lan
+chmod +x config/includes.chroot/usr/local/bin/venvwin-dashboard-lan
 
-cat > config/includes.chroot/usr/local/bin/winux-select-capsule-store <<'EOF'
+cat > config/includes.chroot/usr/local/bin/venvwin-select-capsule-store <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 export PYTHONPATH="/opt/venvwin/src:${PYTHONPATH:-}"
@@ -158,15 +157,15 @@ from pathlib import Path
 from venvwin.persistence import persistence_report
 report = persistence_report()
 chosen = report["chosen"]
-Path.home().joinpath(".winux-capsule-store").write_text(chosen["path"], encoding="utf-8")
-Path.home().joinpath(".winux-capsule-store-source").write_text(chosen["source"], encoding="utf-8")
-Path.home().joinpath(".winux-persistence-report.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
+Path.home().joinpath(".venvwin-capsule-store").write_text(chosen["path"], encoding="utf-8")
+Path.home().joinpath(".venvwin-capsule-store-source").write_text(chosen["source"], encoding="utf-8")
+Path.home().joinpath(".venvwin-persistence-report.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
 print(chosen["path"])
 PY
 EOF
-chmod +x config/includes.chroot/usr/local/bin/winux-select-capsule-store
+chmod +x config/includes.chroot/usr/local/bin/venvwin-select-capsule-store
 
-cat > config/includes.chroot/usr/local/bin/winux-private-browser <<'EOF'
+cat > config/includes.chroot/usr/local/bin/venvwin-private-browser <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 
@@ -184,24 +183,24 @@ Tor Browser is missing. Starting Firefox ESR through torsocks as a fallback.
 This is not Tor Browser. It may reduce direct exposure, but it is not hardened anonymity.
 Useful for testing, not for production privacy claims.
 WARN
-  exec torsocks firefox-esr --new-instance --profile "$HOME/.winux-firefox-tor-fallback"
+  exec torsocks firefox-esr --new-instance --profile "$HOME/.venvwin-firefox-tor-fallback"
 fi
 
 cat <<'ERR'
 Privacy browser is not installed in this venvWin Portable profile.
-Use WINUX_PROFILE=privacy for Tor/Firefox tooling.
+Use VENVWIN_PORTABLE_PROFILE=privacy for Tor/Firefox tooling.
 Core and Standard stay lean on purpose.
 ERR
 exit 1
 EOF
-chmod +x config/includes.chroot/usr/local/bin/winux-private-browser
+chmod +x config/includes.chroot/usr/local/bin/venvwin-private-browser
 
-cat > config/includes.chroot/usr/local/bin/winux-first-run <<'EOF'
+cat > config/includes.chroot/usr/local/bin/venvwin-first-run <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 
-CAPSULE_STORE="$(/usr/local/bin/winux-select-capsule-store)"
-CAPSULE_STORE_SOURCE="$(cat "$HOME/.winux-capsule-store-source" 2>/dev/null || echo unknown)"
+CAPSULE_STORE="$(/usr/local/bin/venvwin-select-capsule-store)"
+CAPSULE_STORE_SOURCE="$(cat "$HOME/.venvwin-capsule-store-source" 2>/dev/null || echo unknown)"
 export VENVWIN_HOME="${VENVWIN_HOME:-$CAPSULE_STORE}"
 export VENVWIN_HOME_SOURCE="${VENVWIN_HOME_SOURCE:-$CAPSULE_STORE_SOURCE}"
 FIRST_RUN_MARKER="$HOME/.venvwin-first-run-complete"
@@ -219,49 +218,49 @@ venvwin doctor > "$HOME/Desktop/venvwin-doctor.txt" 2>&1 || true
 
 date -Iseconds > "${FIRST_RUN_MARKER}"
 EOF
-chmod +x config/includes.chroot/usr/local/bin/winux-first-run
+chmod +x config/includes.chroot/usr/local/bin/venvwin-first-run
 
-cat > config/includes.chroot/etc/xdg/autostart/winux-first-run.desktop <<'EOF'
+cat > config/includes.chroot/etc/xdg/autostart/venvwin-first-run.desktop <<'EOF'
 [Desktop Entry]
 Type=Application
 Name=venvWin Portable First Run Setup
 Comment=Initialize venvWin Portable capsule storage and file handlers
-Exec=/usr/local/bin/winux-first-run
+Exec=/usr/local/bin/venvwin-first-run
 Terminal=false
 X-GNOME-Autostart-enabled=true
 EOF
 
-cat > config/includes.chroot/etc/xdg/autostart/winux-first-boot-gui.desktop <<'EOF'
+cat > config/includes.chroot/etc/xdg/autostart/venvwin-first-boot-gui.desktop <<'EOF'
 [Desktop Entry]
 Type=Application
 Name=venvWin Portable First Boot
 Comment=Show venvWin Portable first boot setup screen
-Exec=/usr/local/bin/winux-first-boot-gui
+Exec=/usr/local/bin/venvwin-first-boot-gui
 Terminal=false
 X-GNOME-Autostart-enabled=true
 EOF
 
-cat > config/includes.chroot/etc/xdg/autostart/winux-dashboard.desktop <<'EOF'
+cat > config/includes.chroot/etc/xdg/autostart/venvwin-dashboard.desktop <<'EOF'
 [Desktop Entry]
 Type=Application
 Name=venvWin Portable Dashboard Service
 Comment=Start local-only venvWin Portable dashboard on port 8787
-Exec=/usr/local/bin/winux-dashboard
+Exec=/usr/local/bin/venvwin-dashboard
 Terminal=false
 X-GNOME-Autostart-enabled=true
 EOF
 
-cat > config/includes.chroot/usr/share/applications/winux-first-boot.desktop <<'EOF'
+cat > config/includes.chroot/usr/share/applications/venvwin-first-boot.desktop <<'EOF'
 [Desktop Entry]
 Type=Application
 Name=venvWin Portable First Boot
 Comment=Open venvWin Portable first boot setup screen
-Exec=/usr/local/bin/winux-first-boot-gui
+Exec=/usr/local/bin/venvwin-first-boot-gui
 Terminal=false
 Categories=Utility;
 EOF
 
-cat > config/includes.chroot/usr/share/applications/winux-dashboard.desktop <<'EOF'
+cat > config/includes.chroot/usr/share/applications/venvwin-dashboard.desktop <<'EOF'
 [Desktop Entry]
 Type=Application
 Name=venvWin Portable Dashboard
@@ -271,22 +270,22 @@ Terminal=false
 Categories=Utility;
 EOF
 
-cat > config/includes.chroot/usr/share/applications/winux-dashboard-lan.desktop <<'EOF'
+cat > config/includes.chroot/usr/share/applications/venvwin-dashboard-lan.desktop <<'EOF'
 [Desktop Entry]
 Type=Application
 Name=venvWin Portable Dashboard LAN Mode
 Comment=Start token-protected LAN dashboard access
-Exec=xfce4-terminal --command="winux-dashboard-lan"
+Exec=xfce4-terminal --command="venvwin-dashboard-lan"
 Terminal=false
 Categories=Utility;
 EOF
 
-cat > config/includes.chroot/usr/share/applications/winux-private-browser.desktop <<'EOF'
+cat > config/includes.chroot/usr/share/applications/venvwin-private-browser.desktop <<'EOF'
 [Desktop Entry]
 Type=Application
 Name=venvWin Portable Private Browser
 Comment=Privacy browser launcher. Installed only in Privacy profile.
-Exec=/usr/local/bin/winux-private-browser
+Exec=/usr/local/bin/venvwin-private-browser
 Terminal=false
 Categories=Network;WebBrowser;
 EOF
@@ -306,31 +305,31 @@ cat > config/includes.chroot/usr/share/applications/venvwin-capsules.desktop <<'
 Type=Application
 Name=venvWin Capsules
 Comment=Open venvWin capsule storage
-Exec=sh -c 'thunar "$(cat "$HOME/.winux-capsule-store" 2>/dev/null || echo "$HOME/WinUx-Capsules")"'
+Exec=sh -c 'thunar "$(cat "$HOME/.venvwin-capsule-store" 2>/dev/null || echo "$HOME/venvWin-Capsules")"'
 Terminal=false
 Categories=Utility;
 EOF
 
-install -m 0755 config/includes.chroot/usr/share/applications/winux-first-boot.desktop config/includes.chroot/etc/skel/Desktop/venvWin-First-Boot.desktop
-install -m 0755 config/includes.chroot/usr/share/applications/winux-dashboard.desktop config/includes.chroot/etc/skel/Desktop/venvWin-Dashboard.desktop
+install -m 0755 config/includes.chroot/usr/share/applications/venvwin-first-boot.desktop config/includes.chroot/etc/skel/Desktop/venvWin-First-Boot.desktop
+install -m 0755 config/includes.chroot/usr/share/applications/venvwin-dashboard.desktop config/includes.chroot/etc/skel/Desktop/venvWin-Dashboard.desktop
 install -m 0755 config/includes.chroot/usr/share/applications/venvwin-capsules.desktop config/includes.chroot/etc/skel/Desktop/venvWin-Capsules.desktop
 install -m 0755 config/includes.chroot/usr/share/applications/venvwin-doctor.desktop config/includes.chroot/etc/skel/Desktop/venvWin-Doctor.desktop
-install -m 0755 config/includes.chroot/usr/share/applications/winux-private-browser.desktop config/includes.chroot/etc/skel/Desktop/venvWin-Private-Browser.desktop
+install -m 0755 config/includes.chroot/usr/share/applications/venvwin-private-browser.desktop config/includes.chroot/etc/skel/Desktop/venvWin-Private-Browser.desktop
 
-cat > config/hooks/normal/010-winux-setup.chroot <<'EOF'
+cat > config/hooks/normal/010-venvwin-setup.chroot <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 
 echo "Setting up venvWin Portable runtime hooks"
 
 cat > /etc/profile.d/venvwin.sh <<'PROFILE'
-if [ -f "$HOME/.winux-capsule-store" ]; then
-  export VENVWIN_HOME="$(cat "$HOME/.winux-capsule-store")"
-  if [ -f "$HOME/.winux-capsule-store-source" ]; then
-    export VENVWIN_HOME_SOURCE="$(cat "$HOME/.winux-capsule-store-source")"
+if [ -f "$HOME/.venvwin-capsule-store" ]; then
+  export VENVWIN_HOME="$(cat "$HOME/.venvwin-capsule-store")"
+  if [ -f "$HOME/.venvwin-capsule-store-source" ]; then
+    export VENVWIN_HOME_SOURCE="$(cat "$HOME/.venvwin-capsule-store-source")"
   fi
 else
-  export VENVWIN_HOME="${VENVWIN_HOME:-$HOME/WinUx-Capsules}"
+  export VENVWIN_HOME="${VENVWIN_HOME:-$HOME/venvWin-Capsules}"
   export VENVWIN_HOME_SOURCE="${VENVWIN_HOME_SOURCE:-home-fallback}"
 fi
 export PYTHONPATH="/opt/venvwin/src:${PYTHONPATH:-}"
@@ -339,9 +338,9 @@ PROFILE
 update-desktop-database /usr/share/applications || true
 update-mime-database /usr/share/mime || true
 EOF
-chmod +x config/hooks/normal/010-winux-setup.chroot
+chmod +x config/hooks/normal/010-venvwin-setup.chroot
 
-cat > config/hooks/normal/090-winux-trim.chroot <<'EOF'
+cat > config/hooks/normal/090-venvwin-trim.chroot <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 
@@ -351,7 +350,7 @@ rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* || true
 rm -rf /usr/share/doc/* /usr/share/man/* /usr/share/info/* || true
 find /usr/share/locale -mindepth 1 -maxdepth 1 ! -name 'en*' -exec rm -rf {} + || true
 EOF
-chmod +x config/hooks/normal/090-winux-trim.chroot
+chmod +x config/hooks/normal/090-venvwin-trim.chroot
 
 sudo lb build
 
@@ -361,17 +360,16 @@ if [[ -z "${ISO_PATH}" ]]; then
   exit 1
 fi
 
-OUTPUT_ISO="${OUT_DIR}/${IMAGE_NAME}-${WINUX_PROFILE}.iso"
+OUTPUT_ISO="${OUT_DIR}/${IMAGE_NAME}-${PROFILE}.iso"
 cp "${ISO_PATH}" "${OUTPUT_ISO}"
 sha256sum "${OUTPUT_ISO}" > "${OUTPUT_ISO}.sha256"
 
 ISO_BYTES="$(stat -c%s "${OUTPUT_ISO}")"
 ISO_MB="$(( (ISO_BYTES + 1048575) / 1048576 ))"
-cat > "${OUT_DIR}/${IMAGE_NAME}-${WINUX_PROFILE}-manifest.txt" <<EOF
+cat > "${OUT_DIR}/${IMAGE_NAME}-${PROFILE}-manifest.txt" <<EOF
 venvWin Portable ISO Manifest
-profile=${WINUX_PROFILE}
+profile=${PROFILE}
 public_product_name=${PUBLIC_PRODUCT_NAME}
-internal_codename=${INTERNAL_CODENAME}
 iso=${OUTPUT_ISO}
 size_mb=${ISO_MB}
 sha256_file=${OUTPUT_ISO}.sha256
