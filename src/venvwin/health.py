@@ -9,6 +9,7 @@ from typing import Any
 from .associate import default_applications_dir
 from .capsule import list_capsules
 from .paths import capsules_dir, profiles_dir
+from .persistence import persistence_report
 
 
 @dataclass(slots=True)
@@ -80,13 +81,16 @@ def association_status(applications_dir: Path) -> HealthCheck:
 
 
 def persistence_status(root: Path) -> HealthCheck:
-    env_home = os.environ.get("VENVWIN_HOME")
-    if env_home:
-        return HealthCheck("persistence", "ok", f"VENVWIN_HOME is set: {env_home}")
+    report = persistence_report()
+    chosen = report["chosen"]
+    if os.environ.get("VENVWIN_HOME"):
+        return HealthCheck("persistence", "ok", f"VENVWIN_HOME is set: {os.environ['VENVWIN_HOME']}")
+    if chosen["writable"] and chosen["source"] != "home-fallback":
+        return HealthCheck("persistence", "ok", f"Persistent capsule store found: {chosen['path']}")
     return HealthCheck(
         "persistence",
         "warn",
-        f"VENVWIN_HOME is not set. Using default root: {root}. Fine for testing, sketchy for WinUx Portable persistence.",
+        f"No dedicated persistent capsule store found. Using default root: {root}. Fine for testing, sketchy for WinUx Portable. Disposable-session goblin risk is active.",
     )
 
 
@@ -99,6 +103,7 @@ def capsule_count_status(root: Path) -> HealthCheck:
 
 def health_report(root: Path, applications_dir: Path | None = None) -> dict[str, Any]:
     apps_dir = applications_dir or default_applications_dir()
+    persist = persistence_report()
     checks = [
         check_path_exists("runtime-root", root, required=False),
         check_path_exists("profiles-dir", profiles_dir(root), required=False),
@@ -117,5 +122,6 @@ def health_report(root: Path, applications_dir: Path | None = None) -> dict[str,
         "overall": worst,
         "root": str(root),
         "applications_dir": str(apps_dir),
+        "persistence": persist,
         "checks": [check.to_dict() for check in checks],
     }
