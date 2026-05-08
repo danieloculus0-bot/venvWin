@@ -10,7 +10,7 @@ def test_display_model_has_first_boot_fields(tmp_path: Path, monkeypatch):
     model = display_model(tmp_path)
 
     assert model["product_name"] == PUBLIC_PRODUCT_NAME
-    assert model["internal_codename"] == "venvWin"
+    assert "internal_codename" not in model
     assert "capsule_store" in model
     assert "storage_status" in model
     assert "storage_message" in model
