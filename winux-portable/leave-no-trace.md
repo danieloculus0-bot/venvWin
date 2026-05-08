@@ -1,35 +1,53 @@
-# WinUx Portable Traceable State Policy
+# WinUx Portable Leave-No-Trace Policy
 
 ## Product rule
 
-WinUx Portable should be portable, lightweight, and respectful of the host machine.
+WinUx Portable is a lightweight portable Linux environment for making old PCs useful again.
 
-That does not mean stealth. WinUx must be traceable to the user who booted it. It should avoid unwanted host changes while still keeping clear logs, proof files, and audit records inside the WinUx session and portable storage.
+Leave No Trace means no host hard-drive writes by default. It does not mean stealth, hidden use, hacking, secrecy, or pretending the machine was never booted.
 
-The correct promise is:
-
-```text
-No unwanted host writes.
-No hidden desktop/browser residue.
-Clear WinUx-owned proof and logs.
-Traceable use, not stealth use.
-```
-
-## Better name
-
-Do not market this as "leave no trace."
-
-Use:
+The selling point is simple:
 
 ```text
-Traceable Portable State
+Boot from USB.
+Run from USB/RAM.
+Store WinUx state on WinUx-owned storage.
+Do not consume or modify the host PC hard drive unless the user explicitly chooses it.
 ```
 
-or:
+## Target feel
 
-```text
-Host-respectful portable mode
-```
+WinUx should feel closer to the useful old Puppy Linux era than a bloated modern desktop distro.
+
+Design targets:
+
+- boots on older 2010-ish PCs where practical
+- lightweight desktop
+- simple launcher model
+- portable state
+- minimal background nonsense
+- clear logs and proof inside WinUx storage/session
+- no host desktop or browser spam
+
+## What LNT means here
+
+LNT means:
+
+- do not write to host internal drives by default
+- do not install onto the host by default
+- do not modify host browser settings
+- do not drop host desktop icons
+- do not alter host startup entries
+- do not mount internal disks read-write unless explicitly chosen
+- keep capsules, logs, and proof files on WinUx-owned storage when possible
+
+LNT does not mean:
+
+- hiding activity
+- disabling logs
+- removing evidence from WinUx-owned storage
+- bypassing auditability
+- behaving like hacker trash
 
 ## Default writable target
 
@@ -47,7 +65,8 @@ Default behavior:
 
 - do not write to host internal disks unless the user explicitly chooses it
 - do not auto-mount host internal disks read-write
-- do not create random host desktop icons
+- do not create host files
+- do not create host desktop icons
 - do not modify host browser settings
 - do not install launchers onto the host OS
 - do not modify the host bootloader
@@ -76,7 +95,7 @@ Required traceable artifacts:
 - capsule metadata
 - install/open dry-run records when applicable
 
-These artifacts are for clarity and debugging, not concealment.
+These artifacts are for clarity, debugging, support, and honest traceability. They should live in the WinUx session or WinUx-owned storage, not sprayed across the host PC.
 
 ## Desktop/browser residue rule
 
@@ -135,18 +154,18 @@ Advanced choices must warn the user if the target appears to be a host/internal 
 
 ## Product promise
 
-WinUx Portable should feel safe to boot on another machine without making a mess:
+WinUx Portable should feel safe to boot on an old or borrowed machine without making a mess:
 
 ```text
 No install by default.
-No host mess.
+No host disk usage by default.
+No browser/desktop residue on the host.
 No mystery writes.
-No fake stealth claims.
-Proof and logs remain in WinUx-owned storage.
+Proof and logs remain in WinUx-owned storage/session.
 ```
 
 ## Hard boundary
 
-Do not sacrifice traceability just to sound privacy-forward.
+Do not sacrifice LNT just to make persistence easier.
 
-A portable OS that hides its own use is suspicious. A portable OS that avoids unwanted host writes while keeping honest logs is useful.
+A portable OS that casually writes to the host hard drive is not portable. It is just a rude little bastard with a boot menu.
