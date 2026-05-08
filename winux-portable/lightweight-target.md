@@ -113,6 +113,23 @@ Avoid by default:
 - automatic host-drive indexing
 - silent update daemons that chew RAM
 
+## Game policy
+
+WinUx is not a game bundle.
+
+Allowed:
+
+- one tiny built-in easter egg game named `Daniel Boone: Bloat Stacker`
+- Tkinter-only implementation using the Python standard library
+- launcher entry in the WinUx menu
+
+Not allowed:
+
+- additional bundled games
+- game package dependencies
+- large art/audio assets
+- anything that bloats the ISO or distracts from old-PC rescue and compatibility work
+
 ## LNT storage rule
 
 Leave No Trace means no host hard-drive usage by default.
