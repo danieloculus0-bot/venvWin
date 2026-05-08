@@ -63,6 +63,7 @@ xfce4-terminal
 thunar
 mousepad
 python3
+python3-tk
 xdg-utils
 desktop-file-utils
 shared-mime-info
@@ -103,6 +104,14 @@ export PYTHONPATH="/opt/venvwin/src:${PYTHONPATH:-}"
 exec python3 -m venvwin.cli "$@"
 EOF
 chmod +x config/includes.chroot/usr/local/bin/venvwin
+
+cat > config/includes.chroot/usr/local/bin/winux-first-boot-gui <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+export PYTHONPATH="/opt/venvwin/src:${PYTHONPATH:-}"
+exec python3 -m venvwin.gui_first_run
+EOF
+chmod +x config/includes.chroot/usr/local/bin/winux-first-boot-gui
 
 cat > config/includes.chroot/usr/local/bin/winux-select-capsule-store <<'EOF'
 #!/usr/bin/env bash
@@ -160,64 +169,46 @@ mkdir -p "$HOME/Desktop" "$VENVWIN_HOME"
 
 venvwin init || true
 venvwin associate || true
+venvwin first-run || true
 venvwin doctor > "$HOME/Desktop/venvwin-doctor.txt" || true
-
-LEAVE_NO_TRACE_NOTE="Leave-no-trace mode: writing to WinUx-owned portable storage. Host machine stays clean."
-DISPOSABLE_NOTE="Persistent capsule store selected: $VENVWIN_HOME"
-if [ "$VENVWIN_HOME" = "$HOME/WinUx-Capsules" ]; then
-  LEAVE_NO_TRACE_NOTE="Leave-no-trace warning: no WinUx-owned persistent storage was found. Do not write to host disks unless you explicitly choose to."
-  DISPOSABLE_NOTE="Disposable-session warning: capsule storage is in the live user's home folder. Fine for testing, terrible for keeping your work unless persistence is enabled."
-fi
-
-cat > "$HOME/Desktop/WinUx-Quick-Start.txt" <<MSG
-Welcome to WinUx Portable.
-
-Default rule:
-
-  Write only to the WinUx USB/install drive. Leave the host machine alone.
-
-$LEAVE_NO_TRACE_NOTE
-
-Double-click a Windows EXE/MSI, or run:
-
-  venvwin open /path/to/app.exe
-
-Capsules live here:
-
-  $VENVWIN_HOME
-
-$DISPOSABLE_NOTE
-
-Run health check:
-
-  venvwin doctor
-
-Private browser:
-
-  winux-private-browser
-
-If Windows files are being bullshit, run:
-
-  venvwin associate
-MSG
 EOF
 chmod +x config/includes.chroot/usr/local/bin/winux-first-run
 
 cat > config/includes.chroot/etc/xdg/autostart/winux-first-run.desktop <<'EOF'
 [Desktop Entry]
 Type=Application
-Name=WinUx First Run
-Comment=Initialize venvWin capsule storage and double-click handlers
+Name=WinUx First Run Setup
+Comment=Initialize WinUx capsule storage and file handlers
 Exec=/usr/local/bin/winux-first-run
 Terminal=false
 X-GNOME-Autostart-enabled=true
+EOF
+
+cat > config/includes.chroot/etc/xdg/autostart/winux-first-boot-gui.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=WinUx First Boot
+Comment=Show WinUx first boot setup screen
+Exec=/usr/local/bin/winux-first-boot-gui
+Terminal=false
+X-GNOME-Autostart-enabled=true
+EOF
+
+cat > config/includes.chroot/usr/share/applications/winux-first-boot.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=WinUx First Boot
+Comment=Open WinUx first boot setup screen
+Exec=/usr/local/bin/winux-first-boot-gui
+Terminal=false
+Categories=Utility;
 EOF
 
 cat > config/includes.chroot/usr/share/applications/winux-private-browser.desktop <<'EOF'
 [Desktop Entry]
 Type=Application
 Name=WinUx Private Browser
-Comment=Launch Tor Browser or honest Tor fallback without fake privacy bullshit
+Comment=Launch Tor Browser or honest Tor fallback without fake privacy claims
 Exec=/usr/local/bin/winux-private-browser
 Terminal=false
 Categories=Network;WebBrowser;
@@ -227,7 +218,7 @@ cat > config/includes.chroot/usr/share/applications/venvwin-doctor.desktop <<'EO
 [Desktop Entry]
 Type=Application
 Name=venvWin Doctor
-Comment=Check venvWin health before the goblins multiply
+Comment=Check venvWin health and setup status
 Exec=xfce4-terminal -e "venvwin doctor"
 Terminal=false
 Categories=Utility;
@@ -267,7 +258,7 @@ cat > config/hooks/normal/090-winux-trim.chroot <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "Trimming WinUx Portable image fat"
+echo "Trimming WinUx Portable image"
 apt-get clean || true
 rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* || true
 rm -rf /usr/share/doc/* /usr/share/man/* /usr/share/info/* || true
@@ -279,7 +270,7 @@ sudo lb build
 
 ISO_PATH="$(find . -maxdepth 1 \( -name 'live-image-*.iso' -o -name 'live-image-*.hybrid.iso' \) -type f | head -n 1 || true)"
 if [[ -z "${ISO_PATH}" ]]; then
-  echo "ISO build finished but no ISO was found. That is cursed and not product-ready." >&2
+  echo "ISO build finished but no ISO was found. Build failed product gate." >&2
   exit 1
 fi
 
@@ -297,13 +288,15 @@ size_mb=${ISO_MB}
 sha256_file=${OUTPUT_ISO}.sha256
 leave_no_trace_default=true
 default_storage=WinUx USB/install drive only
+first_boot_gui=true
+product_gate=first boot must initialize storage, expose status, and show setup UI
 EOF
 
 echo "Built ISO: ${OUTPUT_ISO}"
 echo "Size: ${ISO_MB} MB"
 echo "Checksum: ${OUTPUT_ISO}.sha256"
 if [[ "${ISO_MB}" -gt 3500 ]]; then
-  echo "Hard concern: ISO is over 3500 MB. This is bloated-goblin territory."
+  echo "Hard concern: ISO is over 3500 MB. Trim before product release."
 elif [[ "${ISO_MB}" -gt 2500 ]]; then
-  echo "Soft warning: ISO is over 2500 MB. Alpha can live, but trim this bastard later."
+  echo "Soft warning: ISO is over 2500 MB. Alpha can continue, but tune size later."
 fi
