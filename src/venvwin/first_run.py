@@ -7,10 +7,12 @@ from typing import Any
 from .persistence import persistence_report
 
 
-QUICK_START_NAME = "WinUx-Quick-Start.txt"
-FIRST_BOOT_PROOF_NAME = "WinUx-First-Boot-Proof.txt"
-DASHBOARD_NAME = "WinUx-Dashboard.txt"
-FIRST_BOOT_CHECKLIST_NAME = "WinUx-First-Boot-Checklist.txt"
+PUBLIC_PRODUCT_NAME = "venvWin Portable"
+INTERNAL_CODENAME = "WinUx"
+QUICK_START_NAME = "venvWin-Quick-Start.txt"
+FIRST_BOOT_PROOF_NAME = "venvWin-First-Boot-Proof.txt"
+DASHBOARD_NAME = "venvWin-Dashboard.txt"
+FIRST_BOOT_CHECKLIST_NAME = "venvWin-First-Boot-Checklist.txt"
 DOCTOR_NAME = "venvwin-doctor.txt"
 STORAGE_MARKER_NAME = ".winux-capsule-store"
 PERSISTENCE_REPORT_NAME = ".winux-persistence-report.json"
@@ -24,10 +26,10 @@ def first_run_summary(home: Path | None = None) -> dict[str, Any]:
 
     if report["leave_no_trace"]:
         storage_status = "leave-no-trace-ok"
-        storage_message = "Writing to WinUx-owned portable storage. Host machine stays clean."
+        storage_message = "Writing to venvWin Portable storage. Host machine stays clean."
     elif report["disposable_warning"]:
         storage_status = "disposable-warning"
-        storage_message = "No WinUx-owned persistent storage found. This may be disposable. Fine for testing, terrible for keeping your work."
+        storage_message = "No venvWin-owned persistent storage found. This may be disposable. Fine for testing, terrible for keeping your work."
     elif report["host_write_warning"]:
         storage_status = "host-risk-warning"
         storage_message = "Selected storage may be a host path. Use only if you chose that on purpose."
@@ -36,6 +38,8 @@ def first_run_summary(home: Path | None = None) -> dict[str, Any]:
         storage_message = "Storage status is unclear. Inspect before trusting this little bastard."
 
     return {
+        "product_name": PUBLIC_PRODUCT_NAME,
+        "internal_codename": INTERNAL_CODENAME,
         "capsule_store": chosen["path"],
         "storage_source": chosen["source"],
         "writable": chosen["writable"],
@@ -50,11 +54,11 @@ def first_run_summary(home: Path | None = None) -> dict[str, Any]:
 
 
 def quick_start_text(summary: dict[str, Any], capsule_store: Path) -> str:
-    return f"""Welcome to WinUx Portable.
+    return f"""Welcome to {PUBLIC_PRODUCT_NAME}.
 
 Default rule:
 
-  Write only to the WinUx USB/install drive. Leave the host machine alone.
+  Write only to the venvWin Portable USB/install drive. Leave the host machine alone.
 
 Storage status:
 
@@ -87,11 +91,15 @@ Private browser:
 If Windows files are being bullshit, run:
 
   venvwin associate
+
+Internal codename:
+
+  {INTERNAL_CODENAME}
 """
 
 
 def dashboard_text(summary: dict[str, Any]) -> str:
-    return f"""WinUx Dashboard
+    return f"""{PUBLIC_PRODUCT_NAME} Dashboard
 
 Local dashboard:
 
@@ -99,7 +107,7 @@ Local dashboard:
 
 Default behavior:
 
-  Local-only dashboard on this WinUx session.
+  Local-only dashboard on this venvWin Portable session.
 
 Phone/LAN behavior:
 
@@ -126,13 +134,13 @@ If the dashboard is not available, run:
 
 
 def checklist_text(summary: dict[str, Any], capsule_store: Path) -> str:
-    return f"""WinUx First Boot Checklist
+    return f"""{PUBLIC_PRODUCT_NAME} First Boot Checklist
 
 Use this checklist before calling an ISO flash-ready.
 
 [ ] Desktop loaded
-[ ] WinUx First Boot GUI opened
-[ ] WinUx Dashboard opens at {summary['dashboard_url']}
+[ ] venvWin First Boot GUI opened
+[ ] venvWin Dashboard opens at {summary['dashboard_url']}
 [ ] Capsule storage path is visible
 [ ] Capsule storage path exists: {capsule_store}
 [ ] Leave-no-trace status is visible
@@ -149,6 +157,8 @@ Use this checklist before calling an ISO flash-ready.
 
 Current first-run summary:
 
+product={PUBLIC_PRODUCT_NAME}
+internal_codename={INTERNAL_CODENAME}
 status={summary['storage_status']}
 storage_message={summary['storage_message']}
 capsule_store={capsule_store}
@@ -162,11 +172,12 @@ dashboard_url={summary['dashboard_url']}
 
 
 def first_boot_proof_text(summary: dict[str, Any], capsule_store: Path) -> str:
-    return f"""WinUx First Boot Proof
+    return f"""{PUBLIC_PRODUCT_NAME} First Boot Proof
 
 This file is created by first-run setup so an alpha boot can be verified without guessing.
 
-product=WinUx Portable
+product={PUBLIC_PRODUCT_NAME}
+internal_codename={INTERNAL_CODENAME}
 engine=venvWin
 status={summary['storage_status']}
 storage_message={summary['storage_message']}
@@ -224,7 +235,7 @@ def wizard_text(home: Path | None = None) -> str:
     summary = first_run_summary(home)
     chosen = summary["capsule_store"]
     lines = [
-        "WinUx First Run",
+        f"{PUBLIC_PRODUCT_NAME} First Run",
         "",
         "Where should Windows app state live?",
         "",
@@ -233,10 +244,10 @@ def wizard_text(home: Path | None = None) -> str:
         f"Message: {summary['storage_message']}",
         f"Dashboard: {summary['dashboard_url']}",
         "",
-        "Default policy: write to the WinUx USB/install drive and leave the host machine alone.",
+        "Default policy: write to the venvWin Portable USB/install drive and leave the host machine alone.",
         "",
         "Options planned for GUI:",
-        "  1. Use WinUx USB storage, recommended",
+        "  1. Use venvWin Portable USB storage, recommended",
         "  2. Disposable test session",
         "  3. Advanced location, explicit host-risk warning",
     ]
