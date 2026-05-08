@@ -11,6 +11,8 @@ def test_choose_capsule_store_uses_home_fallback(tmp_path: Path, monkeypatch):
     assert chosen.source == "home-fallback"
     assert chosen.path == tmp_path / "WinUx-Capsules"
     assert chosen.writable is True
+    assert chosen.portable_owned is False
+    assert chosen.host_risk is True
 
 
 def test_choose_capsule_store_prefers_env(tmp_path: Path, monkeypatch):
@@ -22,6 +24,8 @@ def test_choose_capsule_store_prefers_env(tmp_path: Path, monkeypatch):
     assert chosen.source == "VENVWIN_HOME"
     assert chosen.path == target
     assert chosen.writable is True
+    assert chosen.portable_owned is True
+    assert chosen.host_risk is False
 
 
 def test_persistence_report_has_candidates(tmp_path: Path, monkeypatch):
@@ -31,4 +35,6 @@ def test_persistence_report_has_candidates(tmp_path: Path, monkeypatch):
 
     assert "chosen" in report
     assert "candidates" in report
+    assert "leave_no_trace" in report
+    assert "host_write_warning" in report
     assert report["candidates"]
