@@ -1,4 +1,4 @@
-# WinUx Portable ISO Test Plan
+# venvWin Portable ISO Test Plan
 
 ## Goal
 
@@ -9,8 +9,8 @@ Prove the ISO actually boots and the product hook works.
 Expected:
 
 ```text
-dist/winux-portable-alpha.iso
-dist/winux-portable-alpha.iso.sha256
+dist/venvwin-portable-alpha-standard.iso
+dist/venvwin-portable-alpha-standard.iso.sha256
 ```
 
 ## Test 2: VM boot smoke test
