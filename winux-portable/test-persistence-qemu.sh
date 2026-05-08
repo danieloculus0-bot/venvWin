@@ -4,8 +4,8 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DIST_DIR="${ROOT_DIR}/dist"
 WINUX_PROFILE="${WINUX_PROFILE:-standard}"
-ISO_PATH="${ISO_PATH:-${DIST_DIR}/winux-portable-alpha-${WINUX_PROFILE}.iso}"
-PERSIST_IMG="${PERSIST_IMG:-${DIST_DIR}/winux-persistence-test.img}"
+ISO_PATH="${ISO_PATH:-${DIST_DIR}/venvwin-portable-alpha-${WINUX_PROFILE}.iso}"
+PERSIST_IMG="${PERSIST_IMG:-${DIST_DIR}/venvwin-persistence-test.img}"
 MEMORY="${MEMORY:-4096}"
 CPUS="${CPUS:-2}"
 IMAGE_MB="${IMAGE_MB:-2048}"
@@ -44,7 +44,7 @@ else
 fi
 
 cat <<'NOTE'
-== WinUx Persistence QEMU Test ==
+== venvWin Portable Persistence QEMU Test ==
 
 Manual pass criteria:
 
