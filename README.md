@@ -152,6 +152,12 @@ Manual build trigger from phone:
 Actions > flash-ready-standard > Run workflow > main
 ```
 
+Build attempt checklist:
+
+```text
+winux-portable/build-attempt-checklist.md
+```
+
 Windows PowerShell WSL build runner:
 
 ```powershell
