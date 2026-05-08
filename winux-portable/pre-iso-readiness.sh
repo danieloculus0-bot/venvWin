@@ -33,15 +33,21 @@ required_files=(
   "src/venvwin/health.py"
   "winux-portable/audit-public-branding.sh"
   "winux-portable/bootstrap-flash-ready-ubuntu.sh"
+  "winux-portable/build-all-profiles.sh"
+  "winux-portable/build-flash-ready-standard.sh"
   "winux-portable/build-iso.sh"
+  "winux-portable/compare-profiles.sh"
   "winux-portable/test-iso-qemu.sh"
   "winux-portable/test-persistence-qemu.sh"
   "winux-portable/windows-wsl-build-command.md"
+  "winux-portable/workflow-contract.json"
   "winux-portable/first-boot-product-gate.md"
   "winux-portable/flash-ready-checklist.md"
   "winux-portable/leave-no-trace.md"
+  "winux-portable/local-flash-ready-build.md"
   "winux-portable/phone-build-status.md"
   "winux-portable/product-gate.md"
+  "winux-portable/run-flash-ready-from-phone.md"
 )
 
 for file in "${required_files[@]}"; do
@@ -57,6 +63,13 @@ bash -n winux-portable/build-all-profiles.sh
 bash -n winux-portable/test-iso-qemu.sh
 bash -n winux-portable/test-persistence-qemu.sh
 bash -n winux-portable/build-flash-ready-standard.sh
+
+echo "Checking flash-ready static-inspection contract"
+grep -q "unsquashfs -ll" winux-portable/build-flash-ready-standard.sh
+grep -q "squashfs_static_inspection=pass" winux-portable/build-flash-ready-standard.sh
+grep -q "squashfs-root/etc/skel/Desktop/venvWin-First-Boot.desktop" winux-portable/build-flash-ready-standard.sh
+grep -q "venvwin-portable-alpha-standard.iso" winux-portable/build-flash-ready-standard.sh
+grep -q "venvwin-flash-ready-verdict.txt" winux-portable/build-flash-ready-standard.sh
 
 echo "Checking public branding contract"
 chmod +x winux-portable/audit-public-branding.sh
