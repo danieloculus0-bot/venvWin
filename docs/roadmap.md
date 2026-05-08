@@ -1,4 +1,4 @@
-# venvWin Roadmap
+# venvWin / WinUx Roadmap
 
 ## Phase 0: Foundation
 
@@ -13,7 +13,27 @@ Goals:
 - Generate runner commands without executing them
 - Add basic tests and CI
 
-## Phase 1: Local install workflow
+## Phase 1: WinUx Portable MVP
+
+Status: first shippable target
+
+Goals:
+
+- Build bootable USB image plan
+- Support persistent venvWin capsule storage
+- Support optional RAM boot mode
+- Use a dark lightweight desktop
+- Preinstall venvWin
+- Enable EXE/MSI double-click routing into venvWin
+- Keep VM fallback out of the normal path
+- Aim for a small sellable $8 utility image
+
+Docs:
+
+- `docs/product-plan.md`
+- `docs/portable-live-boot.md`
+
+## Phase 2: Local install workflow
 
 Goals:
 
@@ -24,7 +44,7 @@ Goals:
 - Record exit status
 - Add basic logging
 
-## Phase 2: Launcher workflow
+## Phase 3: Launcher workflow
 
 Goals:
 
@@ -34,7 +54,7 @@ Goals:
 - Add file association support
 - Add icon discovery/capture
 
-## Phase 3: Snapshot and rollback
+## Phase 4: Snapshot and rollback
 
 Goals:
 
@@ -43,7 +63,7 @@ Goals:
 - Roll back to known-good state
 - Add repair/reset commands
 
-## Phase 4: Compatibility profiles
+## Phase 5: Compatibility profiles
 
 Goals:
 
@@ -52,7 +72,7 @@ Goals:
 - Add runner version pinning
 - Add known-good install notes
 
-## Phase 5: venvWin GUI
+## Phase 6: venvWin GUI
 
 Goals:
 
@@ -67,7 +87,7 @@ Goals:
 
 Design doc: `docs/gui-vision.md`
 
-## Phase 6: WinUx integration
+## Phase 7: WinUx shell integration
 
 Goals:
 
@@ -77,14 +97,16 @@ Goals:
 - Add health/report view
 - Expose venvWin apps as normal desktop applications
 
-## Phase 7: Fallback backends
+## Phase 8: Fallback backends
 
 Goals:
 
-- Add VM fallback runner
-- Surface remote/VM apps like native launchers
+- Add VM fallback runner only as a last resort
+- Surface remote/VM apps like native launchers when needed
 - Preserve the same capsule metadata model
 
 ## Hard truth
 
 venvWin should not claim magic compatibility. It should claim controlled compatibility: isolated, repairable, profile-driven app environments that feel native from the user's perspective.
+
+WinUx Portable should be the first sellable form because it is smaller, clearer, and easier to test than a full OS replacement.
