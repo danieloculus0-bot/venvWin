@@ -90,7 +90,7 @@ def persistence_status(root: Path) -> HealthCheck:
     return HealthCheck(
         "persistence",
         "warn",
-        f"No dedicated persistent capsule store found. Using default root: {root}. Fine for testing, sketchy for WinUx Portable. Disposable-session goblin risk is active.",
+        f"No dedicated persistent capsule store found. Using default root: {root}. Fine for testing, sketchy for venvWin Portable. Disposable-session goblin risk is active.",
     )
 
 
