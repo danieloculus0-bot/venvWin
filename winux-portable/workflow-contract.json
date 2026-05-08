@@ -1,12 +1,14 @@
 {
   "workflow": "flash-ready-standard",
   "branch": "main",
-  "required_artifact": "winux-portable-flash-ready-standard",
+  "public_product_name": "venvWin Portable",
+  "internal_codename": "WinUx",
+  "required_artifact": "venvwin-portable-flash-ready-standard",
   "required_files": [
-    "winux-portable-alpha-standard.iso",
-    "winux-portable-alpha-standard.iso.sha256",
-    "winux-portable-alpha-standard-manifest.txt",
-    "winux-flash-ready-verdict.txt"
+    "venvwin-portable-alpha-standard.iso",
+    "venvwin-portable-alpha-standard.iso.sha256",
+    "venvwin-portable-alpha-standard-manifest.txt",
+    "venvwin-flash-ready-verdict.txt"
   ],
   "required_verdict": "status=FLASH_READY",
   "flash_ready_only_after": [
