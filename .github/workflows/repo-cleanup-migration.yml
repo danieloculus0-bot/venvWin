@@ -24,7 +24,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          echo "repo-cleanup-migration trigger: v2"
+          echo "repo-cleanup-migration trigger: v3"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
@@ -53,10 +53,10 @@ jobs:
           if [[ "${#text_files[@]}" -gt 0 ]]; then
             for file in "${text_files[@]}"; do
               perl -0pi \
-                -e "s/${old_title}/${new_public}/g" \
-                -e "s/${old_title2}/${new_public}/g" \
-                -e "s/${old_upper}/VENVWIN/g" \
-                -e "s/${old_lower}/${new_lower}/g" \
+                -e "s/${old_title}/${new_public}/g;" \
+                -e "s/${old_title2}/${new_public}/g;" \
+                -e "s/${old_upper}/VENVWIN/g;" \
+                -e "s/${old_lower}/${new_lower}/g;" \
                 "$file"
             done
           fi
