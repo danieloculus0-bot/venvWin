@@ -16,7 +16,7 @@ WinUx
 
 venvWin Portable is a lightweight Linux-based portable OS shell for managed Windows-app compatibility capsules. Its purpose is to extend the usable life of older PCs, especially 2010-era hardware that is too annoying or unsupported for modern Windows, while adding repeatable compatibility paths for old Windows apps, obsolete tech, and legacy workflows.
 
-venvWin is the compatibility engine that manages isolated Windows-like app capsules. Wine can be backend number one, but Wine is not the product. The product is the lightweight portable OS, familiar shell, repeatable app environment, launcher flow, storage policy, dashboard, and recovery model wrapped into a bootable Linux system.
+venvWin is the compatibility engine that manages isolated Windows-like app capsules. Wine can be backend number one, but Wine is not the product. The product is the lightweight portable OS, familiar shell, repeatable app environment, launcher flow, storage policy, dashboard, first-boot GUI, and recovery model wrapped into a bootable Linux system.
 
 Leave No Trace means no host hard-drive usage by default. It does not mean stealth. Logs, proof files, and capsule metadata should remain visible inside the venvWin Portable session or venvWin-owned storage.
 
@@ -46,6 +46,17 @@ Passing means:
 - capsule storage is selected or created
 - `VENVWIN_HOME` can resolve to a writable capsule store
 - first-run summary files are written
+- first-boot GUI opens automatically
+- GUI title says venvWin Portable
+- Start panel is visible
+- Control Panel section is visible
+- System Status section is visible
+- Dashboard URL is visible
+- user can click Initialize Storage
+- user can click Open Dashboard
+- user can click Open Capsules
+- user can click Run Doctor
+- user can click Private Browser when installed in the selected profile
 - the user can see where Windows app state will live
 - the first-run flow does not silently write into unsafe host paths without warning
 - the desktop contains a first-boot proof bundle
@@ -71,7 +82,7 @@ Passing means:
 - portable-owned storage is preferred when available
 - host write risk is detected and reported
 - disposable-session risk is detected and reported
-- the dashboard and CLI agree on the selected storage
+- the dashboard, first-boot GUI, and CLI agree on the selected storage
 - resetting a capsule does not imply deleting user documents or mapped host files
 - host internal disks are not selected automatically for capsules
 - host desktop/browser residue is not created by default
@@ -116,7 +127,7 @@ Passing means:
 - runner command preparation is abstracted behind a backend interface
 - capsule metadata stores the runner profile
 - launch and install commands come from the selected runner
-- new runner backends can be added without rewriting the CLI, dashboard, or capsule model
+- new runner backends can be added without rewriting the CLI, dashboard, first-boot GUI, or capsule model
 - backend limitations are reported honestly by doctor/status output
 
 Backend candidates may include:
@@ -136,6 +147,7 @@ Passing means:
 
 - dashboard launches locally
 - dashboard binds to `127.0.0.1` by default
+- dashboard can be opened from the first-boot GUI
 - dashboard shows capsule count
 - dashboard shows storage destination
 - dashboard shows LNT storage status
@@ -149,12 +161,15 @@ Passing means:
 
 The repository must fail loudly when the basic product shape breaks.
 
-Passing means CI runs:
+Passing means CI or local bootstrap runs:
 
 - package install
+- public branding audit
 - Python import checks
 - CLI smoke commands
 - first-run checks
+- GUI model checks
+- dashboard checks
 - storage checks
 - doctor checks
 - association generation
@@ -183,7 +198,7 @@ Passing means:
 
 ## Current alpha definition
 
-venvWin Portable Alpha is real when a user can boot the image, see venvWin controls, initialize storage, double-click or route a Windows installer into a capsule, inspect the capsule, and understand where the app state lives.
+venvWin Portable Alpha is real when a user can boot the image, see the venvWin Portable first-boot GUI, initialize storage, open the dashboard, double-click or route a Windows installer into a capsule, inspect the capsule, and understand where the app state lives.
 
 It does not need to beat Windows compatibility yet.
 
@@ -195,6 +210,10 @@ The next hard milestone is a boot-tested Alpha ISO with screenshots or logs prov
 
 - first boot desktop loads
 - first-run setup completes
+- first-boot GUI opens automatically
+- Start panel is visible
+- Control Panel section is visible
+- System Status section is visible
 - dashboard opens at `http://127.0.0.1:8787`
 - doctor output is visible in `venvwin-doctor.txt`
 - capsule storage is writable
