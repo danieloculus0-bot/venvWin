@@ -1,10 +1,10 @@
-name: build-winux-iso
+name: build-venvwin-iso
 
 on:
   workflow_dispatch:
     inputs:
       profile:
-        description: "WinUx package profile"
+        description: "venvWin package profile"
         required: true
         default: "standard"
         type: choice
@@ -47,18 +47,18 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y live-build rsync xorriso isolinux syslinux-common squashfs-tools qemu-system-x86 ovmf
 
-      - name: Build WinUx Portable ISO
+      - name: Build venvWin Portable ISO
         run: |
           chmod +x winux-portable/build-iso.sh
           ./winux-portable/build-iso.sh
 
       - name: Static ISO inspection
         run: |
-          ISO="dist/winux-portable-alpha-${WINUX_PROFILE}.iso"
+          ISO="dist/venvwin-portable-alpha-${WINUX_PROFILE}.iso"
           test -f "$ISO"
           test -f "$ISO.sha256"
           sha256sum -c "$ISO.sha256"
-          cat "dist/winux-portable-alpha-${WINUX_PROFILE}-manifest.txt"
+          cat "dist/venvwin-portable-alpha-${WINUX_PROFILE}-manifest.txt"
           xorriso -indev "$ISO" -report_el_torito as_mkisofs
           xorriso -indev "$ISO" -find / -name filesystem.squashfs -print | grep filesystem.squashfs
           xorriso -indev "$ISO" -find / -name vmlinuz -print | head -n 1
@@ -67,7 +67,7 @@ jobs:
       - name: QEMU boot smoke test
         if: env.QEMU_SMOKE == 'true'
         run: |
-          ISO="dist/winux-portable-alpha-${WINUX_PROFILE}.iso"
+          ISO="dist/venvwin-portable-alpha-${WINUX_PROFILE}.iso"
           set +e
           timeout 150s qemu-system-x86_64 \
             -m 2048 \
@@ -90,9 +90,9 @@ jobs:
       - name: Upload ISO artifact
         uses: actions/upload-artifact@v4
         with:
-          name: winux-portable-alpha-${{ env.WINUX_PROFILE }}-iso
+          name: venvwin-portable-alpha-${{ env.WINUX_PROFILE }}-iso
           path: |
-            dist/winux-portable-alpha-${{ env.WINUX_PROFILE }}.iso
-            dist/winux-portable-alpha-${{ env.WINUX_PROFILE }}.iso.sha256
-            dist/winux-portable-alpha-${{ env.WINUX_PROFILE }}-manifest.txt
+            dist/venvwin-portable-alpha-${{ env.WINUX_PROFILE }}.iso
+            dist/venvwin-portable-alpha-${{ env.WINUX_PROFILE }}.iso.sha256
+            dist/venvwin-portable-alpha-${{ env.WINUX_PROFILE }}-manifest.txt
           if-no-files-found: error
