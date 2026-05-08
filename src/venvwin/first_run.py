@@ -8,15 +8,14 @@ from .persistence import persistence_report
 
 
 PUBLIC_PRODUCT_NAME = "venvWin Portable"
-INTERNAL_CODENAME = "WinUx"
 QUICK_START_NAME = "venvWin-Quick-Start.txt"
 FIRST_BOOT_PROOF_NAME = "venvWin-First-Boot-Proof.txt"
 DASHBOARD_NAME = "venvWin-Dashboard.txt"
 FIRST_BOOT_CHECKLIST_NAME = "venvWin-First-Boot-Checklist.txt"
 DOCTOR_NAME = "venvwin-doctor.txt"
-STORAGE_MARKER_NAME = ".winux-capsule-store"
-STORAGE_SOURCE_MARKER_NAME = ".winux-capsule-store-source"
-PERSISTENCE_REPORT_NAME = ".winux-persistence-report.json"
+STORAGE_MARKER_NAME = ".venvwin-capsule-store"
+STORAGE_SOURCE_MARKER_NAME = ".venvwin-capsule-store-source"
+PERSISTENCE_REPORT_NAME = ".venvwin-persistence-report.json"
 DASHBOARD_URL = "http://127.0.0.1:8787"
 
 
@@ -40,7 +39,6 @@ def first_run_summary(home: Path | None = None) -> dict[str, Any]:
 
     return {
         "product_name": PUBLIC_PRODUCT_NAME,
-        "internal_codename": INTERNAL_CODENAME,
         "capsule_store": chosen["path"],
         "storage_source": chosen["source"],
         "writable": chosen["writable"],
@@ -91,15 +89,11 @@ Show storage status:
 
 Private browser:
 
-  winux-private-browser
+  venvwin-private-browser
 
 If Windows files are being bullshit, run:
 
   venvwin associate
-
-Internal codename:
-
-  {INTERNAL_CODENAME}
 """
 
 
@@ -135,7 +129,7 @@ What it shows:
 
 If the dashboard is not available, run:
 
-  winux-dashboard
+  venvwin-dashboard
 """
 
 
@@ -166,7 +160,6 @@ Use this checklist before calling an ISO flash-ready.
 Current first-run summary:
 
 product={PUBLIC_PRODUCT_NAME}
-internal_codename={INTERNAL_CODENAME}
 status={summary['storage_status']}
 storage_message={summary['storage_message']}
 capsule_store={capsule_store}
@@ -185,7 +178,6 @@ def first_boot_proof_text(summary: dict[str, Any], capsule_store: Path) -> str:
 This file is created by first-run setup so an alpha boot can be verified without guessing.
 
 product={PUBLIC_PRODUCT_NAME}
-internal_codename={INTERNAL_CODENAME}
 engine=venvWin
 status={summary['storage_status']}
 storage_message={summary['storage_message']}
