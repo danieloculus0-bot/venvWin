@@ -183,10 +183,49 @@ CAPSULE_STORE="$(/usr/local/bin/winux-select-capsule-store)"
 export VENVWIN_HOME="${VENVWIN_HOME:-$CAPSULE_STORE}"
 mkdir -p "$HOME/Desktop" "$VENVWIN_HOME"
 
-venvwin init || true
-venvwin associate || true
-venvwin first-run || true
-venvwin doctor > "$HOME/Desktop/venvwin-doctor.txt" || true
+venvwin init > "$HOME/Desktop/venvwin-init.txt" 2>&1 || true
+venvwin associate > "$HOME/Desktop/venvwin-associate.txt" 2>&1 || true
+venvwin first-run > "$HOME/Desktop/venvwin-first-run.txt" 2>&1 || true
+venvwin storage > "$HOME/Desktop/venvwin-storage.txt" 2>&1 || true
+venvwin doctor > "$HOME/Desktop/venvwin-doctor.txt" 2>&1 || true
+
+cat > "$HOME/Desktop/WinUx-Dashboard.txt" <<DASH
+WinUx Dashboard
+
+Local URL:
+
+  http://127.0.0.1:8787
+
+Default dashboard mode is local-only.
+LAN mode requires the explicit tokenized launcher:
+
+  winux-dashboard-lan
+DASH
+
+cat > "$HOME/Desktop/WinUx-First-Boot-Checklist.txt" <<CHECK
+WinUx First Boot Checklist
+
+Expected files on this desktop:
+
+- WinUx-Quick-Start.txt
+- WinUx-First-Boot-Proof.txt
+- WinUx-Dashboard.txt
+- WinUx-First-Boot-Checklist.txt
+- venvwin-init.txt
+- venvwin-associate.txt
+- venvwin-first-run.txt
+- venvwin-storage.txt
+- venvwin-doctor.txt
+
+Acceptance checks:
+
+- Desktop loaded
+- Dashboard opens at http://127.0.0.1:8787
+- Capsule storage exists: ${CAPSULE_STORE}
+- venvWin doctor output exists
+- EXE/MSI associations attempted
+- Storage risk is visible in proof/storage files
+CHECK
 EOF
 chmod +x config/includes.chroot/usr/local/bin/winux-first-run
 
@@ -339,9 +378,11 @@ dashboard=true
 dashboard_url=http://127.0.0.1:8787
 dashboard_bind_default=127.0.0.1
 dashboard_lan_mode=explicit_token_required
+first_boot_proof_bundle=true
+first_boot_expected_desktop_files=WinUx-Quick-Start.txt,WinUx-First-Boot-Proof.txt,WinUx-Dashboard.txt,WinUx-First-Boot-Checklist.txt,venvwin-init.txt,venvwin-associate.txt,venvwin-first-run.txt,venvwin-storage.txt,venvwin-doctor.txt
 privacy_browser_profile=privacy_only
 standard_profile_policy=lean_runtime_only
-product_gate=first boot must initialize storage, expose status, show setup UI, and start local dashboard
+product_gate=first boot must initialize storage, expose status, show setup UI, write proof bundle, and start local dashboard
 EOF
 
 echo "Built ISO: ${OUTPUT_ISO}"
