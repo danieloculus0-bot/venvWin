@@ -33,7 +33,7 @@ def build_parser() -> argparse.ArgumentParser:
     first_run.add_argument("--wizard-text", action="store_true", help="Print planned GUI-lite wizard text")
     first_run.add_argument("--json", action="store_true", help="Print raw JSON summary")
 
-    dashboard = sub.add_parser("dashboard", help="Run the local WinUx dashboard app")
+    dashboard = sub.add_parser("dashboard", help="Run the local venvWin dashboard app")
     dashboard.add_argument("--host", default=DEFAULT_HOST, help="Dashboard bind host")
     dashboard.add_argument("--port", type=int, default=DEFAULT_PORT, help="Dashboard port")
     dashboard.add_argument("--home", type=Path, help="Override home path for testing")
@@ -124,7 +124,7 @@ def cmd_first_run(home: Path | None, wizard: bool, as_json: bool) -> int:
     if as_json:
         print(json.dumps(summary, indent=2))
     else:
-        print("WinUx first-run files created")
+        print("venvWin first-run files created")
         print(f"capsule store: {summary['capsule_store']}")
         print(f"storage: {summary['storage_status']}")
         print(summary["storage_message"])
@@ -165,9 +165,9 @@ def cmd_storage(as_json: bool) -> int:
     print(f"portable-owned: {chosen['portable_owned']}")
     print(f"host-risk: {chosen['host_risk']}")
     if report["leave_no_trace"]:
-        print("leave-no-trace: ok, writing to WinUx-owned portable storage")
+        print("leave-no-trace: ok, writing to venvWin-owned portable storage")
     elif report["disposable_warning"]:
-        print("leave-no-trace: warning, no WinUx-owned persistent storage found; this may be disposable")
+        print("leave-no-trace: warning, no venvWin-owned persistent storage found; this may be disposable")
     elif report["host_write_warning"]:
         print("leave-no-trace: warning, selected storage may be a host path; choose that only on purpose")
     else:
