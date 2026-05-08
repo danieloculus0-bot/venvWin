@@ -9,7 +9,6 @@ on:
       - "docs/**"
       - "src/**"
       - "tests/**"
-      - "winux-portable/**"
       - "venvwin-portable/**"
       - ".github/workflows/**"
 
