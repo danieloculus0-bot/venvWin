@@ -34,6 +34,7 @@ required_files=(
   "winux-portable/audit-public-branding.sh"
   "winux-portable/bootstrap-flash-ready-ubuntu.sh"
   "winux-portable/build-all-profiles.sh"
+  "winux-portable/build-attempt-checklist.md"
   "winux-portable/build-flash-ready-standard.sh"
   "winux-portable/build-iso.sh"
   "winux-portable/compare-profiles.sh"
@@ -65,6 +66,16 @@ bash -n winux-portable/build-all-profiles.sh
 bash -n winux-portable/test-iso-qemu.sh
 bash -n winux-portable/test-persistence-qemu.sh
 bash -n winux-portable/build-flash-ready-standard.sh
+
+echo "Checking build attempt checklist contract"
+grep -q "venvWin Portable" winux-portable/build-attempt-checklist.md
+grep -q "run-wsl-flash-ready.ps1" winux-portable/build-attempt-checklist.md
+grep -q "bootstrap-flash-ready-ubuntu.sh" winux-portable/build-attempt-checklist.md
+grep -q "PUBLIC BRANDING AUDIT: PASS" winux-portable/build-attempt-checklist.md
+grep -q "PRE-ISO READINESS: PASS" winux-portable/build-attempt-checklist.md
+grep -q "status=FLASH_READY" winux-portable/build-attempt-checklist.md
+grep -q "venvwin-portable-alpha-standard.iso" winux-portable/build-attempt-checklist.md
+grep -q "venvwin-flash-ready-verdict.txt" winux-portable/build-attempt-checklist.md
 
 echo "Checking PowerShell WSL runner contract"
 grep -q "venvWin Portable" winux-portable/run-wsl-flash-ready.ps1
