@@ -15,6 +15,7 @@ required_public=(
   "winux-portable/phone-build-status.md"
   "winux-portable/run-flash-ready-from-phone.md"
   "winux-portable/run-wsl-flash-ready.ps1"
+  "winux-portable/build-attempt-checklist.md"
   "winux-portable/local-flash-ready-build.md"
   "winux-portable/windows-wsl-build-command.md"
   "winux-portable/usb-flash-guide.md"
@@ -42,6 +43,9 @@ grep -q "venvwin-flash-ready-verdict.txt" winux-portable/windows-wsl-build-comma
 grep -q "venvwin-portable-alpha-standard.iso" winux-portable/run-wsl-flash-ready.ps1 || { echo "PowerShell WSL runner missing renamed ISO" >&2; exit 1; }
 grep -q "venvwin-flash-ready-verdict.txt" winux-portable/run-wsl-flash-ready.ps1 || { echo "PowerShell WSL runner missing renamed verdict" >&2; exit 1; }
 grep -q "status=FLASH_READY" winux-portable/run-wsl-flash-ready.ps1 || { echo "PowerShell WSL runner missing flash-ready status gate" >&2; exit 1; }
+grep -q "venvwin-portable-alpha-standard.iso" winux-portable/build-attempt-checklist.md || { echo "Build attempt checklist missing renamed ISO" >&2; exit 1; }
+grep -q "venvwin-flash-ready-verdict.txt" winux-portable/build-attempt-checklist.md || { echo "Build attempt checklist missing renamed verdict" >&2; exit 1; }
+grep -q "status=FLASH_READY" winux-portable/build-attempt-checklist.md || { echo "Build attempt checklist missing flash-ready status gate" >&2; exit 1; }
 grep -q "venvwin-portable-alpha-standard.iso" winux-portable/usb-flash-guide.md || { echo "USB flash guide missing renamed ISO" >&2; exit 1; }
 grep -q "venvwin-flash-ready-verdict.txt" winux-portable/usb-flash-guide.md || { echo "USB flash guide missing renamed verdict" >&2; exit 1; }
 grep -q "status=FLASH_READY" winux-portable/usb-flash-guide.md || { echo "USB flash guide missing flash-ready status gate" >&2; exit 1; }
