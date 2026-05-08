@@ -42,6 +42,8 @@ grep -q '^dashboard=true$' "${MANIFEST}"
 grep -q '^dashboard_url=http://127.0.0.1:8787$' "${MANIFEST}"
 grep -q '^dashboard_bind_default=127.0.0.1$' "${MANIFEST}"
 grep -q '^dashboard_lan_mode=explicit_token_required$' "${MANIFEST}"
+grep -q '^first_boot_desktop_launchers=true$' "${MANIFEST}"
+grep -q '^first_boot_desktop_launchers_list=venvWin-First-Boot.desktop,venvWin-Dashboard.desktop,venvWin-Capsules.desktop,venvWin-Doctor.desktop,venvWin-Private-Browser.desktop$' "${MANIFEST}"
 grep -q '^first_boot_proof_bundle=true$' "${MANIFEST}"
 grep -q '^privacy_browser_profile=privacy_only$' "${MANIFEST}"
 grep -q '^standard_profile_policy=lean_runtime_only$' "${MANIFEST}"
@@ -67,6 +69,11 @@ xorriso -indev "${ISO}" -find / -path /usr/share/applications/winux-dashboard.de
 xorriso -indev "${ISO}" -find / -path /usr/share/applications/winux-dashboard-lan.desktop -print | grep -q /usr/share/applications/winux-dashboard-lan.desktop
 xorriso -indev "${ISO}" -find / -path /etc/xdg/autostart/winux-dashboard.desktop -print | grep -q /etc/xdg/autostart/winux-dashboard.desktop
 xorriso -indev "${ISO}" -find / -path /etc/xdg/autostart/winux-first-boot-gui.desktop -print | grep -q /etc/xdg/autostart/winux-first-boot-gui.desktop
+xorriso -indev "${ISO}" -find / -path /etc/skel/Desktop/venvWin-First-Boot.desktop -print | grep -q /etc/skel/Desktop/venvWin-First-Boot.desktop
+xorriso -indev "${ISO}" -find / -path /etc/skel/Desktop/venvWin-Dashboard.desktop -print | grep -q /etc/skel/Desktop/venvWin-Dashboard.desktop
+xorriso -indev "${ISO}" -find / -path /etc/skel/Desktop/venvWin-Capsules.desktop -print | grep -q /etc/skel/Desktop/venvWin-Capsules.desktop
+xorriso -indev "${ISO}" -find / -path /etc/skel/Desktop/venvWin-Doctor.desktop -print | grep -q /etc/skel/Desktop/venvWin-Doctor.desktop
+xorriso -indev "${ISO}" -find / -path /etc/skel/Desktop/venvWin-Private-Browser.desktop -print | grep -q /etc/skel/Desktop/venvWin-Private-Browser.desktop
 
 echo "Step 6: QEMU boot smoke"
 set +e
@@ -117,6 +124,7 @@ dashboard=true
 dashboard_url=http://127.0.0.1:8787
 dashboard_bind_default=127.0.0.1
 dashboard_lan_mode=explicit_token_required
+first_boot_desktop_launchers=true
 first_boot_proof_bundle=true
 privacy_browser_profile=privacy_only
 standard_profile_policy=lean_runtime_only
