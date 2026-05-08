@@ -43,6 +43,30 @@ def runner_status(runner: str = "wine") -> HealthCheck:
     )
 
 
+def privacy_browser_status() -> HealthCheck:
+    tor_browser_launcher = shutil.which("torbrowser-launcher")
+    tor_browser = shutil.which("tor-browser")
+    torsocks = shutil.which("torsocks")
+    firefox = shutil.which("firefox-esr") or shutil.which("firefox")
+    tor = shutil.which("tor")
+
+    if tor_browser_launcher:
+        return HealthCheck("privacy-browser", "ok", f"Tor Browser Launcher found: {tor_browser_launcher}")
+    if tor_browser:
+        return HealthCheck("privacy-browser", "ok", f"Tor Browser found: {tor_browser}")
+    if tor and torsocks and firefox:
+        return HealthCheck(
+            "privacy-browser",
+            "warn",
+            "Tor Browser missing, but torsocks + Firefox fallback exists. Useful for testing, not hardened anonymity. Calling that anonymous would be bullshit.",
+        )
+    return HealthCheck(
+        "privacy-browser",
+        "warn",
+        "Tor privacy browser path is missing. Install Tor Browser/torbrowser-launcher for real private browser mode.",
+    )
+
+
 def association_status(applications_dir: Path) -> HealthCheck:
     exe = applications_dir / "venvwin-open-exe.desktop"
     msi = applications_dir / "venvwin-open-msi.desktop"
@@ -80,6 +104,7 @@ def health_report(root: Path, applications_dir: Path | None = None) -> dict[str,
         check_path_exists("profiles-dir", profiles_dir(root), required=False),
         check_path_exists("capsules-dir", capsules_dir(root), required=False),
         runner_status("wine"),
+        privacy_browser_status(),
         association_status(apps_dir),
         persistence_status(root),
         capsule_count_status(root),
