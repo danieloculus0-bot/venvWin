@@ -4,19 +4,19 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "${ROOT_DIR}"
 
-ISO="dist/winux-portable-alpha-standard.iso"
-MANIFEST="dist/winux-portable-alpha-standard-manifest.txt"
+ISO="dist/venvwin-portable-alpha-standard.iso"
+MANIFEST="dist/venvwin-portable-alpha-standard-manifest.txt"
 SHA="${ISO}.sha256"
-VERDICT="dist/winux-flash-ready-verdict.txt"
+VERDICT="dist/venvwin-flash-ready-verdict.txt"
 
 mkdir -p dist
 
 cat > "${VERDICT}" <<'START'
-WinUx Portable Flash-Ready Verdict
+venvWin Portable Flash-Ready Verdict
 status=STARTED
 START
 
-echo "== WinUx flash-ready standard build =="
+echo "== venvWin Portable flash-ready standard build =="
 
 echo "Step 1: Pre-ISO readiness gate"
 chmod +x winux-portable/pre-iso-readiness.sh
@@ -34,6 +34,8 @@ sha256sum -c "${SHA}"
 
 echo "Step 4: Required manifest flags"
 grep -q '^profile=standard$' "${MANIFEST}"
+grep -q '^public_product_name=venvWin Portable$' "${MANIFEST}"
+grep -q '^internal_codename=WinUx$' "${MANIFEST}"
 grep -q '^leave_no_trace_default=true$' "${MANIFEST}"
 grep -q '^first_boot_gui=true$' "${MANIFEST}"
 grep -q '^dashboard=true$' "${MANIFEST}"
@@ -52,7 +54,7 @@ for tool in xorriso qemu-system-x86_64 timeout; do
   fi
 done
 
-xorriso -indev "${ISO}" -report_el_torito as_mkisofs >/tmp/winux-el-torito.txt
+xorriso -indev "${ISO}" -report_el_torito as_mkisofs >/tmp/venvwin-el-torito.txt
 xorriso -indev "${ISO}" -find / -name filesystem.squashfs -print | grep -q filesystem.squashfs
 xorriso -indev "${ISO}" -find / -name vmlinuz -print | head -n 1 | grep -q vmlinuz
 xorriso -indev "${ISO}" -find / -name initrd.img -print | head -n 1 | grep -q initrd.img
@@ -83,7 +85,7 @@ set -e
 if [[ "${code}" -ne 124 ]]; then
   echo "QEMU exited early with code ${code}. Not flash-ready." >&2
   cat > "${VERDICT}" <<FAIL
-WinUx Portable Flash-Ready Verdict
+venvWin Portable Flash-Ready Verdict
 status=NOT_READY
 reason=qemu_exited_early
 qemu_exit_code=${code}
@@ -96,9 +98,11 @@ ISO_BYTES="$(stat -c%s "${ISO}")"
 ISO_MB="$(( (ISO_BYTES + 1048575) / 1048576 ))"
 
 cat > "${VERDICT}" <<PASS
-WinUx Portable Flash-Ready Verdict
+venvWin Portable Flash-Ready Verdict
 status=FLASH_READY
 profile=standard
+public_product_name=venvWin Portable
+internal_codename=WinUx
 iso=${ISO}
 sha256=${SHA}
 manifest=${MANIFEST}
