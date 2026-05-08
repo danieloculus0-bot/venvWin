@@ -16,8 +16,10 @@ required_files=(
   "src/venvwin/persistence.py"
   "src/venvwin/health.py"
   "winux-portable/build-iso.sh"
+  "winux-portable/test-iso-qemu.sh"
   "winux-portable/first-boot-product-gate.md"
   "winux-portable/leave-no-trace.md"
+  "winux-portable/product-gate.md"
 )
 
 for file in "${required_files[@]}"; do
@@ -28,9 +30,7 @@ echo "Checking shell syntax"
 bash -n winux-portable/build-iso.sh
 bash -n winux-portable/compare-profiles.sh
 bash -n winux-portable/build-all-profiles.sh
-if [[ -f winux-portable/test-iso-qemu.sh ]]; then
-  bash -n winux-portable/test-iso-qemu.sh
-fi
+bash -n winux-portable/test-iso-qemu.sh
 
 echo "Checking Python imports, GUI model, and dashboard model"
 PYTHONPATH=src python3 - <<'PY'
