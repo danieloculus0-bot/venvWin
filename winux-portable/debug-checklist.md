@@ -1,4 +1,4 @@
-# WinUx Portable Debug Checklist
+# venvWin Portable Debug Checklist
 
 ## Purpose
 
@@ -57,10 +57,10 @@ size flag
 Run:
 
 ```bash
-xorriso -indev dist/winux-portable-alpha-standard.iso -report_el_torito as_mkisofs
-xorriso -indev dist/winux-portable-alpha-standard.iso -find / -name filesystem.squashfs -print
-xorriso -indev dist/winux-portable-alpha-standard.iso -find / -name vmlinuz -print
-xorriso -indev dist/winux-portable-alpha-standard.iso -find / -name initrd.img -print
+xorriso -indev dist/venvwin-portable-alpha-standard.iso -report_el_torito as_mkisofs
+xorriso -indev dist/venvwin-portable-alpha-standard.iso -find / -name filesystem.squashfs -print
+xorriso -indev dist/venvwin-portable-alpha-standard.iso -find / -name vmlinuz -print
+xorriso -indev dist/venvwin-portable-alpha-standard.iso -find / -name initrd.img -print
 ```
 
 Expected:
@@ -76,7 +76,7 @@ kernel/initrd paths exist
 Run:
 
 ```bash
-./winux-portable/test-iso-qemu.sh dist/winux-portable-alpha-standard.iso
+./winux-portable/test-iso-qemu.sh dist/venvwin-portable-alpha-standard.iso
 ```
 
 Expected:
@@ -92,7 +92,7 @@ Inside booted environment, check:
 ```bash
 which venvwin
 venvwin doctor
-cat ~/Desktop/WinUx-Quick-Start.txt
+cat ~/Desktop/venvWin-Quick-Start.txt
 cat ~/Desktop/venvwin-doctor.txt
 cat ~/.winux-capsule-store
 ```
@@ -129,7 +129,7 @@ Expected:
 Persistence Test still exists.
 ```
 
-If not, WinUx is running as a disposable goblin and must warn harder.
+If not, venvWin Portable is running as a disposable goblin and must warn harder.
 
 ## 8. EXE/MSI validation
 
