@@ -1,0 +1,37 @@
+name: build-winux-iso
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "winux-portable/**"
+      - "src/**"
+      - "pyproject.toml"
+      - ".github/workflows/build-winux-iso.yml"
+
+jobs:
+  iso:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install live-build tooling
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y live-build rsync xorriso isolinux syslinux-common squashfs-tools
+
+      - name: Build WinUx Portable ISO
+        run: |
+          chmod +x winux-portable/build-iso.sh
+          ./winux-portable/build-iso.sh
+
+      - name: Upload ISO artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: winux-portable-alpha-iso
+          path: |
+            dist/winux-portable-alpha.iso
+            dist/winux-portable-alpha.iso.sha256
+          if-no-files-found: error
