@@ -1,19 +1,26 @@
-# WinUx Portable Flash-Ready Checklist
+# venvWin Portable Flash-Ready Checklist
 
 ## Purpose
 
-This checklist defines when WinUx Portable is ready to flash onto a USB drive.
+This checklist defines when venvWin Portable is ready to flash onto a USB drive.
 
 No ISO is considered flash-ready until it passes the readiness gate.
+
+Internal codename:
+
+```text
+WinUx
+```
 
 ## Required artifacts
 
 Flash-ready means these files exist:
 
 ```text
-winux-portable-alpha-standard.iso
-winux-portable-alpha-standard.iso.sha256
-winux-portable-alpha-standard-manifest.txt
+venvwin-portable-alpha-standard.iso
+venvwin-portable-alpha-standard.iso.sha256
+venvwin-portable-alpha-standard-manifest.txt
+venvwin-flash-ready-verdict.txt
 ```
 
 ## Required pre-ISO pass
@@ -42,8 +49,12 @@ Required manifest flags:
 
 ```text
 profile=standard
+public_product_name=venvWin Portable
+internal_codename=WinUx
 leave_no_trace_default=true
 first_boot_gui=true
+dashboard=true
+dashboard_url=http://127.0.0.1:8787
 ```
 
 ## Required static inspection
@@ -57,6 +68,8 @@ The ISO must contain:
 - venvWin source under `/opt/venvwin`
 - `winux-first-boot-gui`
 - `winux-first-run`
+- `winux-dashboard`
+- `winux-dashboard-lan`
 - desktop launcher entries
 
 ## Required smoke pass
@@ -70,8 +83,9 @@ QEMU smoke must either:
 
 On real hardware, first boot must show:
 
-- WinUx desktop
+- venvWin Portable desktop
 - first-boot GUI opens automatically
+- dashboard opens at `http://127.0.0.1:8787`
 - storage destination visible
 - leave-no-trace status visible
 - host-risk status visible
