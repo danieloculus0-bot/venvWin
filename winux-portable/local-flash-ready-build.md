@@ -10,10 +10,12 @@ It runs the same gate:
 
 ```text
 pre-ISO readiness
+public branding audit
+Python tests
 standard ISO build
 checksum
 manifest checks
-static ISO inspection
+squashfs static inspection
 QEMU smoke
 flash-ready verdict
 ```
@@ -47,11 +49,41 @@ python3 -m pip install --break-system-packages --upgrade pip || python3 -m pip i
 python3 -m pip install --break-system-packages -e . pytest || python3 -m pip install -e . pytest
 ```
 
+Preflight only:
+
+```bash
+chmod +x winux-portable/audit-public-branding.sh winux-portable/pre-iso-readiness.sh
+./winux-portable/pre-iso-readiness.sh
+```
+
+Required preflight output:
+
+```text
+PUBLIC BRANDING AUDIT: PASS
+PRE-ISO READINESS: PASS
+```
+
 Build command from repo root:
 
 ```bash
 chmod +x winux-portable/audit-public-branding.sh winux-portable/pre-iso-readiness.sh winux-portable/build-iso.sh winux-portable/build-flash-ready-standard.sh
 ./winux-portable/build-flash-ready-standard.sh
+```
+
+## Static inspection rule
+
+The flash-ready gate must inspect the live filesystem inside:
+
+```text
+filesystem.squashfs
+```
+
+Required static inspection evidence:
+
+```text
+unsquashfs -ll
+squashfs_static_inspection=pass
+squashfs-root/etc/skel/Desktop/venvWin-First-Boot.desktop
 ```
 
 ## Success output
