@@ -46,6 +46,7 @@ mkdir -p \
   config/includes.chroot/usr/local/bin \
   config/includes.chroot/usr/share/applications \
   config/includes.chroot/etc/xdg/autostart \
+  config/includes.chroot/etc/skel/Desktop \
   config/hooks/normal
 
 cat > config/package-lists/00-winux-core.list.chroot <<'EOF'
@@ -211,6 +212,11 @@ venvWin Portable First Boot Checklist
 
 Expected files on this desktop:
 
+- venvWin-First-Boot.desktop
+- venvWin-Dashboard.desktop
+- venvWin-Capsules.desktop
+- venvWin-Doctor.desktop
+- venvWin-Private-Browser.desktop
 - venvWin-Quick-Start.txt
 - venvWin-First-Boot-Proof.txt
 - venvWin-Dashboard.txt
@@ -323,6 +329,12 @@ Terminal=false
 Categories=Utility;
 EOF
 
+install -m 0755 config/includes.chroot/usr/share/applications/winux-first-boot.desktop config/includes.chroot/etc/skel/Desktop/venvWin-First-Boot.desktop
+install -m 0755 config/includes.chroot/usr/share/applications/winux-dashboard.desktop config/includes.chroot/etc/skel/Desktop/venvWin-Dashboard.desktop
+install -m 0755 config/includes.chroot/usr/share/applications/venvwin-capsules.desktop config/includes.chroot/etc/skel/Desktop/venvWin-Capsules.desktop
+install -m 0755 config/includes.chroot/usr/share/applications/venvwin-doctor.desktop config/includes.chroot/etc/skel/Desktop/venvWin-Doctor.desktop
+install -m 0755 config/includes.chroot/usr/share/applications/winux-private-browser.desktop config/includes.chroot/etc/skel/Desktop/venvWin-Private-Browser.desktop
+
 cat > config/hooks/normal/010-winux-setup.chroot <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
@@ -384,11 +396,13 @@ dashboard=true
 dashboard_url=http://127.0.0.1:8787
 dashboard_bind_default=127.0.0.1
 dashboard_lan_mode=explicit_token_required
+first_boot_desktop_launchers=true
+first_boot_desktop_launchers_list=venvWin-First-Boot.desktop,venvWin-Dashboard.desktop,venvWin-Capsules.desktop,venvWin-Doctor.desktop,venvWin-Private-Browser.desktop
 first_boot_proof_bundle=true
-first_boot_expected_desktop_files=venvWin-Quick-Start.txt,venvWin-First-Boot-Proof.txt,venvWin-Dashboard.txt,venvWin-First-Boot-Checklist.txt,venvwin-init.txt,venvwin-associate.txt,venvwin-first-run.txt,venvwin-storage.txt,venvwin-doctor.txt
+first_boot_expected_desktop_files=venvWin-First-Boot.desktop,venvWin-Dashboard.desktop,venvWin-Capsules.desktop,venvWin-Doctor.desktop,venvWin-Private-Browser.desktop,venvWin-Quick-Start.txt,venvWin-First-Boot-Proof.txt,venvWin-Dashboard.txt,venvWin-First-Boot-Checklist.txt,venvwin-init.txt,venvwin-associate.txt,venvwin-first-run.txt,venvwin-storage.txt,venvwin-doctor.txt
 privacy_browser_profile=privacy_only
 standard_profile_policy=lean_runtime_only
-product_gate=first boot must initialize storage, expose status, show setup UI, write proof bundle, and start local dashboard
+product_gate=first boot must initialize storage, expose status, show setup UI, write proof bundle, show desktop launchers, and start local dashboard
 EOF
 
 echo "Built ISO: ${OUTPUT_ISO}"
