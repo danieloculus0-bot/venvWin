@@ -5,19 +5,48 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+PORTABLE_SOURCES = {
+    "VENVWIN_HOME",
+    "live-persistence",
+    "persistence-root",
+    "mounted-winux-persistence",
+    "usb-label-winuxdata",
+    "usb-label-winuxdata-mixed",
+}
+
+HOST_RISK_SOURCES = {
+    "home-fallback",
+    "advanced-user-selected",
+}
+
 
 @dataclass(slots=True)
 class PersistenceCandidate:
     path: Path
     source: str
     writable: bool
+    portable_owned: bool
+    host_risk: bool
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "path": str(self.path),
             "source": self.source,
             "writable": self.writable,
+            "portable_owned": self.portable_owned,
+            "host_risk": self.host_risk,
         }
+
+
+def classify_candidate(path: Path, source: str) -> tuple[bool, bool]:
+    if source in PORTABLE_SOURCES:
+        return True, False
+    if source in HOST_RISK_SOURCES:
+        return False, True
+    path_text = str(path)
+    if "/WINUXDATA/" in path_text or "/WinUxData/" in path_text:
+        return True, False
+    return False, True
 
 
 def is_writable_directory(path: Path) -> bool:
@@ -29,6 +58,17 @@ def is_writable_directory(path: Path) -> bool:
         return True
     except OSError:
         return False
+
+
+def make_candidate(path: Path, source: str) -> PersistenceCandidate:
+    portable_owned, host_risk = classify_candidate(path, source)
+    return PersistenceCandidate(
+        path=path,
+        source=source,
+        writable=is_writable_directory(path),
+        portable_owned=portable_owned,
+        host_risk=host_risk,
+    )
 
 
 def candidate_paths(home: Path | None = None) -> list[PersistenceCandidate]:
@@ -57,19 +97,25 @@ def candidate_paths(home: Path | None = None) -> list[PersistenceCandidate]:
         if resolved in seen:
             continue
         seen.add(resolved)
-        result.append(PersistenceCandidate(path=Path(resolved), source=source, writable=is_writable_directory(Path(resolved))))
+        result.append(make_candidate(Path(resolved), source))
     return result
 
 
 def choose_capsule_store(home: Path | None = None) -> PersistenceCandidate:
     candidates = candidate_paths(home)
     for candidate in candidates:
-        if candidate.writable and candidate.source != "home-fallback":
+        if candidate.writable and candidate.portable_owned and not candidate.host_risk:
             return candidate
     for candidate in candidates:
-        if candidate.writable:
+        if candidate.writable and candidate.source == "home-fallback":
             return candidate
-    fallback = PersistenceCandidate(path=(home or Path.home()) / "WinUx-Capsules", source="home-fallback", writable=False)
+    fallback = PersistenceCandidate(
+        path=(home or Path.home()) / "WinUx-Capsules",
+        source="home-fallback",
+        writable=False,
+        portable_owned=False,
+        host_risk=True,
+    )
     return fallback
 
 
@@ -77,8 +123,11 @@ def persistence_report(home: Path | None = None) -> dict[str, Any]:
     candidates = candidate_paths(home)
     chosen = choose_capsule_store(home)
     disposable = chosen.source == "home-fallback" and not os.environ.get("VENVWIN_HOME")
+    leave_no_trace = chosen.portable_owned and not chosen.host_risk
     return {
         "chosen": chosen.to_dict(),
+        "leave_no_trace": leave_no_trace,
         "disposable_warning": disposable,
+        "host_write_warning": chosen.host_risk,
         "candidates": [candidate.to_dict() for candidate in candidates],
     }
