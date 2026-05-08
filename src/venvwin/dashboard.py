@@ -10,7 +10,7 @@ from typing import Any
 from urllib.parse import parse_qs, urlencode, urlparse
 
 from .capsule import list_capsules
-from .first_run import first_run_summary, write_first_run_files
+from .first_run import PUBLIC_PRODUCT_NAME, first_run_summary, write_first_run_files
 from .health import health_report
 from .paths import capsules_dir, default_root, ensure_runtime_dirs
 from .persistence import persistence_report
@@ -28,6 +28,7 @@ def dashboard_model(root: Path | None = None, home: Path | None = None) -> dict[
     health = health_report(runtime_root)
     capsules = [capsule.to_dict() for capsule in list_capsules(capsules_dir(runtime_root))]
     return {
+        "product_name": PUBLIC_PRODUCT_NAME,
         "runtime_root": str(runtime_root),
         "storage": storage,
         "first_run": first,
@@ -73,11 +74,11 @@ def token_link(path: str, token: str | None) -> str:
 
 
 def render_locked_page() -> str:
-    return """<!doctype html>
+    return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>WinUx Dashboard Locked</title>
-<style>body{margin:0;font-family:system-ui;background:#070b10;color:#eef6ff;display:grid;place-items:center;min-height:100vh}.card{background:#111827;border:1px solid #263449;border-radius:18px;padding:28px;max-width:560px}.muted{color:#a7b4c0}.token{background:#070b10;color:#38bdf8;border-radius:10px;padding:10px;overflow-wrap:anywhere}</style></head>
-<body><div class="card"><h1>WinUx Dashboard Locked</h1><p class="muted">LAN dashboard access requires the session token from the WinUx desktop. This keeps the control panel from being open to every device on the network.</p><p class="muted">Open the dashboard from the WinUx desktop launcher or use the printed LAN URL.</p></div></body></html>"""
+<title>{PUBLIC_PRODUCT_NAME} Dashboard Locked</title>
+<style>body{{margin:0;font-family:system-ui;background:#070b10;color:#eef6ff;display:grid;place-items:center;min-height:100vh}}.card{{background:#111827;border:1px solid #263449;border-radius:18px;padding:28px;max-width:560px}}.muted{{color:#a7b4c0}}.token{{background:#070b10;color:#38bdf8;border-radius:10px;padding:10px;overflow-wrap:anywhere}}</style></head>
+<body><div class="card"><h1>{PUBLIC_PRODUCT_NAME} Dashboard Locked</h1><p class="muted">LAN dashboard access requires the session token from the venvWin Portable desktop. This keeps the control panel from being open to every device on the network.</p><p class="muted">Open the dashboard from the desktop launcher or use the printed LAN URL.</p></div></body></html>"""
 
 
 def render_dashboard(model: dict[str, Any], token: str | None = None) -> str:
@@ -106,15 +107,19 @@ def render_dashboard(model: dict[str, Any], token: str | None = None) -> str:
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>WinUx Dashboard</title>
+  <title>{PUBLIC_PRODUCT_NAME} Dashboard</title>
   <style>
     :root {{ color-scheme: dark; }}
     * {{ box-sizing: border-box; }}
-    body {{ margin: 0; font-family: system-ui, -apple-system, Segoe UI, sans-serif; background: #070b10; color: #eef6ff; }}
-    header {{ padding: 28px; background: linear-gradient(135deg, #0b1220, #111827 55%, #0f2535); border-bottom: 1px solid #203040; }}
-    h1 {{ margin: 0; font-size: 34px; letter-spacing: -0.04em; }}
+    body {{ margin: 0; font-family: system-ui, -apple-system, Segoe UI, sans-serif; background: #05080d; color: #eef6ff; min-height: 100vh; padding-bottom: 54px; }}
+    header {{ padding: 24px 28px 18px; background: linear-gradient(135deg, #07111f, #101827 55%, #0b2638); border-bottom: 1px solid #203040; }}
+    h1 {{ margin: 0; font-size: 32px; letter-spacing: -0.04em; }}
     .sub {{ color: #a7b4c0; margin-top: 8px; }}
-    main {{ padding: 22px; display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 18px; }}
+    main {{ padding: 18px; display: grid; grid-template-columns: 230px 1.1fr 0.9fr; gap: 14px; }}
+    .start-panel {{ background:#0d1522; border:1px solid #263449; border-radius:18px; padding:14px; min-height: 460px; box-shadow: 0 20px 45px rgba(0,0,0,.25); }}
+    .start-title {{ font-weight:900; margin: 4px 0 12px; color:#eef6ff; }}
+    .start-item {{ display:block; text-decoration:none; color:#eef6ff; background:#1b2638; padding:11px 12px; border-radius:12px; margin-bottom:9px; font-weight:750; }}
+    .start-item span {{ display:block; color:#a7b4c0; font-weight:500; font-size:12px; margin-top:2px; }}
     .card {{ background: #111827; border: 1px solid #263449; border-radius: 18px; padding: 20px; box-shadow: 0 20px 45px rgba(0,0,0,.28); }}
     .card h2 {{ margin: 0 0 14px; font-size: 18px; }}
     .path {{ background: #070b10; color: #38bdf8; border-radius: 12px; padding: 12px; overflow-wrap: anywhere; }}
@@ -138,15 +143,27 @@ def render_dashboard(model: dict[str, Any], token: str | None = None) -> str:
     .check.error {{ border-left: 4px solid #ef4444; }}
     .actions {{ display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }}
     a.button {{ text-decoration: none; color: #eef6ff; background: #263449; padding: 10px 14px; border-radius: 12px; font-weight: 800; }}
-    @media (max-width: 850px) {{ main {{ grid-template-columns: 1fr; padding: 14px; }} header {{ padding: 22px; }} h1 {{ font-size: 28px; }} .grid {{ grid-template-columns: 1fr; }} }}
+    .taskbar {{ position:fixed; left:0; right:0; bottom:0; height:54px; background:#0a1019; border-top:1px solid #263449; display:flex; align-items:center; gap:12px; padding:0 14px; box-shadow:0 -10px 30px rgba(0,0,0,.35); }}
+    .start-button {{ background:#1f6feb; color:white; border-radius:12px; padding:10px 14px; font-weight:900; }}
+    .task-pill {{ background:#1b2638; color:#a7b4c0; border-radius:999px; padding:8px 12px; font-size:13px; }}
+    .task-spacer {{ flex:1; }}
+    @media (max-width: 1000px) {{ main {{ grid-template-columns: 1fr; padding: 14px; }} .start-panel {{ min-height:auto; }} header {{ padding: 22px; }} h1 {{ font-size: 28px; }} .grid {{ grid-template-columns: 1fr; }} }}
   </style>
 </head>
 <body>
   <header>
-    <h1>WinUx Dashboard</h1>
-    <div class="sub">Portable Windows-app capsules, storage visibility, and leave-no-trace control.</div>
+    <h1>{PUBLIC_PRODUCT_NAME}</h1>
+    <div class="sub">Portable compatibility capsules with a familiar desktop-control flow.</div>
   </header>
   <main>
+    <nav class="start-panel">
+      <div class="start-title">Start</div>
+      <a class="start-item" href="{status_href}">System Status<span>Storage, capsules, runtime JSON</span></a>
+      <a class="start-item" href="{doctor_href}">Doctor<span>Health checks and repairs</span></a>
+      <a class="start-item" href="{init_href}">Initialize Storage<span>Write first-boot proof files</span></a>
+      <a class="start-item" href="#capsules">Capsules<span>Installed app environments</span></a>
+    </nav>
+
     <section class="card">
       <h2>Storage destination</h2>
       <p class="muted">{html.escape(model['first_run']['storage_message'])}</p>
@@ -164,12 +181,12 @@ def render_dashboard(model: dict[str, Any], token: str | None = None) -> str:
     </section>
 
     <section class="card">
-      <h2>Health</h2>
+      <h2>Control Panel</h2>
       <p class="muted">Overall: <strong>{html.escape(health['overall'])}</strong></p>
       {checks}
     </section>
 
-    <section class="card" style="grid-column: 1 / -1;">
+    <section id="capsules" class="card" style="grid-column: 2 / -1;">
       <h2>Capsules</h2>
       <table>
         <thead><tr><th>ID</th><th>App</th><th>Profile</th></tr></thead>
@@ -177,6 +194,13 @@ def render_dashboard(model: dict[str, Any], token: str | None = None) -> str:
       </table>
     </section>
   </main>
+  <div class="taskbar">
+    <div class="start-button">venvWin</div>
+    <div class="task-pill">Dashboard</div>
+    <div class="task-pill">Capsules: {model['capsule_count']}</div>
+    <div class="task-spacer"></div>
+    <div class="task-pill">Leave no trace: {'ON' if leave_no_trace else 'CHECK'}</div>
+  </div>
 </body>
 </html>"""
 
@@ -245,7 +269,7 @@ def run_dashboard(
     handler.user_home = home
     handler.access_token = token
     server = ThreadingHTTPServer((host, port), handler)
-    print(f"WinUx dashboard: {dashboard_url(host, port, token)}")
+    print(f"{PUBLIC_PRODUCT_NAME} dashboard: {dashboard_url(host, port, token)}")
     server.serve_forever()
 
 
