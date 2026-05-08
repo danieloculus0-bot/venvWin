@@ -24,6 +24,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          echo "brand-audit trigger: v2"
           old_mixed="Wi""nUx"
           old_upper="WI""NUX"
           old_title="Wi""nux"
