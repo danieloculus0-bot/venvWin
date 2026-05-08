@@ -6,7 +6,7 @@ on:
     paths:
       - "README.md"
       - "docs/**"
-      - "winux-portable/**"
+      - "venvwin-portable/**"
       - "src/**"
       - "tests/**"
       - "pyproject.toml"
@@ -37,10 +37,10 @@ jobs:
 
       - name: Run flash-ready standard gate
         run: |
-          chmod +x winux-portable/pre-iso-readiness.sh
-          chmod +x winux-portable/build-iso.sh
-          chmod +x winux-portable/build-flash-ready-standard.sh
-          ./winux-portable/build-flash-ready-standard.sh
+          chmod +x venvwin-portable/pre-iso-readiness.sh
+          chmod +x venvwin-portable/build-iso.sh
+          chmod +x venvwin-portable/build-flash-ready-standard.sh
+          ./venvwin-portable/build-flash-ready-standard.sh
 
       - name: Upload flash-ready artifacts
         uses: actions/upload-artifact@v4
