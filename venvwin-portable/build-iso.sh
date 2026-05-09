@@ -32,6 +32,8 @@ lb config \
   --architectures amd64 \
   --binary-images iso-hybrid \
   --archive-areas "main contrib non-free non-free-firmware" \
+  --linux-packages none \
+  --linux-flavours none \
   --security false \
   --debian-installer false \
   --memtest none \
@@ -60,6 +62,7 @@ deb http://security.debian.org/debian-security bookworm-security main contrib no
 EOF
 
 cat > config/package-lists/00-venvwin-core.list.chroot <<'EOF'
+linux-image-amd64
 live-boot
 live-config
 systemd-sysv
