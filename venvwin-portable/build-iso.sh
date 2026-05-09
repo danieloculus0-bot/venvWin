@@ -32,6 +32,7 @@ lb config \
   --architectures amd64 \
   --binary-images iso-hybrid \
   --archive-areas "main contrib non-free non-free-firmware" \
+  --security false \
   --debian-installer false \
   --memtest none \
   --bootappend-live "boot=live components quiet splash persistence" \
@@ -40,6 +41,7 @@ lb config \
   --iso-volume "VENVWIN_PORTABLE"
 
 mkdir -p \
+  config/archives \
   config/package-lists \
   config/includes.chroot/opt/venvwin \
   config/includes.chroot/usr/local/bin \
@@ -48,6 +50,14 @@ mkdir -p \
   config/includes.chroot/etc/skel/Desktop \
   config/includes.chroot/etc/lightdm/lightdm.conf.d \
   config/hooks/normal
+
+cat > config/archives/bookworm-security.list.chroot <<'EOF'
+deb http://security.debian.org/debian-security bookworm-security main contrib non-free non-free-firmware
+EOF
+
+cat > config/archives/bookworm-security.list.binary <<'EOF'
+deb http://security.debian.org/debian-security bookworm-security main contrib non-free non-free-firmware
+EOF
 
 cat > config/package-lists/00-venvwin-core.list.chroot <<'EOF'
 live-boot
