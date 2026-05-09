@@ -365,6 +365,22 @@ find /usr/share/locale -mindepth 1 -maxdepth 1 ! -name 'en*' -exec rm -rf {} + |
 EOF
 chmod +x config/hooks/normal/090-venvwin-trim.chroot
 
+LB_CONTENTS_DIST="bookworm"
+LB_CONTENTS_ARCH="amd64"
+LB_CONTENTS_CACHE="cache/contents.chroot/contents.${LB_CONTENTS_DIST}.${LB_CONTENTS_ARCH}"
+LB_CONTENTS_URL="https://deb.debian.org/debian/dists/${LB_CONTENTS_DIST}/main/Contents-${LB_CONTENTS_ARCH}.gz"
+mkdir -p "$(dirname "${LB_CONTENTS_CACHE}")"
+if [[ ! -s "${LB_CONTENTS_CACHE}" ]]; then
+  echo "Preloading live-build contents cache from ${LB_CONTENTS_URL}"
+  if command -v wget >/dev/null 2>&1; then
+    wget -qO- "${LB_CONTENTS_URL}" | gunzip -c > "${LB_CONTENTS_CACHE}"
+  else
+    curl -fsSL "${LB_CONTENTS_URL}" | gunzip -c > "${LB_CONTENTS_CACHE}"
+  fi
+fi
+
+test -s "${LB_CONTENTS_CACHE}"
+
 sudo lb build
 
 ISO_PATH="$(find . -maxdepth 1 \( -name 'live-image-*.iso' -o -name 'live-image-*.hybrid.iso' \) -type f | head -n 1 || true)"
