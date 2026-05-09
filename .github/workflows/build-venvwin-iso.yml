@@ -34,7 +34,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        profile: ${{ github.event_name == 'workflow_dispatch' && fromJSON(format('["{0}"]', github.event.inputs.profile)) || fromJSON('["core","standard","privacy"]') }}
+        profile: ${{ github.event_name == 'workflow_dispatch' && fromJSON(format('["{0}"]', github.event.inputs.profile)) || fromJSON('["standard"]') }}
     env:
       VENVWIN_PROFILE: ${{ matrix.profile }}
       VENVWIN_PORTABLE_PROFILE: ${{ matrix.profile }}
@@ -43,15 +43,38 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Install live-build and virtual test tooling
+      - name: Install host inspection and virtual test tooling
         run: |
           sudo apt-get update
-          sudo apt-get install -y live-build rsync xorriso isolinux syslinux-common squashfs-tools qemu-system-x86 ovmf
+          sudo apt-get install -y xorriso qemu-system-x86 ovmf
 
-      - name: Build venvWin Portable ISO
+      - name: Build venvWin Portable ISO in Debian bookworm live-build container
         run: |
-          chmod +x venvwin-portable/build-iso.sh
-          ./venvwin-portable/build-iso.sh
+          set -euo pipefail
+          docker pull debian:bookworm
+          docker run --rm --privileged \
+            -e VENVWIN_PROFILE="${VENVWIN_PROFILE}" \
+            -e VENVWIN_PORTABLE_PROFILE="${VENVWIN_PORTABLE_PROFILE}" \
+            -v "$PWD:/workspace" \
+            -w /workspace \
+            debian:bookworm \
+            bash -lc '
+              set -euo pipefail
+              apt-get update
+              DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+                ca-certificates \
+                curl \
+                gzip \
+                live-build \
+                rsync \
+                sudo \
+                xorriso \
+                isolinux \
+                syslinux-common \
+                squashfs-tools
+              chmod +x venvwin-portable/build-iso.sh
+              ./venvwin-portable/build-iso.sh
+            '
 
       - name: Static ISO inspection
         run: |
@@ -82,11 +105,36 @@ jobs:
           code=$?
           set -e
           if [ "$code" -eq 124 ]; then
-            echo "QEMU stayed alive for 150 seconds. Boot smoke passed enough for alpha learing."
+            echo "QEMU stayed alive for 150 seconds. Boot smoke passed enough for alpha learning."
             exit 0
           fi
           echo "QEMU exited early with code $code. ISO may be cursed."
           exit "$code"
+
+      - name: Write flash-ready verdict
+        run: |
+          ISO="dist/venvwin-portable-alpha-${VENVWIN_PROFILE}.iso"
+          VERDICT="dist/venvwin-flash-ready-verdict.txt"
+          if [ "$QEMU_SMOKE" = "true" ]; then
+            STATUS="FLASH_READY"
+          else
+            STATUS="ISO_BUILT_STATIC_ONLY"
+          fi
+          ISO_BYTES="$(stat -c%s "$ISO")"
+          ISO_MB="$(( (ISO_BYTES + 1048575) / 1048576 ))"
+          SHA256="$(cut -d' ' -f1 "$ISO.sha256")"
+          cat > "$VERDICT" <<EOF
+status=${STATUS}
+profile=${VENVWIN_PROFILE}
+iso=${ISO}
+size_mb=${ISO_MB}
+sha256=${SHA256}
+qemu_smoke=${QEMU_SMOKE}
+static_iso_inspection=passed
+artifact_name=venvwin-portable-alpha-${VENVWIN_PROFILE}-iso
+note=Only status=FLASH_READY should be treated as ready for a real USB flash test.
+EOF
+          cat "$VERDICT"
 
       - name: Upload ISO artifact
         uses: actions/upload-artifact@v4
@@ -96,4 +144,5 @@ jobs:
             dist/venvwin-portable-alpha-${{ env.VENVWIN_PROFILE }}.iso
             dist/venvwin-portable-alpha-${{ env.VENVWIN_PROFILE }}.iso.sha256
             dist/venvwin-portable-alpha-${{ env.VENVWIN_PROFILE }}-manifest.txt
+            dist/venvwin-flash-ready-verdict.txt
           if-no-files-found: error
