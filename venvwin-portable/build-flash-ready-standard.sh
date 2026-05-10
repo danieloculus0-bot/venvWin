@@ -48,12 +48,24 @@ grep -q '^dashboard_url=http://127.0.0.1:8787$' "${MANIFEST}"
 grep -q '^dashboard_bind_default=127.0.0.1$' "${MANIFEST}"
 grep -q '^dashboard_lan_mode=explicit_token_required$' "${MANIFEST}"
 grep -q '^first_boot_desktop_launchers=true$' "${MANIFEST}"
-grep -q '^first_boot_desktop_launchers_list=venvWin-First-Boot.desktop,venvWin-Dashboard.desktop,venvWin-Capsules.desktop,venvWin-Doctor.desktop,venvWin-Private-Browser.desktop$' "${MANIFEST}"
+grep -q '^first_boot_desktop_launchers_list=venvWin-First-Boot.desktop,venvWin-Dashboard.desktop,venvWin-Capsules.desktop,venvWin-Doctor.desktop,venvWin-Private-Browser.desktop,venvWin-Software-Center.desktop,venvWin-Notepad.desktop,venvWin-Network-Settings.desktop,venvWin-Hardware-Check.desktop,venvWin-Media-Player.desktop,venvWin-Audio-Control.desktop,venvWin-Camera-Test.desktop,venvWin-Partition-Manager.desktop,venvWin-Drive-Health.desktop,venvWin-File-Recovery.desktop$' "${MANIFEST}"
 grep -q '^first_boot_proof_bundle=true$' "${MANIFEST}"
 grep -q '^storage_source_marker=true$' "${MANIFEST}"
-grep -q '^standard_browser=netsurf-gtk$' "${MANIFEST}"
-grep -q '^privacy_browser_profile=privacy_only$' "${MANIFEST}"
-grep -q '^standard_profile_policy=lean_runtime_only$' "${MANIFEST}"
+grep -q '^standard_browser=netsurf-gtk,firefox-esr$' "${MANIFEST}"
+grep -q '^privacy_browser_profile=torbrowser-launcher,tor,torsocks$' "${MANIFEST}"
+grep -q '^software_center=synaptic,gdebi$' "${MANIFEST}"
+grep -q '^notepad=mousepad$' "${MANIFEST}"
+grep -q '^light_editor=geany$' "${MANIFEST}"
+grep -q '^office_tools=abiword,gnumeric$' "${MANIFEST}"
+grep -q '^pdf_viewer=evince$' "${MANIFEST}"
+grep -q '^image_tools=mtpaint,ristretto$' "${MANIFEST}"
+grep -q '^media_tools=mpv,ffmpeg$' "${MANIFEST}"
+grep -q '^camera_tools=guvcview,v4l-utils$' "${MANIFEST}"
+grep -q '^audio_stack=pipewire,pipewire-pulse,wireplumber,alsa-utils,pavucontrol,pamixer,xfce4-pulseaudio-plugin$' "${MANIFEST}"
+grep -q '^usb_support=udisks2,gvfs-backends,pmount,usb-modeswitch,mtp-tools,jmtpfs,exfatprogs,ntfs-3g,dosfstools$' "${MANIFEST}"
+grep -q '^rescue_tools=gparted,parted,testdisk,smartmontools,gsmartcontrol,ufw$' "${MANIFEST}"
+grep -q '^standard_profile_policy=lean_runtime_plus_puppy_era_essentials$' "${MANIFEST}"
+grep -q '^excluded_bloat=inkscape,cd_tools,dvd_tools,burners,audio_editors,extra_games,libreoffice,developer_stack$' "${MANIFEST}"
 
 echo "Step 5: Static ISO inspection"
 for tool in xorriso unsquashfs qemu-system-x86_64 timeout grep sed; do
@@ -104,6 +116,12 @@ grep -q 'squashfs-root/usr/local/bin/venvwin-private-browser' "${SQUASHFS_LIST}"
 grep -q 'squashfs-root/usr/share/applications/venvwin-dashboard.desktop' "${SQUASHFS_LIST}"
 grep -q 'squashfs-root/usr/share/applications/venvwin-dashboard-lan.desktop' "${SQUASHFS_LIST}"
 grep -q 'squashfs-root/usr/share/applications/venvwin-private-browser.desktop' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/usr/share/applications/venvwin-media-player.desktop' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/usr/share/applications/venvwin-audio-control.desktop' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/usr/share/applications/venvwin-camera.desktop' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/usr/share/applications/venvwin-partition-manager.desktop' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/usr/share/applications/venvwin-drive-health.desktop' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/usr/share/applications/venvwin-file-recovery.desktop' "${SQUASHFS_LIST}"
 grep -q 'squashfs-root/etc/xdg/autostart/venvwin-dashboard.desktop' "${SQUASHFS_LIST}"
 grep -q 'squashfs-root/etc/xdg/autostart/venvwin-first-run.desktop' "${SQUASHFS_LIST}"
 grep -q 'squashfs-root/etc/xdg/autostart/venvwin-first-boot-gui.desktop' "${SQUASHFS_LIST}"
@@ -114,6 +132,40 @@ grep -q 'squashfs-root/etc/skel/Desktop/venvWin-Dashboard.desktop' "${SQUASHFS_L
 grep -q 'squashfs-root/etc/skel/Desktop/venvWin-Capsules.desktop' "${SQUASHFS_LIST}"
 grep -q 'squashfs-root/etc/skel/Desktop/venvWin-Doctor.desktop' "${SQUASHFS_LIST}"
 grep -q 'squashfs-root/etc/skel/Desktop/venvWin-Private-Browser.desktop' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/etc/skel/Desktop/venvWin-Software-Center.desktop' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/etc/skel/Desktop/venvWin-Notepad.desktop' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/etc/skel/Desktop/venvWin-Network-Settings.desktop' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/etc/skel/Desktop/venvWin-Hardware-Check.desktop' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/etc/skel/Desktop/venvWin-Media-Player.desktop' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/etc/skel/Desktop/venvWin-Audio-Control.desktop' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/etc/skel/Desktop/venvWin-Camera-Test.desktop' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/etc/skel/Desktop/venvWin-Partition-Manager.desktop' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/etc/skel/Desktop/venvWin-Drive-Health.desktop' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/etc/skel/Desktop/venvWin-File-Recovery.desktop' "${SQUASHFS_LIST}"
+
+grep -q 'squashfs-root/usr/bin/netsurf-gtk' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/usr/bin/firefox-esr' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/usr/bin/torbrowser-launcher' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/usr/bin/torsocks' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/usr/bin/mpv' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/usr/bin/ffmpeg' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/usr/bin/guvcview' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/usr/bin/v4l2-ctl' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/usr/bin/pavucontrol' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/usr/bin/pamixer' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/usr/bin/arecord' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/usr/bin/aplay' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/usr/bin/abiword' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/usr/bin/gnumeric' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/usr/bin/mousepad' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/usr/bin/geany' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/usr/bin/evince' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/usr/bin/mtpaint' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/usr/bin/ristretto' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/usr/sbin/gparted' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/usr/bin/testdisk' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/usr/sbin/smartctl' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/usr/bin/gsmartcontrol' "${SQUASHFS_LIST}"
 
 echo "Step 6: QEMU boot smoke"
 set +e
@@ -169,8 +221,18 @@ dashboard_bind_default=127.0.0.1
 dashboard_lan_mode=explicit_token_required
 first_boot_desktop_launchers=true
 first_boot_proof_bundle=true
-privacy_browser_profile=privacy_only
-standard_profile_policy=lean_runtime_only
+standard_browser=netsurf-gtk,firefox-esr
+privacy_browser_profile=torbrowser-launcher,tor,torsocks
+office_tools=abiword,gnumeric
+pdf_viewer=evince
+image_tools=mtpaint,ristretto
+media_tools=mpv,ffmpeg
+camera_tools=guvcview,v4l-utils
+audio_stack=pipewire,pipewire-pulse,wireplumber,alsa-utils,pavucontrol,pamixer,xfce4-pulseaudio-plugin
+usb_support=udisks2,gvfs-backends,pmount,usb-modeswitch,mtp-tools,jmtpfs,exfatprogs,ntfs-3g,dosfstools
+rescue_tools=gparted,parted,testdisk,smartmontools,gsmartcontrol,ufw
+standard_profile_policy=lean_runtime_plus_puppy_era_essentials
+excluded_bloat=inkscape,cd_tools,dvd_tools,burners,audio_editors,extra_games,libreoffice,developer_stack
 PASS
 
 cat "${VERDICT}"
