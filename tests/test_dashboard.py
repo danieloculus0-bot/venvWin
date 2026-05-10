@@ -26,14 +26,14 @@ def test_dashboard_render_contains_product_signals(tmp_path: Path, monkeypatch):
     html = render_dashboard(model)
 
     assert PUBLIC_PRODUCT_NAME in html
-    assert "Storage destination" in html
+    assert "Capsule Storage" in html
     assert "Leave no trace" in html
     assert "Host write risk" in html
     assert "Capsules" in html
-    assert "Status JSON" in html
-    assert "Doctor JSON" in html
-    assert "Start" in html
-    assert "Control Panel" in html
+    assert "Open Dashboard" in html
+    assert "Run Doctor" in html
+    assert "venvWin" in html
+    assert "Control Center" in html
 
 
 def test_dashboard_token_links():
