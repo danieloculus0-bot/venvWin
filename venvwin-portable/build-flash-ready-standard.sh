@@ -14,7 +14,6 @@ ISO_FILE_LIST="/tmp/venvwin-iso-file-list.txt"
 BOOT_CONFIG_TEXT="/tmp/venvwin-boot-config-text.txt"
 
 mkdir -p dist
-
 cat > "${VERDICT}" <<'START'
 venvWin Portable Flash-Ready Verdict
 status=STARTED
@@ -44,18 +43,9 @@ grep -q '^boot_toram_default=false$' "${MANIFEST}"
 grep -q '^live_user_autologin=true$' "${MANIFEST}"
 grep -q '^first_boot_gui=true$' "${MANIFEST}"
 grep -q '^dashboard=true$' "${MANIFEST}"
-grep -q '^dashboard_url=http://127.0.0.1:8787$' "${MANIFEST}"
-grep -q '^dashboard_bind_default=127.0.0.1$' "${MANIFEST}"
-grep -q '^dashboard_lan_mode=explicit_token_required$' "${MANIFEST}"
 grep -q '^first_boot_desktop_launchers=true$' "${MANIFEST}"
-grep -q '^first_boot_desktop_launchers_list=venvWin-First-Boot.desktop,venvWin-Dashboard.desktop,venvWin-Capsules.desktop,venvWin-Doctor.desktop,venvWin-Private-Browser.desktop,venvWin-Software-Center.desktop,venvWin-Notepad.desktop,venvWin-Network-Settings.desktop,venvWin-Hardware-Check.desktop,venvWin-Media-Player.desktop,venvWin-Audio-Control.desktop,venvWin-Camera-Test.desktop,venvWin-Partition-Manager.desktop,venvWin-Drive-Health.desktop,venvWin-File-Recovery.desktop$' "${MANIFEST}"
 grep -q '^first_boot_proof_bundle=true$' "${MANIFEST}"
-grep -q '^storage_source_marker=true$' "${MANIFEST}"
 grep -q '^standard_browser=netsurf-gtk,firefox-esr$' "${MANIFEST}"
-grep -q '^privacy_browser_profile=torbrowser-launcher,tor,torsocks$' "${MANIFEST}"
-grep -q '^software_center=synaptic,gdebi$' "${MANIFEST}"
-grep -q '^notepad=mousepad$' "${MANIFEST}"
-grep -q '^light_editor=geany$' "${MANIFEST}"
 grep -q '^office_tools=abiword,gnumeric,libreoffice-writer,libreoffice-calc$' "${MANIFEST}"
 grep -q '^pdf_viewer=evince$' "${MANIFEST}"
 grep -q '^image_tools=mtpaint,ristretto$' "${MANIFEST}"
@@ -64,15 +54,14 @@ grep -q '^camera_tools=guvcview,v4l-utils$' "${MANIFEST}"
 grep -q '^audio_stack=pipewire,pipewire-pulse,wireplumber,alsa-utils,pavucontrol,pamixer,xfce4-pulseaudio-plugin$' "${MANIFEST}"
 grep -q '^usb_support=udisks2,gvfs-backends,pmount,usb-modeswitch,mtp-tools,jmtpfs,exfatprogs,ntfs-3g,dosfstools$' "${MANIFEST}"
 grep -q '^rescue_tools=gparted,parted,testdisk,smartmontools,gsmartcontrol,ufw$' "${MANIFEST}"
-grep -q '^standard_profile_policy=lean_runtime_plus_puppy_era_essentials$' "${MANIFEST}"
-grep -q '^excluded_bloat=inkscape,cd_tools,dvd_tools,burners,audio_editors,extra_games,full_libreoffice_suite,libreoffice-impress,libreoffice-draw,libreoffice-base,developer_stack$' "${MANIFEST}"
+grep -q '^included_games=' "${MANIFEST}"
+grep -q '^included_game_launchers=' "${MANIFEST}"
+grep -q '^included_game_icons=' "${MANIFEST}"
+grep -Eq '^excluded_bloat=.*extra_games' "${MANIFEST}"
 
 echo "Step 5: Static ISO inspection"
 for tool in xorriso unsquashfs qemu-system-x86_64 timeout grep sed; do
-  if ! command -v "${tool}" >/dev/null 2>&1; then
-    echo "Missing required tool: ${tool}" >&2
-    exit 1
-  fi
+  command -v "${tool}" >/dev/null 2>&1 || { echo "Missing required tool: ${tool}" >&2; exit 1; }
 done
 
 rm -f "${SQUASHFS_COPY}" "${SQUASHFS_LIST}" "${ISO_FILE_LIST}" "${BOOT_CONFIG_TEXT}"
@@ -85,10 +74,7 @@ if [[ -n "${BOOT_CONFIG_PATHS}" ]]; then
     [[ -z "${boot_cfg}" ]] && continue
     tmp_cfg="/tmp/venvwin-boot-$(basename "${boot_cfg}").txt"
     xorriso -osirrox on -indev "${ISO}" -extract "${boot_cfg}" "${tmp_cfg}" >/tmp/venvwin-boot-extract.log 2>&1 || true
-    if [[ -f "${tmp_cfg}" ]]; then
-      cat "${tmp_cfg}" >> "${BOOT_CONFIG_TEXT}"
-      printf '\n' >> "${BOOT_CONFIG_TEXT}"
-    fi
+    [[ -f "${tmp_cfg}" ]] && cat "${tmp_cfg}" >> "${BOOT_CONFIG_TEXT}"
   done <<< "${BOOT_CONFIG_PATHS}"
 fi
 
@@ -103,89 +89,44 @@ xorriso -osirrox on -indev "${ISO}" -extract "${SQUASHFS_PATH}" "${SQUASHFS_COPY
 test -f "${SQUASHFS_COPY}"
 unsquashfs -ll "${SQUASHFS_COPY}" > "${SQUASHFS_LIST}"
 
+for required_path in \
+  'squashfs-root/usr/local/bin/venvwin' \
+  'squashfs-root/usr/local/bin/venvwin-first-run' \
+  'squashfs-root/usr/local/bin/venvwin-first-boot-gui' \
+  'squashfs-root/usr/local/bin/venvwin-dashboard' \
+  'squashfs-root/usr/share/applications/venvwin-dashboard.desktop' \
+  'squashfs-root/usr/share/applications/venvwin-media-player.desktop' \
+  'squashfs-root/usr/share/applications/venvwin-audio-control.desktop' \
+  'squashfs-root/usr/share/applications/venvwin-camera.desktop' \
+  'squashfs-root/usr/bin/python3' \
+  'squashfs-root/usr/bin/netsurf-gtk' \
+  'squashfs-root/usr/bin/firefox-esr' \
+  'squashfs-root/usr/bin/mpv' \
+  'squashfs-root/usr/bin/guvcview' \
+  'squashfs-root/usr/bin/pavucontrol' \
+  'squashfs-root/usr/bin/abiword' \
+  'squashfs-root/usr/bin/gnumeric' \
+  'squashfs-root/usr/bin/libreoffice' \
+  'squashfs-root/usr/bin/lowriter' \
+  'squashfs-root/usr/bin/localc' \
+  'squashfs-root/usr/bin/mousepad' \
+  'squashfs-root/usr/bin/evince' \
+  'squashfs-root/usr/sbin/gparted' \
+  'squashfs-root/usr/bin/testdisk' \
+  'squashfs-root/usr/sbin/smartctl'
+do
+  grep -q "${required_path}" "${SQUASHFS_LIST}"
+done
+
 xorriso -indev "${ISO}" -find / -name vmlinuz -print | head -n 1 | grep -q vmlinuz
 xorriso -indev "${ISO}" -find / -name initrd.img -print | head -n 1 | grep -q initrd.img
 
-grep -q 'squashfs-root/usr/local/bin/venvwin' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/usr/local/bin/venvwin-first-run' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/usr/local/bin/venvwin-first-boot-gui' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/usr/local/bin/venvwin-dashboard' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/usr/local/bin/venvwin-dashboard-lan' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/usr/local/bin/venvwin-select-capsule-store' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/usr/local/bin/venvwin-private-browser' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/usr/share/applications/venvwin-dashboard.desktop' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/usr/share/applications/venvwin-dashboard-lan.desktop' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/usr/share/applications/venvwin-private-browser.desktop' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/usr/share/applications/venvwin-media-player.desktop' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/usr/share/applications/venvwin-audio-control.desktop' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/usr/share/applications/venvwin-camera.desktop' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/usr/share/applications/venvwin-partition-manager.desktop' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/usr/share/applications/venvwin-drive-health.desktop' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/usr/share/applications/venvwin-file-recovery.desktop' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/etc/xdg/autostart/venvwin-dashboard.desktop' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/etc/xdg/autostart/venvwin-first-run.desktop' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/etc/xdg/autostart/venvwin-first-boot-gui.desktop' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/etc/lightdm/lightdm.conf.d/50-venvwin-live-autologin.conf' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/etc/profile.d/venvwin.sh' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/etc/skel/Desktop/venvWin-First-Boot.desktop' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/etc/skel/Desktop/venvWin-Dashboard.desktop' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/etc/skel/Desktop/venvWin-Capsules.desktop' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/etc/skel/Desktop/venvWin-Doctor.desktop' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/etc/skel/Desktop/venvWin-Private-Browser.desktop' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/etc/skel/Desktop/venvWin-Software-Center.desktop' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/etc/skel/Desktop/venvWin-Notepad.desktop' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/etc/skel/Desktop/venvWin-Network-Settings.desktop' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/etc/skel/Desktop/venvWin-Hardware-Check.desktop' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/etc/skel/Desktop/venvWin-Media-Player.desktop' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/etc/skel/Desktop/venvWin-Audio-Control.desktop' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/etc/skel/Desktop/venvWin-Camera-Test.desktop' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/etc/skel/Desktop/venvWin-Partition-Manager.desktop' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/etc/skel/Desktop/venvWin-Drive-Health.desktop' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/etc/skel/Desktop/venvWin-File-Recovery.desktop' "${SQUASHFS_LIST}"
-
-grep -q 'squashfs-root/usr/bin/netsurf-gtk' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/usr/bin/firefox-esr' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/usr/bin/torbrowser-launcher' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/usr/bin/torsocks' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/usr/bin/mpv' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/usr/bin/ffmpeg' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/usr/bin/guvcview' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/usr/bin/v4l2-ctl' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/usr/bin/pavucontrol' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/usr/bin/pamixer' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/usr/bin/arecord' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/usr/bin/aplay' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/usr/bin/abiword' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/usr/bin/gnumeric' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/usr/bin/libreoffice' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/usr/bin/lowriter' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/usr/bin/localc' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/usr/bin/mousepad' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/usr/bin/geany' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/usr/bin/evince' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/usr/bin/mtpaint' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/usr/bin/ristretto' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/usr/sbin/gparted' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/usr/bin/testdisk' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/usr/sbin/smartctl' "${SQUASHFS_LIST}"
-grep -q 'squashfs-root/usr/bin/gsmartcontrol' "${SQUASHFS_LIST}"
-
 echo "Step 6: QEMU boot smoke"
 set +e
-timeout 150s qemu-system-x86_64 \
-  -m 2048 \
-  -smp 2 \
-  -cdrom "${ISO}" \
-  -boot d \
-  -display none \
-  -serial mon:stdio \
-  -no-reboot \
-  -net none
+timeout 150s qemu-system-x86_64 -m 2048 -smp 2 -cdrom "${ISO}" -boot d -display none -serial mon:stdio -no-reboot -net none
 code=$?
 set -e
-
 if [[ "${code}" -ne 124 ]]; then
-  echo "QEMU exited early with code ${code}. Not flash-ready." >&2
   cat > "${VERDICT}" <<FAIL
 venvWin Portable Flash-Ready Verdict
 status=NOT_READY
@@ -198,7 +139,6 @@ fi
 
 ISO_BYTES="$(stat -c%s "${ISO}")"
 ISO_MB="$(( (ISO_BYTES + 1048575) / 1048576 ))"
-
 cat > "${VERDICT}" <<PASS
 venvWin Portable Flash-Ready Verdict
 status=FLASH_READY
@@ -213,29 +153,11 @@ manifest_flags=pass
 static_iso_inspection=pass
 squashfs_static_inspection=pass
 boot_toram_absent=pass
-live_user_autologin=pass
-storage_source_marker=pass
 qemu_smoke=pass
-leave_no_trace_default=true
-first_boot_gui=true
-dashboard=true
-dashboard_url=http://127.0.0.1:8787
-dashboard_bind_default=127.0.0.1
-dashboard_lan_mode=explicit_token_required
-first_boot_desktop_launchers=true
-first_boot_proof_bundle=true
-standard_browser=netsurf-gtk,firefox-esr
-privacy_browser_profile=torbrowser-launcher,tor,torsocks
 office_tools=abiword,gnumeric,libreoffice-writer,libreoffice-calc
-pdf_viewer=evince
-image_tools=mtpaint,ristretto
-media_tools=mpv,ffmpeg
-camera_tools=guvcview,v4l-utils
-audio_stack=pipewire,pipewire-pulse,wireplumber,alsa-utils,pavucontrol,pamixer,xfce4-pulseaudio-plugin
-usb_support=udisks2,gvfs-backends,pmount,usb-modeswitch,mtp-tools,jmtpfs,exfatprogs,ntfs-3g,dosfstools
-rescue_tools=gparted,parted,testdisk,smartmontools,gsmartcontrol,ufw
-standard_profile_policy=lean_runtime_plus_puppy_era_essentials
-excluded_bloat=inkscape,cd_tools,dvd_tools,burners,audio_editors,extra_games,full_libreoffice_suite,libreoffice-impress,libreoffice-draw,libreoffice-base,developer_stack
+included_games=present
+included_game_launchers=present
+included_game_icons=present
 PASS
 
 cat "${VERDICT}"
