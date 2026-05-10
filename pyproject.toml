@@ -26,6 +26,7 @@ dependencies = []
 
 [project.scripts]
 venvwin = "venvwin.cli:main"
+venvwin-frontier-trail = "venvwin.frontier_trail:main"
 
 [build-system]
 requires = ["setuptools>=68", "wheel"]
