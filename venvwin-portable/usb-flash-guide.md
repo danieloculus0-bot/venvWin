@@ -19,13 +19,18 @@ Required ISO:
 ```text
 dist/venvwin-portable-alpha-standard.iso
 ```
+Required checksum:
+
+```text
+dist/venvwin-portable-alpha-standard.iso.sha256
+```
 
 ## Before flashing
 
 Confirm the checksum:
 
 ```bash
-sha256sum -c dist/venvwin-portable-alpha-standard.iso.sha256
+(cd dist && sha256sum -c venvwin-portable-alpha-standard.iso.sha256)
 ```
 
 Expected:

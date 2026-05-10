@@ -93,6 +93,7 @@ def env_home_source() -> str:
 
 
 def candidate_paths(home: Path | None = None) -> list[PersistenceCandidate]:
+    explicit_home = home is not None
     user_home = home or Path.home()
     candidates: list[tuple[Path, str]] = []
 
@@ -100,18 +101,19 @@ def candidate_paths(home: Path | None = None) -> list[PersistenceCandidate]:
     if env_home:
         candidates.append((Path(env_home).expanduser(), env_home_source()))
 
-    candidates.extend(
-        [
-            (Path("/run/live/persistence/venvWin-Capsules"), "live-persistence"),
-            (Path("/persistence/venvWin-Capsules"), "persistence-root"),
-            (Path("/mnt/venvwin-persistence/venvWin-Capsules"), "mounted-venvwin-persistence"),
-            (Path("/media") / user_home.name / "VENVWINDATA" / "venvWin-Capsules", "usb-label-venvwindata"),
-            (Path("/media") / user_home.name / "venvWinData" / "venvWin-Capsules", "usb-label-venvwindata-mixed"),
-        ]
-    )
+    if not explicit_home:
+        candidates.extend(
+            [
+                (Path("/run/live/persistence/venvWin-Capsules"), "live-persistence"),
+                (Path("/persistence/venvWin-Capsules"), "persistence-root"),
+                (Path("/mnt/venvwin-persistence/venvWin-Capsules"), "mounted-venvwin-persistence"),
+                (Path("/media") / user_home.name / "VENVWINDATA" / "venvWin-Capsules", "usb-label-venvwindata"),
+                (Path("/media") / user_home.name / "venvWinData" / "venvWin-Capsules", "usb-label-venvwindata-mixed"),
+            ]
+        )
 
-    if running_from_live_media():
-        candidates.append((user_home / "venvWin-Capsules", "live-home-overlay"))
+        if running_from_live_media():
+            candidates.append((user_home / "venvWin-Capsules", "live-home-overlay"))
 
     candidates.append((user_home / "venvWin-Capsules", "home-fallback"))
 

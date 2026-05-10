@@ -50,6 +50,8 @@ mkdir -p \
   config/includes.chroot/usr/share/applications \
   config/includes.chroot/etc/xdg/autostart \
   config/includes.chroot/etc/skel/Desktop \
+  config/includes.chroot/etc/skel/.config/gtk-3.0 \
+  config/includes.chroot/etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml \
   config/includes.chroot/etc/lightdm/lightdm.conf.d \
   config/hooks/normal
 
@@ -166,6 +168,73 @@ export PYTHONPATH="/opt/venvwin/src:${PYTHONPATH:-}"
 exec python3 -m venvwin.gui_first_run
 EOF
 chmod +x config/includes.chroot/usr/local/bin/venvwin-first-boot-gui
+
+cat > config/includes.chroot/usr/local/bin/venvwin-wine <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+
+CAPSULE_STORE="$(${VENVWIN_SELECT_CAPSULE_STORE:-/usr/local/bin/venvwin-select-capsule-store} 2>/dev/null || true)"
+if [[ -z "${CAPSULE_STORE}" ]]; then
+  CAPSULE_STORE="${VENVWIN_HOME:-$HOME/venvWin-Capsules}"
+fi
+export VENVWIN_HOME="${VENVWIN_HOME:-$CAPSULE_STORE}"
+export WINEPREFIX="${WINEPREFIX:-$VENVWIN_HOME/manual-wine-prefix}"
+export WINEARCH="${WINEARCH:-win64}"
+mkdir -p "$WINEPREFIX"
+
+if [[ "$#" -eq 0 ]]; then
+  cat <<'HELP'
+venvWin Wine wrapper
+Usage:
+  venvwin-wine /path/to/app.exe [args...]
+  venvwin-wine winecfg
+
+EXE/MSI files are routed through venvwin open when possible; other commands run in
+the isolated manual Wine prefix under the venvWin capsule store.
+HELP
+  exit 0
+fi
+
+case "${1,,}" in
+  *.exe|*.msi)
+    if [[ "$#" -eq 1 ]]; then
+      exec venvwin open "$1"
+    fi
+    exec wine "$@"
+    ;;
+  winecfg) shift; exec winecfg "$@" ;;
+  *) exec wine "$@" ;;
+esac
+EOF
+chmod +x config/includes.chroot/usr/local/bin/venvwin-wine
+
+cat > config/includes.chroot/usr/local/bin/venvwin-run-windows-app <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+export PYTHONPATH="/opt/venvwin/src:${PYTHONPATH:-}"
+python3 - <<'PY'
+import subprocess
+import sys
+from pathlib import Path
+from tkinter import Tk, filedialog, messagebox
+
+root = Tk()
+root.withdraw()
+path = filedialog.askopenfilename(
+    title="Choose a Windows app or installer",
+    filetypes=[("Windows programs", "*.exe *.msi"), ("All files", "*")],
+)
+if not path:
+    sys.exit(0)
+completed = subprocess.run(["venvwin", "open", path], text=True, capture_output=True)
+if completed.returncode != 0:
+    messagebox.showerror("venvWin", completed.stderr or completed.stdout or "Unable to open the selected file.")
+else:
+    messagebox.showinfo("venvWin", completed.stdout or f"Started {Path(path).name}")
+sys.exit(completed.returncode)
+PY
+EOF
+chmod +x config/includes.chroot/usr/local/bin/venvwin-run-windows-app
 
 cat > config/includes.chroot/usr/local/bin/venvwin-dashboard <<'EOF'
 #!/usr/bin/env bash
@@ -286,6 +355,56 @@ Terminal=false
 X-GNOME-Autostart-enabled=true
 EOF
 
+cat > config/includes.chroot/usr/share/applications/venvwin-app-manager.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=venvWin App Manager
+Comment=Manage Windows app capsules and portable storage
+Exec=/usr/local/bin/venvwin-first-boot-gui
+Terminal=false
+Categories=Utility;System;
+EOF
+
+cat > config/includes.chroot/usr/share/applications/venvwin-run-windows-app.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Run Windows App
+Comment=Choose an EXE or MSI and open it with venvWin
+Exec=/usr/local/bin/venvwin-run-windows-app
+Terminal=false
+Categories=Utility;Emulator;
+EOF
+
+cat > config/includes.chroot/usr/share/applications/venvwin-file-manager.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=File Manager
+Comment=Browse files with Thunar
+Exec=thunar
+Terminal=false
+Categories=System;FileManager;
+EOF
+
+cat > config/includes.chroot/usr/share/applications/venvwin-terminal.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Terminal
+Comment=Open the XFCE terminal
+Exec=xfce4-terminal
+Terminal=false
+Categories=System;TerminalEmulator;
+EOF
+
+cat > config/includes.chroot/usr/share/applications/venvwin-power.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Shutdown / Reboot / Logout
+Comment=Open session logout, reboot, and shutdown options
+Exec=xfce4-session-logout
+Terminal=false
+Categories=System;
+EOF
+
 cat > config/includes.chroot/usr/share/applications/venvwin-first-boot.desktop <<'EOF'
 [Desktop Entry]
 Type=Application
@@ -386,7 +505,66 @@ Terminal=false
 Categories=Utility;
 EOF
 
+cat > config/includes.chroot/etc/skel/.config/gtk-3.0/gtk.css <<'EOF'
+/* venvWin Portable: dark Mint-style desktop with orange highlights and red warnings only. */
+@define-color theme_bg_color #101010;
+@define-color theme_fg_color #f4f1ea;
+@define-color theme_selected_bg_color #ff8a00;
+@define-color theme_selected_fg_color #111111;
+button, .button { border-radius: 0; }
+.warning, .error { color: #e04436; }
+EOF
+
+cat > config/includes.chroot/etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xsettings.xml <<'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<channel name="xsettings" version="1.0">
+  <property name="Net" type="empty">
+    <property name="ThemeName" type="string" value="Adwaita-dark"/>
+    <property name="IconThemeName" type="string" value="Adwaita"/>
+  </property>
+  <property name="Gtk" type="empty">
+    <property name="FontName" type="string" value="Sans 10"/>
+    <property name="DecorationLayout" type="string" value="menu:minimize,maximize,close"/>
+  </property>
+</channel>
+EOF
+
+cat > config/includes.chroot/etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml <<'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<channel name="xfwm4" version="1.0">
+  <property name="general" type="empty">
+    <property name="theme" type="string" value="Default"/>
+    <property name="button_layout" type="string" value="O|HMC"/>
+    <property name="title_font" type="string" value="Sans Bold 10"/>
+  </property>
+</channel>
+EOF
+
+cat > config/includes.chroot/etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml <<'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<channel name="xfce4-desktop" version="1.0">
+  <property name="desktop-icons" type="empty">
+    <property name="style" type="int" value="2"/>
+  </property>
+  <property name="backdrop" type="empty">
+    <property name="screen0" type="empty">
+      <property name="monitor0" type="empty">
+        <property name="workspace0" type="empty">
+          <property name="color-style" type="int" value="0"/>
+          <property name="rgba1" type="array"><value type="double" value="0.04"/><value type="double" value="0.04"/><value type="double" value="0.04"/><value type="double" value="1.0"/></property>
+        </property>
+      </property>
+    </property>
+  </property>
+</channel>
+EOF
+
 install -m 0755 config/includes.chroot/usr/share/applications/venvwin-first-boot.desktop config/includes.chroot/etc/skel/Desktop/venvWin-First-Boot.desktop
+install -m 0755 config/includes.chroot/usr/share/applications/venvwin-app-manager.desktop config/includes.chroot/etc/skel/Desktop/venvWin-App-Manager.desktop
+install -m 0755 config/includes.chroot/usr/share/applications/venvwin-run-windows-app.desktop config/includes.chroot/etc/skel/Desktop/Run-Windows-App.desktop
+install -m 0755 config/includes.chroot/usr/share/applications/venvwin-file-manager.desktop config/includes.chroot/etc/skel/Desktop/File-Manager.desktop
+install -m 0755 config/includes.chroot/usr/share/applications/venvwin-terminal.desktop config/includes.chroot/etc/skel/Desktop/Terminal.desktop
+install -m 0755 config/includes.chroot/usr/share/applications/venvwin-power.desktop config/includes.chroot/etc/skel/Desktop/Shutdown-Reboot-Logout.desktop
 install -m 0755 config/includes.chroot/usr/share/applications/venvwin-dashboard.desktop config/includes.chroot/etc/skel/Desktop/venvWin-Dashboard.desktop
 install -m 0755 config/includes.chroot/usr/share/applications/venvwin-capsules.desktop config/includes.chroot/etc/skel/Desktop/venvWin-Capsules.desktop
 install -m 0755 config/includes.chroot/usr/share/applications/venvwin-doctor.desktop config/includes.chroot/etc/skel/Desktop/venvWin-Doctor.desktop
@@ -458,7 +636,10 @@ fi
 
 OUTPUT_ISO="${OUT_DIR}/${IMAGE_NAME}-${PROFILE}.iso"
 cp "${ISO_PATH}" "${OUTPUT_ISO}"
-sha256sum "${OUTPUT_ISO}" > "${OUTPUT_ISO}.sha256"
+(
+  cd "${OUT_DIR}"
+  sha256sum "$(basename "${OUTPUT_ISO}")" > "$(basename "${OUTPUT_ISO}").sha256"
+)
 
 ISO_BYTES="$(stat -c%s "${OUTPUT_ISO}")"
 ISO_MB="$(( (ISO_BYTES + 1048575) / 1048576 ))"
@@ -479,9 +660,9 @@ dashboard_url=http://127.0.0.1:8787
 dashboard_bind_default=127.0.0.1
 dashboard_lan_mode=explicit_token_required
 first_boot_desktop_launchers=true
-first_boot_desktop_launchers_list=venvWin-First-Boot.desktop,venvWin-Dashboard.desktop,venvWin-Capsules.desktop,venvWin-Doctor.desktop,venvWin-Private-Browser.desktop,venvWin-Software-Center.desktop,venvWin-Notepad.desktop,venvWin-Network-Settings.desktop,venvWin-Hardware-Check.desktop
+first_boot_desktop_launchers_list=venvWin-First-Boot.desktop,venvWin-App-Manager.desktop,Run-Windows-App.desktop,venvWin-Dashboard.desktop,venvWin-Capsules.desktop,venvWin-Doctor.desktop,venvWin-Private-Browser.desktop,venvWin-Software-Center.desktop,venvWin-Notepad.desktop,venvWin-Network-Settings.desktop,venvWin-Hardware-Check.desktop,File-Manager.desktop,Terminal.desktop,Shutdown-Reboot-Logout.desktop
 first_boot_proof_bundle=true
-first_boot_expected_desktop_files=venvWin-First-Boot.desktop,venvWin-Dashboard.desktop,venvWin-Capsules.desktop,venvWin-Private-Browser.desktop,venvWin-Software-Center.desktop,venvWin-Notepad.desktop,venvWin-Network-Settings.desktop,venvWin-Hardware-Check.desktop,venvWin-Quick-Start.txt,venvWin-First-Boot-Proof.txt,venvWin-Dashboard.txt,venvWin-First-Boot-Checklist.txt,venvwin-init.txt,venvwin-associate.txt,venvwin-first-run.txt,venvwin-storage.txt,venvwin-doctor.txt
+first_boot_expected_desktop_files=venvWin-First-Boot.desktop,venvWin-App-Manager.desktop,Run-Windows-App.desktop,venvWin-Dashboard.desktop,venvWin-Capsules.desktop,venvWin-Doctor.desktop,venvWin-Private-Browser.desktop,venvWin-Software-Center.desktop,venvWin-Notepad.desktop,venvWin-Network-Settings.desktop,venvWin-Hardware-Check.desktop,venvWin-Quick-Start.txt,venvWin-First-Boot-Proof.txt,venvWin-Dashboard.txt,venvWin-First-Boot-Checklist.txt,venvwin-init.txt,venvwin-associate.txt,venvwin-first-run.txt,venvwin-storage.txt,venvwin-doctor.txt
 storage_source_marker=true
 standard_browser=netsurf-gtk
 software_center=synaptic,gdebi
@@ -491,7 +672,10 @@ hardware_probe_tools=pciutils,usbutils,lshw,inxi,rfkill,nmcli
 firmware_bundle=firmware-linux,firmware-linux-nonfree,firmware-iwlwifi,firmware-realtek,firmware-atheros,firmware-brcm80211,firmware-misc-nonfree,firmware-sof-signed
 privacy_browser_profile=privacy_only
 standard_profile_policy=lean_runtime_plus_essential_desktop_tools
-product_gate=first boot must initialize storage, expose status, show setup UI, write proof bundle, show desktop launchers, start local dashboard, expose software center, expose notepad, expose network settings, and provide hardware/driver diagnostics
+theme=dark_mint_style_orange_highlights_red_warnings_square_windows
+venvwin_wine_wrapper=/usr/local/bin/venvwin-wine
+required_tools=file_manager:thunar,terminal:xfce4-terminal,notepad:mousepad,network:network-manager-gnome,software_center:synaptic,gdebi,app_manager:venvwin-first-boot-gui,power:xfce4-session-logout
+product_gate=first boot must initialize storage, expose status, show setup UI, write proof bundle, show desktop launchers, start local dashboard, expose software center, expose notepad, expose network settings, expose app manager/Wine wrapper, expose shutdown/reboot/logout, and provide hardware/driver diagnostics
 EOF
 
 echo "Built ISO: ${OUTPUT_ISO}"

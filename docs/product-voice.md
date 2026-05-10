@@ -53,7 +53,7 @@ Use sparingly:
 - misbehaving
 - haunted
 - not product-ready
-- fix the little bastard
+- fix the issue
 
 ## Examples
 

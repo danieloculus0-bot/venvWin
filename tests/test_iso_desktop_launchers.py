@@ -82,5 +82,5 @@ def test_flash_ready_gate_checks_boot_and_autologin_contracts():
 def test_manifest_contract_names_visible_desktop_launchers():
     script = (ROOT / "venvwin-portable" / "build-iso.sh").read_text(encoding="utf-8")
 
-    manifest_line = "first_boot_desktop_launchers_list=venvWin-First-Boot.desktop,venvWin-Dashboard.desktop,venvWin-Capsules.desktop,venvWin-Doctor.desktop,venvWin-Private-Browser.desktop"
+    manifest_line = "first_boot_desktop_launchers_list=venvWin-First-Boot.desktop,venvWin-App-Manager.desktop,Run-Windows-App.desktop,venvWin-Dashboard.desktop,venvWin-Capsules.desktop,venvWin-Doctor.desktop,venvWin-Private-Browser.desktop"
     assert manifest_line in script

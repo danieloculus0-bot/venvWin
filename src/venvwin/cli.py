@@ -195,7 +195,7 @@ def cmd_storage(as_json: bool) -> int:
     elif report["host_write_warning"]:
         print("leave-no-trace: warning, selected storage may be a host path; choose that only on purpose")
     else:
-        print("leave-no-trace: unknown, inspect before trusting this little bastard")
+        print("leave-no-trace: unknown, inspect before trusting this environment")
     return 0
 
 

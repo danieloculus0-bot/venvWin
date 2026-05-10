@@ -13,6 +13,29 @@ SQUASHFS_LIST="/tmp/venvwin-filesystem-list.txt"
 ISO_FILE_LIST="/tmp/venvwin-iso-file-list.txt"
 BOOT_CONFIG_TEXT="/tmp/venvwin-boot-config-text.txt"
 
+write_not_flash_ready() {
+  local reason="$1"
+  local detail="${2:-}"
+  cat > "${VERDICT}" <<FAIL
+venvWin Portable Flash-Ready Verdict
+status=NOT_FLASH_READY
+reason=${reason}
+detail=${detail}
+iso=${ISO}
+sha256=${SHA}
+manifest=${MANIFEST}
+FAIL
+}
+
+on_error() {
+  local exit_code="$1"
+  local line_no="$2"
+  local command="$3"
+  write_not_flash_ready "build_or_gate_failed" "line=${line_no}; exit=${exit_code}; command=${command}"
+  exit "${exit_code}"
+}
+trap 'on_error "$?" "$LINENO" "$BASH_COMMAND"' ERR
+
 mkdir -p dist
 
 cat > "${VERDICT}" <<'START'
@@ -34,7 +57,7 @@ echo "Step 3: Required artifact check"
 test -f "${ISO}"
 test -f "${SHA}"
 test -f "${MANIFEST}"
-sha256sum -c "${SHA}"
+(cd dist && sha256sum -c "$(basename "${SHA}")")
 
 echo "Step 4: Required manifest flags"
 grep -q '^profile=standard$' "${MANIFEST}"
@@ -48,12 +71,15 @@ grep -q '^dashboard_url=http://127.0.0.1:8787$' "${MANIFEST}"
 grep -q '^dashboard_bind_default=127.0.0.1$' "${MANIFEST}"
 grep -q '^dashboard_lan_mode=explicit_token_required$' "${MANIFEST}"
 grep -q '^first_boot_desktop_launchers=true$' "${MANIFEST}"
-grep -q '^first_boot_desktop_launchers_list=venvWin-First-Boot.desktop,venvWin-Dashboard.desktop,venvWin-Capsules.desktop,venvWin-Doctor.desktop,venvWin-Private-Browser.desktop$' "${MANIFEST}"
+grep -q '^first_boot_desktop_launchers_list=venvWin-First-Boot.desktop,venvWin-App-Manager.desktop,Run-Windows-App.desktop,venvWin-Dashboard.desktop,venvWin-Capsules.desktop,venvWin-Doctor.desktop,venvWin-Private-Browser.desktop,venvWin-Software-Center.desktop,venvWin-Notepad.desktop,venvWin-Network-Settings.desktop,venvWin-Hardware-Check.desktop,File-Manager.desktop,Terminal.desktop,Shutdown-Reboot-Logout.desktop$' "${MANIFEST}"
 grep -q '^first_boot_proof_bundle=true$' "${MANIFEST}"
 grep -q '^storage_source_marker=true$' "${MANIFEST}"
 grep -q '^standard_browser=netsurf-gtk$' "${MANIFEST}"
 grep -q '^privacy_browser_profile=privacy_only$' "${MANIFEST}"
-grep -q '^standard_profile_policy=lean_runtime_only$' "${MANIFEST}"
+grep -q '^standard_profile_policy=lean_runtime_plus_essential_desktop_tools$' "${MANIFEST}"
+grep -q '^theme=dark_mint_style_orange_highlights_red_warnings_square_windows$' "${MANIFEST}"
+grep -q '^venvwin_wine_wrapper=/usr/local/bin/venvwin-wine$' "${MANIFEST}"
+grep -q '^required_tools=.*file_manager:thunar.*terminal:xfce4-terminal.*notepad:mousepad.*network:network-manager-gnome.*software_center:synaptic,gdebi.*app_manager:venvwin-first-boot-gui.*power:xfce4-session-logout' "${MANIFEST}"
 
 echo "Step 5: Static ISO inspection"
 for tool in xorriso unsquashfs qemu-system-x86_64 timeout grep sed; do
@@ -97,10 +123,17 @@ xorriso -indev "${ISO}" -find / -name initrd.img -print | head -n 1 | grep -q in
 grep -q 'squashfs-root/usr/local/bin/venvwin' "${SQUASHFS_LIST}"
 grep -q 'squashfs-root/usr/local/bin/venvwin-first-run' "${SQUASHFS_LIST}"
 grep -q 'squashfs-root/usr/local/bin/venvwin-first-boot-gui' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/usr/local/bin/venvwin-wine' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/usr/local/bin/venvwin-run-windows-app' "${SQUASHFS_LIST}"
 grep -q 'squashfs-root/usr/local/bin/venvwin-dashboard' "${SQUASHFS_LIST}"
 grep -q 'squashfs-root/usr/local/bin/venvwin-dashboard-lan' "${SQUASHFS_LIST}"
 grep -q 'squashfs-root/usr/local/bin/venvwin-select-capsule-store' "${SQUASHFS_LIST}"
 grep -q 'squashfs-root/usr/local/bin/venvwin-private-browser' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/usr/share/applications/venvwin-app-manager.desktop' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/usr/share/applications/venvwin-run-windows-app.desktop' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/usr/share/applications/venvwin-file-manager.desktop' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/usr/share/applications/venvwin-terminal.desktop' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/usr/share/applications/venvwin-power.desktop' "${SQUASHFS_LIST}"
 grep -q 'squashfs-root/usr/share/applications/venvwin-dashboard.desktop' "${SQUASHFS_LIST}"
 grep -q 'squashfs-root/usr/share/applications/venvwin-dashboard-lan.desktop' "${SQUASHFS_LIST}"
 grep -q 'squashfs-root/usr/share/applications/venvwin-private-browser.desktop' "${SQUASHFS_LIST}"
@@ -110,14 +143,27 @@ grep -q 'squashfs-root/etc/xdg/autostart/venvwin-first-boot-gui.desktop' "${SQUA
 grep -q 'squashfs-root/etc/lightdm/lightdm.conf.d/50-venvwin-live-autologin.conf' "${SQUASHFS_LIST}"
 grep -q 'squashfs-root/etc/profile.d/venvwin.sh' "${SQUASHFS_LIST}"
 grep -q 'squashfs-root/etc/skel/Desktop/venvWin-First-Boot.desktop' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/etc/skel/Desktop/venvWin-App-Manager.desktop' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/etc/skel/Desktop/Run-Windows-App.desktop' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/etc/skel/Desktop/File-Manager.desktop' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/etc/skel/Desktop/Terminal.desktop' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/etc/skel/Desktop/Shutdown-Reboot-Logout.desktop' "${SQUASHFS_LIST}"
 grep -q 'squashfs-root/etc/skel/Desktop/venvWin-Dashboard.desktop' "${SQUASHFS_LIST}"
 grep -q 'squashfs-root/etc/skel/Desktop/venvWin-Capsules.desktop' "${SQUASHFS_LIST}"
 grep -q 'squashfs-root/etc/skel/Desktop/venvWin-Doctor.desktop' "${SQUASHFS_LIST}"
 grep -q 'squashfs-root/etc/skel/Desktop/venvWin-Private-Browser.desktop' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/etc/skel/Desktop/venvWin-Software-Center.desktop' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/etc/skel/Desktop/venvWin-Notepad.desktop' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/etc/skel/Desktop/venvWin-Network-Settings.desktop' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/etc/skel/Desktop/venvWin-Hardware-Check.desktop' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/etc/skel/.config/gtk-3.0/gtk.css' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xsettings.xml' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml' "${SQUASHFS_LIST}"
 
 echo "Step 6: QEMU boot smoke"
 set +e
 timeout 150s qemu-system-x86_64 \
+  -accel tcg \
   -m 2048 \
   -smp 2 \
   -cdrom "${ISO}" \
@@ -131,18 +177,17 @@ set -e
 
 if [[ "${code}" -ne 124 ]]; then
   echo "QEMU exited early with code ${code}. Not flash-ready." >&2
-  cat > "${VERDICT}" <<FAIL
-venvWin Portable Flash-Ready Verdict
-status=NOT_READY
-reason=qemu_exited_early
-qemu_exit_code=${code}
-iso=${ISO}
-FAIL
+  write_not_flash_ready "qemu_exited_early" "qemu_exit_code=${code}"
   exit "${code}"
 fi
 
 ISO_BYTES="$(stat -c%s "${ISO}")"
 ISO_MB="$(( (ISO_BYTES + 1048575) / 1048576 ))"
+
+test -f "${ISO}"
+test -f "${SHA}"
+test -f "${MANIFEST}"
+(cd dist && sha256sum -c "$(basename "${SHA}")")
 
 cat > "${VERDICT}" <<PASS
 venvWin Portable Flash-Ready Verdict
@@ -170,7 +215,7 @@ dashboard_lan_mode=explicit_token_required
 first_boot_desktop_launchers=true
 first_boot_proof_bundle=true
 privacy_browser_profile=privacy_only
-standard_profile_policy=lean_runtime_only
+standard_profile_policy=lean_runtime_plus_essential_desktop_tools
 PASS
 
 cat "${VERDICT}"
