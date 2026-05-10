@@ -12,7 +12,7 @@ def test_usb_flash_guide_is_gated_by_flash_ready_verdict():
     assert "dist/venvwin-flash-ready-verdict.txt" in guide
     assert "dist/venvwin-portable-alpha-standard.iso" in guide
     assert "dist/venvwin-portable-alpha-standard.iso.sha256" in guide
-    assert "sha256sum -c dist/venvwin-portable-alpha-standard.iso.sha256" in guide
+    assert "(cd dist && sha256sum -c venvwin-portable-alpha-standard.iso.sha256)" in guide
 
 
 def test_usb_flash_guide_warns_about_whole_device_writes():
@@ -53,6 +53,6 @@ def test_preflight_requires_usb_flash_guide_contract():
     assert '"venvwin-portable/usb-flash-guide.md"' in preflight
     assert "Checking USB flash guide contract" in preflight
     assert "status=FLASH_READY" in preflight
-    assert "sha256sum -c dist/venvwin-portable-alpha-standard.iso.sha256" in preflight
+    assert "(cd dist && sha256sum -c venvwin-portable-alpha-standard.iso.sha256)" in preflight
     assert "dist/venvwin-portable-alpha-standard.iso" in preflight
     assert "dist/venvwin-flash-ready-verdict.txt" in preflight

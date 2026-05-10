@@ -36,14 +36,17 @@ jobs:
           sudo apt-get install -y live-build rsync xorriso isolinux syslinux-common squashfs-tools qemu-system-x86 ovmf
 
       - name: Run flash-ready standard gate
+        id: flash_gate
+        continue-on-error: true
         run: |
-          echo "flash-ready-standard trigger: v2"
+          echo "flash-ready-standard trigger: v3"
           chmod +x venvwin-portable/pre-iso-readiness.sh
           chmod +x venvwin-portable/build-iso.sh
           chmod +x venvwin-portable/build-flash-ready-standard.sh
           ./venvwin-portable/build-flash-ready-standard.sh
 
-      - name: Upload flash-ready artifacts
+      - name: Upload flash-ready ISO artifacts
+        if: steps.flash_gate.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: venvwin-portable-flash-ready-standard
@@ -53,3 +56,25 @@ jobs:
             dist/venvwin-portable-alpha-standard-manifest.txt
             dist/venvwin-flash-ready-verdict.txt
           if-no-files-found: error
+
+      - name: Upload flash-ready diagnostics on failure
+        if: always() && steps.flash_gate.outcome != 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: venvwin-portable-flash-ready-standard-diagnostics
+          path: |
+            dist/venvwin-portable-alpha-standard.iso
+            dist/venvwin-portable-alpha-standard.iso.sha256
+            dist/venvwin-portable-alpha-standard-manifest.txt
+            dist/venvwin-flash-ready-verdict.txt
+            /tmp/venvwin-*.txt
+            /tmp/venvwin-*.log
+          if-no-files-found: warn
+
+      - name: Fail when flash-ready gate failed
+        if: steps.flash_gate.outcome != 'success'
+        run: |
+          if [ -f dist/venvwin-flash-ready-verdict.txt ]; then
+            cat dist/venvwin-flash-ready-verdict.txt
+          fi
+          exit 1

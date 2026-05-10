@@ -168,4 +168,4 @@ Proof and logs remain in venvWin-owned storage/session.
 
 Do not sacrifice LNT just to make persistence easier.
 
-A portable OS that casually writes to the host hard drive is not portable. It is just a rude little bastard with a boot menu.
+A portable OS that casually writes to the host hard drive is not portable. It is an unsafe boot environment with a misleading label.

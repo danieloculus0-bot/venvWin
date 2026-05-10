@@ -99,7 +99,7 @@ grep -q "venvwin-flash-ready-verdict.txt" venvwin-portable/build-flash-ready-sta
 
 echo "Checking USB flash guide contract"
 grep -q "status=FLASH_READY" venvwin-portable/usb-flash-guide.md
-grep -q "sha256sum -c dist/venvwin-portable-alpha-standard.iso.sha256" venvwin-portable/usb-flash-guide.md
+grep -q "(cd dist && sha256sum -c venvwin-portable-alpha-standard.iso.sha256)" venvwin-portable/usb-flash-guide.md
 grep -q "dist/venvwin-portable-alpha-standard.iso" venvwin-portable/usb-flash-guide.md
 grep -q "dist/venvwin-flash-ready-verdict.txt" venvwin-portable/usb-flash-guide.md
 
@@ -108,7 +108,8 @@ chmod +x venvwin-portable/audit-public-branding.sh
 ./venvwin-portable/audit-public-branding.sh
 
 echo "Checking Python imports, GUI model, dashboard model, and fallback honesty"
-PYTHONPATH=src python3 - <<'PY'
+export PYTHONPATH="src:${PYTHONPATH:-}"
+python3 - <<'PY'
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -209,7 +210,7 @@ python3 -m venvwin.cli first-run --home "${TMP_ROOT}/home" --wizard-text >/dev/n
 python3 -m venvwin.cli first-run --home "${TMP_ROOT}/home" --json >/dev/null
 python3 -m venvwin.cli storage >/dev/null
 python3 -m venvwin.cli storage --json >/dev/null
-PYTHONPATH=src python3 -m venvwin.dashboard --root "${TMP_ROOT}/runtime" --home "${TMP_ROOT}/home" --port 9878 >/tmp/venvwin-dashboard-smoke.log 2>&1 &
+python3 -m venvwin.dashboard --root "${TMP_ROOT}/runtime" --home "${TMP_ROOT}/home" --port 9878 >/tmp/venvwin-dashboard-smoke.log 2>&1 &
 DASH_PID=$!
 sleep 1
 curl -fsS http://127.0.0.1:9878/ >/dev/null
@@ -218,7 +219,7 @@ curl -fsS http://127.0.0.1:9878/api/doctor >/dev/null
 kill "${DASH_PID}" || true
 DASH_PID=""
 
-PYTHONPATH=src python3 -m venvwin.dashboard --root "${TMP_ROOT}/runtime" --home "${TMP_ROOT}/home" --port 9879 --token testtoken >/tmp/venvwin-dashboard-token-smoke.log 2>&1 &
+python3 -m venvwin.dashboard --root "${TMP_ROOT}/runtime" --home "${TMP_ROOT}/home" --port 9879 --token testtoken >/tmp/venvwin-dashboard-token-smoke.log 2>&1 &
 TOKEN_DASH_PID=$!
 sleep 1
 LOCK_CODE="$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:9879/)"

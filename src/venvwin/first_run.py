@@ -35,7 +35,7 @@ def first_run_summary(home: Path | None = None) -> dict[str, Any]:
         storage_message = "Selected storage may be a host path. Use only if you chose that on purpose."
     else:
         storage_status = "unknown-warning"
-        storage_message = "Storage status is unclear. Inspect before trusting this little bastard."
+        storage_message = "Storage status is unclear. Inspect before trusting this environment."
 
     return {
         "product_name": PUBLIC_PRODUCT_NAME,
