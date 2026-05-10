@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from venvwin.first_run import PUBLIC_PRODUCT_NAME
-from venvwin.gui_first_run import display_model, status_color
+from venvwin.gui_first_run import BAD, display_model, status_color
 
 
 def test_display_model_has_first_boot_fields(tmp_path: Path, monkeypatch):
@@ -22,8 +22,8 @@ def test_display_model_has_first_boot_fields(tmp_path: Path, monkeypatch):
     assert model["dashboard_url"] == "http://127.0.0.1:8787"
 
 
-def test_status_color_mapping():
+def test_status_color_mapping_uses_red_for_warnings_only():
     assert status_color("leave-no-trace-ok") == "#22c55e"
-    assert status_color("disposable-warning") == "#f59e0b"
-    assert status_color("host-risk-warning") == "#f59e0b"
-    assert status_color("unknown") == "#ef4444"
+    assert status_color("disposable-warning") == BAD
+    assert status_color("host-risk-warning") == BAD
+    assert status_color("unknown") == BAD
