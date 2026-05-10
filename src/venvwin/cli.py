@@ -139,9 +139,9 @@ def cmd_dashboard(root: Path, host: str, port: int, home: Path | None) -> int:
 
 
 def cmd_frontier_trail() -> int:
-    from .frontier_trail import main as game_main
+    from .frontier_trail import launch_cli
 
-    return game_main([])
+    return launch_cli()
 
 
 def cmd_doctor(root: Path, applications_dir: Path | None, as_json: bool) -> int:
