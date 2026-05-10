@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 
 from .associate import default_applications_dir, write_file_association_handlers
+from .bootstate import bootstate_json, bootstate_text, write_bootstate
 from .capsule import create_capsule, list_capsules, load_capsule, save_capsule
 from .dashboard import DEFAULT_HOST, DEFAULT_PORT, run_dashboard
 from .desktop import generate_desktop_launcher
@@ -28,6 +29,10 @@ def build_parser() -> argparse.ArgumentParser:
 
     sub.add_parser("init", help="Initialize runtime directories and default profile")
     sub.add_parser("frontier-trail", help="Play Daniel Boone: Frontier Trail")
+
+    bootstate = sub.add_parser("bootstate", help="Show Puppy-style venvWin boot/session layer state")
+    bootstate.add_argument("--json", action="store_true", help="Print raw JSON report")
+    bootstate.add_argument("--write", action="store_true", help="Write BOOTSTATE to /etc/venvwin/BOOTSTATE or user fallback")
 
     first_run = sub.add_parser("first-run", help="Create first-run files and show storage summary")
     first_run.add_argument("--home", type=Path, help="Override home path for testing")
@@ -113,6 +118,18 @@ def cmd_init(root: Path) -> int:
     ensure_runtime_dirs(root)
     save_profile(profiles_dir(root), RunnerProfile.default())
     print(f"Initialized venvWin runtime: {root}")
+    return 0
+
+
+def cmd_bootstate(as_json: bool, write: bool) -> int:
+    if write:
+        path = write_bootstate()
+        print(f"Wrote BOOTSTATE: {path}")
+        return 0
+    if as_json:
+        print(bootstate_json())
+    else:
+        print(bootstate_text(), end="")
     return 0
 
 
@@ -323,6 +340,8 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if args.command == "init":
             return cmd_init(root)
+        if args.command == "bootstate":
+            return cmd_bootstate(args.json, args.write)
         if args.command == "frontier-trail":
             return cmd_frontier_trail()
         if args.command == "first-run":
