@@ -45,6 +45,7 @@ grep -q '^first_boot_gui=true$' "${MANIFEST}"
 grep -q '^dashboard=true$' "${MANIFEST}"
 grep -q '^first_boot_desktop_launchers=true$' "${MANIFEST}"
 grep -q '^first_boot_proof_bundle=true$' "${MANIFEST}"
+grep -q '^storage_source_marker=true$' "${MANIFEST}"
 grep -q '^standard_browser=netsurf-gtk,firefox-esr$' "${MANIFEST}"
 grep -q '^office_tools=abiword,gnumeric,libreoffice-writer,libreoffice-calc$' "${MANIFEST}"
 grep -q '^pdf_viewer=evince$' "${MANIFEST}"
@@ -95,6 +96,7 @@ for required_path in \
   'squashfs-root/usr/local/bin/venvwin-first-boot-gui' \
   'squashfs-root/usr/local/bin/venvwin-dashboard' \
   'squashfs-root/usr/share/applications/venvwin-dashboard.desktop' \
+  'squashfs-root/etc/skel/Desktop/venvWin-First-Boot.desktop' \
   'squashfs-root/usr/share/applications/venvwin-media-player.desktop' \
   'squashfs-root/usr/share/applications/venvwin-audio-control.desktop' \
   'squashfs-root/usr/share/applications/venvwin-camera.desktop' \
@@ -153,6 +155,8 @@ manifest_flags=pass
 static_iso_inspection=pass
 squashfs_static_inspection=pass
 boot_toram_absent=pass
+live_user_autologin=pass
+storage_source_marker=pass
 qemu_smoke=pass
 office_tools=abiword,gnumeric,libreoffice-writer,libreoffice-calc
 included_games=present
