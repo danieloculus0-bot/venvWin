@@ -96,7 +96,15 @@ for required_path in \
   'squashfs-root/usr/local/bin/venvwin-first-boot-gui' \
   'squashfs-root/usr/local/bin/venvwin-dashboard' \
   'squashfs-root/usr/share/applications/venvwin-dashboard.desktop' \
+  'squashfs-root/usr/share/applications/venvwin-frontier-trail.desktop' \
+  'squashfs-root/usr/share/pixmaps/venvwin-frontier-trail.svg' \
   'squashfs-root/etc/skel/Desktop/venvWin-First-Boot.desktop' \
+  'squashfs-root/etc/skel/Desktop/venvWin-Dashboard.desktop' \
+  'squashfs-root/etc/skel/Desktop/venvWin-Capsules.desktop' \
+  'squashfs-root/etc/skel/Desktop/venvWin-Doctor.desktop' \
+  'squashfs-root/etc/skel/Desktop/venvWin-Private-Browser.desktop' \
+  'squashfs-root/etc/lightdm/lightdm.conf.d/50-venvwin-live-autologin.conf' \
+  'squashfs-root/etc/profile.d/venvwin.sh' \
   'squashfs-root/usr/share/applications/venvwin-media-player.desktop' \
   'squashfs-root/usr/share/applications/venvwin-audio-control.desktop' \
   'squashfs-root/usr/share/applications/venvwin-camera.desktop' \
