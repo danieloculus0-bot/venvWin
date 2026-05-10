@@ -139,7 +139,7 @@ def cmd_dashboard(root: Path, host: str, port: int, home: Path | None) -> int:
 
 
 def cmd_frontier_trail() -> int:
-    from .frontier_trail import launch_cli
+    from .frontier_trail.pitfall import launch_cli
 
     return launch_cli()
 
