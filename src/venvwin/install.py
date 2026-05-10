@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from .capsule import Capsule, capsule_dir, save_capsule, utc_now
-from .runner import get_runner
+from .runner import get_runner, require_command_runner
 
 
 def record_installer(
@@ -48,6 +48,11 @@ def install_into_capsule(
     dry_run: bool = False,
     copy_installer: bool = True,
 ) -> dict[str, Any]:
+    command = get_runner(capsule.profile.runner).prepare_install(capsule, str(installer_path))
+
+    if not dry_run:
+        require_command_runner(command)
+
     record = record_installer(
         capsules_root,
         capsule,
@@ -55,12 +60,12 @@ def install_into_capsule(
         copy_installer=copy_installer,
     )
 
-    command = get_runner(capsule.profile.runner).prepare_install(capsule, str(installer_path))
     install_record = {
         **record,
         "command": command.args,
         "env": command.env,
         "dry_run": dry_run,
+        "runner_available": dry_run or True,
         "exit_code": None,
         "completed_at": None,
     }
