@@ -104,8 +104,8 @@ class VenvWinFirstRunApp:
         titlebar.pack_propagate(False)
         self.draw_mini_logo(titlebar).pack(side="left", padx=(10, 8), pady=7)
         self.label(titlebar, f"{PUBLIC_PRODUCT_NAME} Control Center", 11, TEXT, True).pack(side="left", fill="y")
-        for mark, close in [("_", False), ("□", False), ("×", True)]:
-            b = tk.Label(titlebar, text=mark, bg=BAD if close else "#303030", fg="#ffffff", width=4, font=(FONT, 10, "bold"), relief="solid", bd=1)
+        for mark in ("_", "□", "×"):
+            b = tk.Label(titlebar, text=mark, bg="#303030", fg="#ffffff", width=4, font=(FONT, 10, "bold"), relief="solid", bd=1)
             b.pack(side="right", padx=(0, 6), pady=5)
 
         main = tk.Frame(window, bg=DESKTOP, padx=12, pady=12)
@@ -165,7 +165,7 @@ class VenvWinFirstRunApp:
         logo.create_arc(8, 11, 66, 75, start=210, extent=250, outline="#dddddd", width=4)
         logo.create_polygon(1, 34, 28, 23, 42, 37, 28, 48, fill=ACCENT, outline=ACCENT)
         logo.create_rectangle(66, 24, 94, 52, fill=ACCENT, outline="#7c3b00")
-        logo.create_rectangle(98, 24, 126, 52, fill="#555555", outline="#666666")
+        logo.create_rectangle(98, 24, 108, 52, fill="#555555", outline="#666666")
         copy = tk.Frame(row, bg=CARD)
         copy.pack(side="left", fill="both", expand=True)
         self.label(copy, "venvWin Portable", 28, TEXT, True).pack(anchor="w")
