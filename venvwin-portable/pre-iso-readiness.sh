@@ -176,7 +176,7 @@ with TemporaryDirectory() as tmp:
     assert "capsules" in dash
     rendered = render_dashboard(dash)
     assert PUBLIC_PRODUCT_NAME in rendered
-    assert "Control Panel" in rendered
+    assert "Control Center" in rendered
     assert "Leave no trace" in rendered
     rendered_token = render_dashboard(dash, token="abc")
     assert "/api/status?token=abc" in rendered_token
