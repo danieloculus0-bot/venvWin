@@ -14,8 +14,7 @@ if ! command -v lb >/dev/null 2>&1; then
 fi
 
 case "${PROFILE}" in
-  core|standard|privacy)
-    ;;
+  core|standard|privacy) ;;
   *)
     echo "Unknown VENVWIN_PORTABLE_PROFILE='${PROFILE}'. Use core, standard, or privacy." >&2
     exit 1
@@ -48,6 +47,7 @@ mkdir -p \
   config/includes.chroot/opt/venvwin \
   config/includes.chroot/usr/local/bin \
   config/includes.chroot/usr/share/applications \
+  config/includes.chroot/usr/share/pixmaps \
   config/includes.chroot/etc/xdg/autostart \
   config/includes.chroot/etc/skel/Desktop \
   config/includes.chroot/etc/lightdm/lightdm.conf.d \
@@ -293,6 +293,30 @@ date -Iseconds > "${FIRST_RUN_MARKER}"
 EOF
 chmod +x config/includes.chroot/usr/local/bin/venvwin-first-run
 
+cat > config/includes.chroot/usr/share/pixmaps/venvwin-frontier-trail.svg <<'EOF'
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#111827"/>
+      <stop offset="1" stop-color="#2b1b12"/>
+    </linearGradient>
+    <linearGradient id="trail" x1="0" x2="1" y1="1" y2="0">
+      <stop offset="0" stop-color="#2dd4bf"/>
+      <stop offset="1" stop-color="#60a5fa"/>
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="112" height="112" rx="22" fill="url(#bg)"/>
+  <path d="M24 88 C40 72 46 58 64 56 C82 54 90 40 104 26" fill="none" stroke="url(#trail)" stroke-width="8" stroke-linecap="round"/>
+  <path d="M20 94 L42 70 L58 82 L78 52 L108 94 Z" fill="#163020" opacity="0.92"/>
+  <circle cx="96" cy="30" r="9" fill="#facc15" opacity="0.95"/>
+  <path d="M43 84 h35 l8 12 h-51 z" fill="#c08457"/>
+  <circle cx="45" cy="99" r="6" fill="#111827" stroke="#e5e7eb" stroke-width="2"/>
+  <circle cx="78" cy="99" r="6" fill="#111827" stroke="#e5e7eb" stroke-width="2"/>
+  <path d="M47 84 q14 -20 28 0" fill="none" stroke="#e5e7eb" stroke-width="5" stroke-linecap="round"/>
+  <text x="64" y="51" text-anchor="middle" font-family="serif" font-weight="700" font-size="22" fill="#e5e7eb">DB</text>
+</svg>
+EOF
+
 cat > config/includes.chroot/etc/xdg/autostart/venvwin-first-run.desktop <<'EOF'
 [Desktop Entry]
 Type=Application
@@ -483,6 +507,17 @@ Terminal=false
 Categories=System;
 EOF
 
+cat > config/includes.chroot/usr/share/applications/venvwin-frontier-trail.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Daniel Boone: Frontier Trail
+Comment=Play the venvWin frontier trail mini game
+Exec=venvwin frontier-trail
+Icon=venvwin-frontier-trail
+Terminal=false
+Categories=Game;
+EOF
+
 install -m 0755 config/includes.chroot/usr/share/applications/venvwin-first-boot.desktop config/includes.chroot/etc/skel/Desktop/venvWin-First-Boot.desktop
 install -m 0755 config/includes.chroot/usr/share/applications/venvwin-dashboard.desktop config/includes.chroot/etc/skel/Desktop/venvWin-Dashboard.desktop
 install -m 0755 config/includes.chroot/usr/share/applications/venvwin-capsules.desktop config/includes.chroot/etc/skel/Desktop/venvWin-Capsules.desktop
@@ -601,10 +636,13 @@ wireless_manager=network-manager,network-manager-gnome
 usb_support=udisks2,gvfs-backends,pmount,usb-modeswitch,mtp-tools,jmtpfs,exfatprogs,ntfs-3g,dosfstools
 hardware_probe_tools=pciutils,usbutils,lshw,inxi,rfkill,nmcli,v4l2-ctl,aplay,arecord
 rescue_tools=gparted,parted,testdisk,smartmontools,gsmartcontrol,ufw
+included_games=daniel-boone-frontier-trail
+included_game_launchers=venvwin-frontier-trail.desktop
+included_game_icons=venvwin-frontier-trail.svg
 firmware_bundle=firmware-linux,firmware-linux-nonfree,firmware-iwlwifi,firmware-realtek,firmware-atheros,firmware-brcm80211,firmware-misc-nonfree,firmware-sof-signed
 standard_profile_policy=lean_runtime_plus_puppy_era_essentials
-excluded_bloat=inkscape,cd_tools,dvd_tools,burners,audio_editors,extra_games,full_libreoffice_suite,libreoffice-impress,libreoffice-draw,libreoffice-base,developer_stack
-product_gate=first boot must initialize storage, expose status, show setup UI, write proof bundle, show desktop launchers, start local dashboard, expose software center, expose notepad, expose network settings, provide audio/camera/media tools, provide document and CSV compatibility, and provide hardware/driver/rescue diagnostics
+excluded_bloat=inkscape,cd_tools,dvd_tools,burners,audio_editors,extra_games_except_frontier_trail,full_libreoffice_suite,libreoffice-impress,libreoffice-draw,libreoffice-base,developer_stack
+product_gate=first boot must initialize storage, expose status, show setup UI, write proof bundle, show desktop launchers, start local dashboard, expose software center, expose notepad, expose network settings, provide audio/camera/media tools, provide document and CSV compatibility, expose Daniel Boone Frontier Trail in the app menu with icon, and provide hardware/driver/rescue diagnostics
 EOF
 
 echo "Built ISO: ${OUTPUT_ISO}"
