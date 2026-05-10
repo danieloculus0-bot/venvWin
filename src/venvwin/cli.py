@@ -27,6 +27,7 @@ def build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command", required=True)
 
     sub.add_parser("init", help="Initialize runtime directories and default profile")
+    sub.add_parser("frontier-trail", help="Play Daniel Boone: Frontier Trail")
 
     first_run = sub.add_parser("first-run", help="Create first-run files and show storage summary")
     first_run.add_argument("--home", type=Path, help="Override home path for testing")
@@ -135,6 +136,12 @@ def cmd_dashboard(root: Path, host: str, port: int, home: Path | None) -> int:
     target_home = home.expanduser().resolve() if home else None
     run_dashboard(host=host, port=port, root=root, home=target_home)
     return 0
+
+
+def cmd_frontier_trail() -> int:
+    from .frontier_trail import main as game_main
+
+    return game_main([])
 
 
 def cmd_doctor(root: Path, applications_dir: Path | None, as_json: bool) -> int:
@@ -316,6 +323,8 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if args.command == "init":
             return cmd_init(root)
+        if args.command == "frontier-trail":
+            return cmd_frontier_trail()
         if args.command == "first-run":
             return cmd_first_run(args.home, args.wizard_text, args.json)
         if args.command == "dashboard":
