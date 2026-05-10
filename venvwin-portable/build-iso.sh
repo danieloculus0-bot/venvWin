@@ -69,6 +69,21 @@ systemd-sysv
 sudo
 network-manager
 network-manager-gnome
+wpasupplicant
+wireless-tools
+rfkill
+pciutils
+usbutils
+lshw
+inxi
+firmware-linux
+firmware-linux-nonfree
+firmware-iwlwifi
+firmware-realtek
+firmware-atheros
+firmware-brcm80211
+firmware-misc-nonfree
+firmware-sof-signed
 xorg
 lightdm
 lightdm-gtk-greeter
@@ -81,6 +96,14 @@ xfce4-terminal
 thunar
 gvfs
 mousepad
+ristretto
+xarchiver
+file-roller
+evince
+galculator
+synaptic
+gdebi
+policykit-1
 python3
 python3-tk
 xdg-utils
@@ -293,6 +316,46 @@ Terminal=false
 Categories=Utility;
 EOF
 
+cat > config/includes.chroot/usr/share/applications/venvwin-software-center.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=venvWin Software Center
+Comment=Install and manage Debian packages with Synaptic and GDebi
+Exec=sh -c 'synaptic-pkexec || pkexec synaptic || xfce4-terminal --command="sudo synaptic"'
+Terminal=false
+Categories=System;PackageManager;
+EOF
+
+cat > config/includes.chroot/usr/share/applications/venvwin-notepad.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=venvWin Notepad
+Comment=Lightweight text editor
+Exec=mousepad
+Terminal=false
+Categories=Utility;TextEditor;
+EOF
+
+cat > config/includes.chroot/usr/share/applications/venvwin-network-settings.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Wireless & Network Settings
+Comment=Manage Wi-Fi, Ethernet, and saved network connections
+Exec=nm-connection-editor
+Terminal=false
+Categories=Network;Settings;
+EOF
+
+cat > config/includes.chroot/usr/share/applications/venvwin-hardware-check.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Hardware & Driver Check
+Comment=Show detected PCI, USB, Wi-Fi, and system hardware
+Exec=xfce4-terminal --hold --command="sh -c 'echo PCI DEVICES; lspci; echo; echo USB DEVICES; lsusb; echo; echo NETWORK DEVICES; nmcli device status; echo; echo SYSTEM REPORT; inxi -Fxz'"
+Terminal=false
+Categories=System;
+EOF
+
 cat > config/includes.chroot/usr/share/applications/venvwin-private-browser.desktop <<'EOF'
 [Desktop Entry]
 Type=Application
@@ -328,6 +391,10 @@ install -m 0755 config/includes.chroot/usr/share/applications/venvwin-dashboard.
 install -m 0755 config/includes.chroot/usr/share/applications/venvwin-capsules.desktop config/includes.chroot/etc/skel/Desktop/venvWin-Capsules.desktop
 install -m 0755 config/includes.chroot/usr/share/applications/venvwin-doctor.desktop config/includes.chroot/etc/skel/Desktop/venvWin-Doctor.desktop
 install -m 0755 config/includes.chroot/usr/share/applications/venvwin-private-browser.desktop config/includes.chroot/etc/skel/Desktop/venvWin-Private-Browser.desktop
+install -m 0755 config/includes.chroot/usr/share/applications/venvwin-software-center.desktop config/includes.chroot/etc/skel/Desktop/venvWin-Software-Center.desktop
+install -m 0755 config/includes.chroot/usr/share/applications/venvwin-notepad.desktop config/includes.chroot/etc/skel/Desktop/venvWin-Notepad.desktop
+install -m 0755 config/includes.chroot/usr/share/applications/venvwin-network-settings.desktop config/includes.chroot/etc/skel/Desktop/venvWin-Network-Settings.desktop
+install -m 0755 config/includes.chroot/usr/share/applications/venvwin-hardware-check.desktop config/includes.chroot/etc/skel/Desktop/venvWin-Hardware-Check.desktop
 
 cat > config/hooks/normal/010-venvwin-setup.chroot <<'EOF'
 #!/usr/bin/env bash
@@ -412,14 +479,19 @@ dashboard_url=http://127.0.0.1:8787
 dashboard_bind_default=127.0.0.1
 dashboard_lan_mode=explicit_token_required
 first_boot_desktop_launchers=true
-first_boot_desktop_launchers_list=venvWin-First-Boot.desktop,venvWin-Dashboard.desktop,venvWin-Capsules.desktop,venvWin-Doctor.desktop,venvWin-Private-Browser.desktop
+first_boot_desktop_launchers_list=venvWin-First-Boot.desktop,venvWin-Dashboard.desktop,venvWin-Capsules.desktop,venvWin-Doctor.desktop,venvWin-Private-Browser.desktop,venvWin-Software-Center.desktop,venvWin-Notepad.desktop,venvWin-Network-Settings.desktop,venvWin-Hardware-Check.desktop
 first_boot_proof_bundle=true
-first_boot_expected_desktop_files=venvWin-First-Boot.desktop,venvWin-Dashboard.desktop,venvWin-Capsules.desktop,venvWin-Private-Browser.desktop,venvWin-Quick-Start.txt,venvWin-First-Boot-Proof.txt,venvWin-Dashboard.txt,venvWin-First-Boot-Checklist.txt,venvwin-init.txt,venvwin-associate.txt,venvwin-first-run.txt,venvwin-storage.txt,venvwin-doctor.txt
+first_boot_expected_desktop_files=venvWin-First-Boot.desktop,venvWin-Dashboard.desktop,venvWin-Capsules.desktop,venvWin-Private-Browser.desktop,venvWin-Software-Center.desktop,venvWin-Notepad.desktop,venvWin-Network-Settings.desktop,venvWin-Hardware-Check.desktop,venvWin-Quick-Start.txt,venvWin-First-Boot-Proof.txt,venvWin-Dashboard.txt,venvWin-First-Boot-Checklist.txt,venvwin-init.txt,venvwin-associate.txt,venvwin-first-run.txt,venvwin-storage.txt,venvwin-doctor.txt
 storage_source_marker=true
 standard_browser=netsurf-gtk
+software_center=synaptic,gdebi
+notepad=mousepad
+wireless_manager=network-manager,network-manager-gnome
+hardware_probe_tools=pciutils,usbutils,lshw,inxi,rfkill,nmcli
+firmware_bundle=firmware-linux,firmware-linux-nonfree,firmware-iwlwifi,firmware-realtek,firmware-atheros,firmware-brcm80211,firmware-misc-nonfree,firmware-sof-signed
 privacy_browser_profile=privacy_only
-standard_profile_policy=lean_runtime_only
-product_gate=first boot must initialize storage, expose status, show setup UI, write proof bundle, show desktop launchers, and start local dashboard
+standard_profile_policy=lean_runtime_plus_essential_desktop_tools
+product_gate=first boot must initialize storage, expose status, show setup UI, write proof bundle, show desktop launchers, start local dashboard, expose software center, expose notepad, expose network settings, and provide hardware/driver diagnostics
 EOF
 
 echo "Built ISO: ${OUTPUT_ISO}"
