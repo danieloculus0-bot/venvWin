@@ -115,6 +115,9 @@ file-roller
 evince
 abiword
 gnumeric
+libreoffice-writer
+libreoffice-calc
+libreoffice-gtk3
 galculator
 synaptic
 gdebi
@@ -588,7 +591,7 @@ privacy_browser_profile=torbrowser-launcher,tor,torsocks
 software_center=synaptic,gdebi
 notepad=mousepad
 light_editor=geany
-office_tools=abiword,gnumeric
+office_tools=abiword,gnumeric,libreoffice-writer,libreoffice-calc
 pdf_viewer=evince
 image_tools=mtpaint,ristretto
 media_tools=mpv,ffmpeg
@@ -600,8 +603,8 @@ hardware_probe_tools=pciutils,usbutils,lshw,inxi,rfkill,nmcli,v4l2-ctl,aplay,are
 rescue_tools=gparted,parted,testdisk,smartmontools,gsmartcontrol,ufw
 firmware_bundle=firmware-linux,firmware-linux-nonfree,firmware-iwlwifi,firmware-realtek,firmware-atheros,firmware-brcm80211,firmware-misc-nonfree,firmware-sof-signed
 standard_profile_policy=lean_runtime_plus_puppy_era_essentials
-excluded_bloat=inkscape,cd_tools,dvd_tools,burners,audio_editors,extra_games,libreoffice,developer_stack
-product_gate=first boot must initialize storage, expose status, show setup UI, write proof bundle, show desktop launchers, start local dashboard, expose software center, expose notepad, expose network settings, provide audio/camera/media tools, and provide hardware/driver/rescue diagnostics
+excluded_bloat=inkscape,cd_tools,dvd_tools,burners,audio_editors,extra_games,full_libreoffice_suite,libreoffice-impress,libreoffice-draw,libreoffice-base,developer_stack
+product_gate=first boot must initialize storage, expose status, show setup UI, write proof bundle, show desktop launchers, start local dashboard, expose software center, expose notepad, expose network settings, provide audio/camera/media tools, provide document and CSV compatibility, and provide hardware/driver/rescue diagnostics
 EOF
 
 echo "Built ISO: ${OUTPUT_ISO}"
