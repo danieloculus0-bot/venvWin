@@ -56,7 +56,7 @@ grep -q '^privacy_browser_profile=torbrowser-launcher,tor,torsocks$' "${MANIFEST
 grep -q '^software_center=synaptic,gdebi$' "${MANIFEST}"
 grep -q '^notepad=mousepad$' "${MANIFEST}"
 grep -q '^light_editor=geany$' "${MANIFEST}"
-grep -q '^office_tools=abiword,gnumeric$' "${MANIFEST}"
+grep -q '^office_tools=abiword,gnumeric,libreoffice-writer,libreoffice-calc$' "${MANIFEST}"
 grep -q '^pdf_viewer=evince$' "${MANIFEST}"
 grep -q '^image_tools=mtpaint,ristretto$' "${MANIFEST}"
 grep -q '^media_tools=mpv,ffmpeg$' "${MANIFEST}"
@@ -65,7 +65,7 @@ grep -q '^audio_stack=pipewire,pipewire-pulse,wireplumber,alsa-utils,pavucontrol
 grep -q '^usb_support=udisks2,gvfs-backends,pmount,usb-modeswitch,mtp-tools,jmtpfs,exfatprogs,ntfs-3g,dosfstools$' "${MANIFEST}"
 grep -q '^rescue_tools=gparted,parted,testdisk,smartmontools,gsmartcontrol,ufw$' "${MANIFEST}"
 grep -q '^standard_profile_policy=lean_runtime_plus_puppy_era_essentials$' "${MANIFEST}"
-grep -q '^excluded_bloat=inkscape,cd_tools,dvd_tools,burners,audio_editors,extra_games,libreoffice,developer_stack$' "${MANIFEST}"
+grep -q '^excluded_bloat=inkscape,cd_tools,dvd_tools,burners,audio_editors,extra_games,full_libreoffice_suite,libreoffice-impress,libreoffice-draw,libreoffice-base,developer_stack$' "${MANIFEST}"
 
 echo "Step 5: Static ISO inspection"
 for tool in xorriso unsquashfs qemu-system-x86_64 timeout grep sed; do
@@ -157,6 +157,9 @@ grep -q 'squashfs-root/usr/bin/arecord' "${SQUASHFS_LIST}"
 grep -q 'squashfs-root/usr/bin/aplay' "${SQUASHFS_LIST}"
 grep -q 'squashfs-root/usr/bin/abiword' "${SQUASHFS_LIST}"
 grep -q 'squashfs-root/usr/bin/gnumeric' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/usr/bin/libreoffice' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/usr/bin/lowriter' "${SQUASHFS_LIST}"
+grep -q 'squashfs-root/usr/bin/localc' "${SQUASHFS_LIST}"
 grep -q 'squashfs-root/usr/bin/mousepad' "${SQUASHFS_LIST}"
 grep -q 'squashfs-root/usr/bin/geany' "${SQUASHFS_LIST}"
 grep -q 'squashfs-root/usr/bin/evince' "${SQUASHFS_LIST}"
@@ -223,7 +226,7 @@ first_boot_desktop_launchers=true
 first_boot_proof_bundle=true
 standard_browser=netsurf-gtk,firefox-esr
 privacy_browser_profile=torbrowser-launcher,tor,torsocks
-office_tools=abiword,gnumeric
+office_tools=abiword,gnumeric,libreoffice-writer,libreoffice-calc
 pdf_viewer=evince
 image_tools=mtpaint,ristretto
 media_tools=mpv,ffmpeg
@@ -232,7 +235,7 @@ audio_stack=pipewire,pipewire-pulse,wireplumber,alsa-utils,pavucontrol,pamixer,x
 usb_support=udisks2,gvfs-backends,pmount,usb-modeswitch,mtp-tools,jmtpfs,exfatprogs,ntfs-3g,dosfstools
 rescue_tools=gparted,parted,testdisk,smartmontools,gsmartcontrol,ufw
 standard_profile_policy=lean_runtime_plus_puppy_era_essentials
-excluded_bloat=inkscape,cd_tools,dvd_tools,burners,audio_editors,extra_games,libreoffice,developer_stack
+excluded_bloat=inkscape,cd_tools,dvd_tools,burners,audio_editors,extra_games,full_libreoffice_suite,libreoffice-impress,libreoffice-draw,libreoffice-base,developer_stack
 PASS
 
 cat "${VERDICT}"
