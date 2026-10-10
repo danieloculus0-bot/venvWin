@@ -50,7 +50,7 @@ jobs:
           chmod +x venvwin-portable/pre-iso-readiness.sh
           chmod +x venvwin-portable/build-iso.sh
           chmod +x venvwin-portable/build-flash-ready-standard.sh
-          ./venvwin-portable/build-in-bookworm.sh
+          bash ./venvwin-portable/build-in-bookworm.sh
 
       - name: BEAN bridge repeated evidence gate
         if: always()
