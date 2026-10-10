@@ -38,5 +38,7 @@ def test_guest_boot_requires_real_serial_proof():
     assert "qemu_smoke=guest_side_proven" in build
     assert "BEAN_GUEST_NOT_READY" in iso
     assert "xfce4-session" in iso
+    assert "xdg-mime default venvwin-open-exe.desktop" in iso
+    assert "xdg-mime default venvwin-open-msi.desktop" in iso
     assert "ezbean.smoke_lab" in workflow
     assert "--repeat 5" in workflow
