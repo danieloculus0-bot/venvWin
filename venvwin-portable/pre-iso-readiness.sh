@@ -35,7 +35,8 @@ required_files=(
   "venvwin-portable/bootstrap-flash-ready-ubuntu.sh"
   "venvwin-portable/build-all-profiles.sh"
   "venvwin-portable/build-attempt-checklist.md"
-  "venvwin-portable/build-flash-ready-standard.sh"\n  "venvwin-portable/build-in-bookworm.sh"
+  "venvwin-portable/build-flash-ready-standard.sh"
+  "venvwin-portable/build-in-bookworm.sh"
   "venvwin-portable/build-iso.sh"
   "venvwin-portable/compare-profiles.sh"
   "venvwin-portable/run-wsl-flash-ready.ps1"
@@ -65,7 +66,8 @@ for script in \
   venvwin-portable/build-all-profiles.sh \
   venvwin-portable/test-iso-qemu.sh \
   venvwin-portable/test-persistence-qemu.sh \
-  venvwin-portable/build-flash-ready-standard.sh \\\n  venvwin-portable/build-in-bookworm.sh; do
+  venvwin-portable/build-flash-ready-standard.sh \\
+  venvwin-portable/build-in-bookworm.sh; do
   bash -n "${script}"
 done
 
