@@ -1,0 +1,98 @@
+name: compatibility-smoke-real-wine
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/compatibility-smoke-real-wine.yml"
+      - "src/**"
+      - "tests/**"
+      - "pyproject.toml"
+
+permissions:
+  contents: read
+
+jobs:
+  wine-install-and-persistence:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install real Wine emulation toolchain
+        run: |
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            wine wine64 gcc-mingw-w64-x86-64 xvfb xauth
+          python3 -m pip install -e . pytest
+          wine --version
+          x86_64-w64-mingw32-gcc --version | head -n 1
+      - name: Build small genuine Windows EXE installer payload
+        run: |
+          mkdir -p /tmp/venvwin-smoke
+          cat > /tmp/venvwin-smoke/payload.c <<'EOF'
+          #include <windows.h>
+          int main(void) {
+            HANDLE handle = CreateFileA("C:\\venvwin-smoke-ok.txt", GENERIC_WRITE, 0,
+                                        NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+            if (handle == INVALID_HANDLE_VALUE) return 41;
+            const char proof[] = "REAL_WINDOWS_BINARY_EXECUTED";
+            DWORD written = 0;
+            BOOL success = WriteFile(handle, proof, sizeof(proof) - 1, &written, NULL);
+            CloseHandle(handle);
+            return (success && written == sizeof(proof) - 1) ? 0 : 42;
+          }
+          EOF
+          x86_64-w64-mingw32-gcc -Os /tmp/venvwin-smoke/payload.c -o /tmp/venvwin-smoke/Setup.exe
+          file /tmp/venvwin-smoke/Setup.exe
+      - name: Actually install EXE through venvWin under Wine
+        env:
+          VENVWIN_HOME: ${{ runner.temp }}/venvwin-real
+          WINEDEBUG: "-all"
+        run: |
+          set -euo pipefail
+          venvwin init
+          xvfb-run -a venvwin open /tmp/venvwin-smoke/Setup.exe | tee /tmp/venvwin-smoke/install.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          raw = Path('/tmp/venvwin-smoke/install.json').read_text()
+          print('CLI_STDOUT_CAPTURE:', repr(raw[:300]), 'bytes=', len(raw))
+          start = raw.find('{')
+          assert start >= 0, 'No CLI JSON output captured'
+          data, _ = json.JSONDecoder().raw_decode(raw[start:])
+          assert data['exit_code'] == 0, data
+          assert data['action'] == 'install', data
+          assert data['runner_available'] is True, data
+          prefix = Path(data['env']['WINEPREFIX'])
+          marker = prefix / 'drive_c' / 'venvwin-smoke-ok.txt'
+          assert marker.exists(), f'Genuine Win64 program did not execute: {marker}'
+          assert marker.read_text() == 'REAL_WINDOWS_BINARY_EXECUTED'
+          assert Path(data['stored_path']).exists()
+          print('REAL_WINE_INSTALL_PASS:', marker)
+          PY
+      - name: Reload capsule, snapshot, reset and confirm isolation
+        env:
+          VENVWIN_HOME: ${{ runner.temp }}/venvwin-real
+        run: |
+          set -euo pipefail
+          venvwin inspect setup > /tmp/venvwin-smoke/inspect.json
+          # Full Wine prefix snapshot compression is covered separately by contract tests.
+          venvwin reset setup > /tmp/venvwin-smoke/reset.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          data = json.loads(Path('/tmp/venvwin-smoke/inspect.json').read_text())
+          marker = Path(data['prefix_path']) / 'drive_c' / 'venvwin-smoke-ok.txt'
+          assert data['installers'][-1]['exit_code'] == 0
+          assert not marker.exists(), 'reset failed to remove installed marker'
+          backups = Path(data['prefix_path']).parent / 'reset-backups'
+          assert list(backups.rglob('venvwin-smoke-ok.txt')), 'reset failed to preserve backup'
+          print('WINE_PERSISTENCE_AND_RESET_PASS')
+          PY
+      - name: Upload smoke evidence even after failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: venvwin-real-wine-install-evidence
+          path: /tmp/venvwin-smoke/*.json
+          if-no-files-found: ignore
