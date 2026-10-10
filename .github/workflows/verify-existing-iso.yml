@@ -1,0 +1,50 @@
+name: verify-existing-iso-no-rebuild
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/verify-existing-iso.yml"
+      - ".github/scripts/verify-existing-iso.sh"
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  verify-existing-iso:
+    name: Verify prebuilt ISO in QEMU (no rebuild)
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Retrieve existing ISO artifact from earlier failed verification
+        uses: actions/download-artifact@v4
+        with:
+          name: venvwin-portable-flash-ready-standard
+          run-id: 38072277622
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: dist
+
+      - name: Install verification tools only (no live-build or compiler)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y xorriso qemu-system-x86 qemu-utils
+
+      - name: Recheck the unchanged ISO boot evidence
+        run: |
+          bash .github/scripts/verify-existing-iso.sh
+
+      - name: Publish only verification evidence (never upload a duplicate ISO)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: venvwin-existing-iso-boot-verification
+          path: |
+            dist/verify-existing-iso-result.json
+            dist/verify-existing-iso-qemu-serial.log
+            dist/verify-existing-iso-file-list.txt
+            dist/verify-existing-iso-eltorito.txt
+            dist/verify-existing-iso-xorriso-stderr.log
+          if-no-files-found: warn
