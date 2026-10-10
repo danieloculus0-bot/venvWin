@@ -5,6 +5,8 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 command -v docker >/dev/null || { echo "Docker is required for the Bookworm build" >&2; exit 1; }
+# Keep the evidence directory writable by the non-root GitHub Actions runner.
+mkdir -p dist
 docker run --rm --privileged \
   -v "$ROOT:/workspace" \
   -w /workspace \
