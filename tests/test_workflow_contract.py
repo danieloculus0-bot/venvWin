@@ -39,5 +39,5 @@ def test_flash_ready_script_writes_required_verdict():
     assert "pre_iso_readiness=pass" in script
     assert "static_iso_inspection=pass" in script
     assert "squashfs_static_inspection=pass" in script
-    assert "qemu_smoke=pass" in script
+    assert "qemu_smoke=guest_side_proven" in script
     assert "manifest_flags=pass" in script
