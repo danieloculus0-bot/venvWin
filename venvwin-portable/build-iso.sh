@@ -180,6 +180,7 @@ rsync -a \
   --exclude .git \
   --exclude build \
   --exclude dist \
+  --exclude bean-bridge \
   --exclude .pytest_cache \
   --exclude __pycache__ \
   "${ROOT_DIR}/" "config/includes.chroot/opt/venvwin/"
