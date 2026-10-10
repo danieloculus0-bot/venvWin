@@ -68,7 +68,7 @@ done
 
 rm -f "${SQUASHFS_COPY}" "${SQUASHFS_LIST}" "${ISO_FILE_LIST}" "${BOOT_CONFIG_TEXT}"
 xorriso -indev "${ISO}" -report_el_torito as_mkisofs >/tmp/venvwin-el-torito.txt
-xorriso -indev "${ISO}" -find / -type f -print > "${ISO_FILE_LIST}"
+xorriso -indev "${ISO}" -find / -type f > "${ISO_FILE_LIST}"
 
 BOOT_CONFIG_PATHS="$(grep -E '/(grub|isolinux|syslinux|boot).*(grub\.cfg|live\.cfg|isolinux\.cfg|txt\.cfg|syslinux\.cfg)$|/(grub\.cfg|isolinux\.cfg|syslinux\.cfg)$' "${ISO_FILE_LIST}" || true)"
 if [[ -n "${BOOT_CONFIG_PATHS}" ]]; then
@@ -132,8 +132,8 @@ do
   grep -q "${required_path}" "${SQUASHFS_LIST}"
 done
 
-xorriso -indev "${ISO}" -find / -name vmlinuz -print | head -n 1 | grep -q vmlinuz
-xorriso -indev "${ISO}" -find / -name initrd.img -print | head -n 1 | grep -q initrd.img
+xorriso -indev "${ISO}" -find / -name vmlinuz | head -n 1 | grep -q vmlinuz
+xorriso -indev "${ISO}" -find / -name initrd.img | head -n 1 | grep -q initrd.img
 
 echo "STATIC_ISO_VALID" > dist/venvwin-static-pass.txt
 echo "Step 6: QEMU guest evidence: require actual desktop and first-run proof"
