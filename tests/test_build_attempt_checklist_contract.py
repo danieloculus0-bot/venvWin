@@ -37,7 +37,7 @@ def test_build_attempt_checklist_requires_gate_markers():
         "PUBLIC BRANDING AUDIT: PASS",
         "PRE-ISO READINESS: PASS",
         "squashfs_static_inspection=pass",
-        "qemu_smoke=pass",
+        "qemu_smoke=guest_side_proven",
         "FLASH READY: dist/venvwin-portable-alpha-standard.iso",
     ]
 
