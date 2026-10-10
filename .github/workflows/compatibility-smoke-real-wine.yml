@@ -55,7 +55,11 @@ jobs:
           python3 - <<'PY'
           import json
           from pathlib import Path
-          data = json.loads(Path('/tmp/venvwin-smoke/install.json').read_text())
+          raw = Path('/tmp/venvwin-smoke/install.json').read_text()
+          print('CLI_STDOUT_CAPTURE:', repr(raw[:300]), 'bytes=', len(raw))
+          start = raw.find('{')
+          assert start >= 0, 'No CLI JSON output captured'
+          data, _ = json.JSONDecoder().raw_decode(raw[start:])
           assert data['exit_code'] == 0, data
           assert data['action'] == 'install', data
           assert data['runner_available'] is True, data
