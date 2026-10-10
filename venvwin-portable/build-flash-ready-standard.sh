@@ -136,7 +136,7 @@ xorriso -indev "${ISO}" -find / -name vmlinuz -print | head -n 1 | grep -q vmlin
 xorriso -indev "${ISO}" -find / -name initrd.img -print | head -n 1 | grep -q initrd.img
 
 echo "STATIC_ISO_VALID" > dist/venvwin-static-pass.txt
-echo "Step 6: QEMU actual guest-side smoke, not a timeout-only pass"
+echo "Step 6: QEMU guest evidence: require actual desktop and first-run proof"
 QEMU_LOG="dist/venvwin-qemu-serial.log"
 rm -f "${QEMU_LOG}"
 set +e
@@ -144,65 +144,7 @@ timeout 270s qemu-system-x86_64 -m 3072 -smp 2 -cdrom "${ISO}" -boot d -display 
 code=$?
 set -e
 if [[ -f "${QEMU_LOG}" ]]; then tail -n 80 "${QEMU_LOG}" || true; fi
-if [[ ! -f "${QEMU_LOG}" ]] || ! grep -q '^BEAN_GUEST_READY
-
-ISO_BYTES="$(stat -c%s "${ISO}")"
-ISO_MB="$(( (ISO_BYTES + 1048575) / 1048576 ))"
-cat > "${VERDICT}" <<PASS
-venvWin Portable Flash-Ready Verdict
-status=FLASH_READY
-profile=standard
-public_product_name=venvWin Portable
-iso=${ISO}
-sha256=${SHA}
-manifest=${MANIFEST}
-size_mb=${ISO_MB}
-pre_iso_readiness=pass
-manifest_flags=pass
-static_iso_inspection=pass
-squashfs_static_inspection=pass
-boot_toram_absent=pass
-live_user_autologin=pass
-storage_source_marker=pass
-qemu_smoke=guest_side_proven\nfirst_run_smoke=guest_side_proven
-office_tools=abiword,gnumeric,libreoffice-writer,libreoffice-calc
-included_games=present
-included_game_launchers=present
-included_game_icons=present
-PASS
-
-cat "${VERDICT}"
-echo "FLASH READY: ${ISO}"
- "${QEMU_LOG}" || ! grep -q '^BEAN_GUEST_FIRST_RUN_PASS
-
-ISO_BYTES="$(stat -c%s "${ISO}")"
-ISO_MB="$(( (ISO_BYTES + 1048575) / 1048576 ))"
-cat > "${VERDICT}" <<PASS
-venvWin Portable Flash-Ready Verdict
-status=FLASH_READY
-profile=standard
-public_product_name=venvWin Portable
-iso=${ISO}
-sha256=${SHA}
-manifest=${MANIFEST}
-size_mb=${ISO_MB}
-pre_iso_readiness=pass
-manifest_flags=pass
-static_iso_inspection=pass
-squashfs_static_inspection=pass
-boot_toram_absent=pass
-live_user_autologin=pass
-storage_source_marker=pass
-qemu_smoke=pass
-office_tools=abiword,gnumeric,libreoffice-writer,libreoffice-calc
-included_games=present
-included_game_launchers=present
-included_game_icons=present
-PASS
-
-cat "${VERDICT}"
-echo "FLASH READY: ${ISO}"
- "${QEMU_LOG}"; then
+if [[ ! -f "${QEMU_LOG}" ]] || ! grep -Fxq "BEAN_GUEST_READY" "${QEMU_LOG}" || ! grep -Fxq "BEAN_GUEST_FIRST_RUN_PASS" "${QEMU_LOG}"; then
   cat > "${VERDICT}" <<FAIL
 venvWin Portable Flash-Ready Verdict
 status=NOT_READY
@@ -231,7 +173,8 @@ squashfs_static_inspection=pass
 boot_toram_absent=pass
 live_user_autologin=pass
 storage_source_marker=pass
-qemu_smoke=pass
+qemu_smoke=guest_side_proven
+first_run_smoke=guest_side_proven
 office_tools=abiword,gnumeric,libreoffice-writer,libreoffice-calc
 included_games=present
 included_game_launchers=present
