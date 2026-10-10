@@ -1,5 +1,7 @@
 # Local venvWin Portable Flash-Ready Build
 
+> Current build: use Docker with Debian Bookworm through `bash ./venvwin-portable/build-in-bookworm.sh`. Ubuntu's older live-build cannot parse the GRUB hybrid options. A successful build must include BEAN guest-side evidence, not merely a QEMU timeout.
+
 ## Purpose
 
 This is the local Linux/WSL equivalent of the phone-runnable GitHub Actions workflow.
