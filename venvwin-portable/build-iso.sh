@@ -329,10 +329,10 @@ if [[ -f "${FIRST_RUN_MARKER}" ]]; then
   exit 0
 fi
 
-venvwin init > "$HOME/Desktop/venvwin-init.txt" 2>&1 || true
-venvwin associate > "$HOME/Desktop/venvwin-associate.txt" 2>&1 || true
-venvwin first-run > "$HOME/Desktop/venvwin-first-run.txt" 2>&1 || true
-venvwin storage > "$HOME/Desktop/venvwin-storage.txt" 2>&1 || true
+venvwin init > "$HOME/Desktop/venvwin-init.txt" 2>&1
+venvwin associate > "$HOME/Desktop/venvwin-associate.txt" 2>&1
+venvwin first-run > "$HOME/Desktop/venvwin-first-run.txt" 2>&1
+venvwin storage > "$HOME/Desktop/venvwin-storage.txt" 2>&1
 venvwin doctor > "$HOME/Desktop/venvwin-doctor.txt" 2>&1 || true
 
 date -Iseconds > "${FIRST_RUN_MARKER}"
