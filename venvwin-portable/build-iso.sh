@@ -30,13 +30,14 @@ lb config \
   --distribution bookworm \
   --architectures amd64 \
   --binary-images iso-hybrid \
+  --bootloaders "grub-pc,grub-efi" \
   --archive-areas "main contrib non-free non-free-firmware" \
   --linux-packages none \
   --linux-flavours none \
   --security false \
   --debian-installer false \
   --memtest none \
-  --bootappend-live "boot=live components quiet splash persistence" \
+  --bootappend-live "boot=live components persistence console=tty0 console=ttyS0,115200n8" \
   --iso-application "${PUBLIC_PRODUCT_NAME}" \
   --iso-publisher "venvWin" \
   --iso-volume "VENVWIN_PORTABLE"
@@ -51,6 +52,7 @@ mkdir -p \
   config/includes.chroot/etc/xdg/autostart \
   config/includes.chroot/etc/skel/Desktop \
   config/includes.chroot/etc/lightdm/lightdm.conf.d \
+  config/includes.chroot/etc/systemd/system/multi-user.target.wants \
   config/hooks/normal
 
 cat > config/archives/bookworm-security.list.chroot <<'EOF'
@@ -181,6 +183,50 @@ rsync -a \
   --exclude .pytest_cache \
   --exclude __pycache__ \
   "${ROOT_DIR}/" "config/includes.chroot/opt/venvwin/"
+
+# Booted-guest proof: unlike a QEMU timeout, this proves an actual user session,
+# first-run desktop output, and HTTP dashboard response inside the guest.
+cat > config/includes.chroot/usr/local/bin/venvwin-guest-probe <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+emit() {
+  printf '%s\n' "$1" >> /var/log/venvwin-guest-proof.log
+  if [[ -c /dev/ttyS0 ]]; then printf '%s\n' "$1" > /dev/ttyS0 || true; fi
+}
+emit 'BEAN_GUEST_STARTED'
+for attempt in $(seq 1 100); do
+  if [[ -f /home/user/Desktop/venvWin-First-Boot-Proof.txt ]] \
+     && [[ -f /home/user/.venvwin-first-run-complete ]] \
+     && pgrep -u user -f 'xfce4-session' >/dev/null 2>&1 \
+     && curl -fsS --max-time 2 http://127.0.0.1:8787/api/status >/dev/null 2>&1; then
+    if /usr/local/bin/venvwin --root /home/user/.local/share/venvwin list >/dev/null 2>&1; then
+      emit 'BEAN_GUEST_FIRST_RUN_PASS'
+      emit 'BEAN_GUEST_READY'
+      exit 0
+    fi
+  fi
+  sleep 2
+done
+emit 'BEAN_GUEST_NOT_READY'
+exit 1
+EOF
+chmod +x config/includes.chroot/usr/local/bin/venvwin-guest-probe
+
+cat > config/includes.chroot/etc/systemd/system/venvwin-guest-probe.service <<'EOF'
+[Unit]
+Description=venvWin booted guest evidence probe
+After=display-manager.service
+Wants=display-manager.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/venvwin-guest-probe
+TimeoutStartSec=240
+
+[Install]
+WantedBy=multi-user.target
+EOF
+ln -s ../venvwin-guest-probe.service config/includes.chroot/etc/systemd/system/multi-user.target.wants/venvwin-guest-probe.service
 
 cat > config/includes.chroot/etc/lightdm/lightdm.conf.d/50-venvwin-live-autologin.conf <<'EOF'
 [Seat:*]
