@@ -66,7 +66,7 @@ for script in \
   venvwin-portable/build-all-profiles.sh \
   venvwin-portable/test-iso-qemu.sh \
   venvwin-portable/test-persistence-qemu.sh \
-  venvwin-portable/build-flash-ready-standard.sh \\
+  venvwin-portable/build-flash-ready-standard.sh \
   venvwin-portable/build-in-bookworm.sh; do
   bash -n "${script}"
 done
