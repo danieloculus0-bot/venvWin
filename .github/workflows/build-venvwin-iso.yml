@@ -31,14 +31,10 @@ jobs:
   iso:
     runs-on: ubuntu-latest
     timeout-minutes: 90
-    strategy:
-      fail-fast: false
-      matrix:
-        profile: ${{ github.event_name == 'workflow_dispatch' && fromJSON(format('["{0}"]', github.event.inputs.profile)) || fromJSON('["standard"]') }}
     env:
-      VENVWIN_PROFILE: ${{ matrix.profile }}
-      VENVWIN_PORTABLE_PROFILE: ${{ matrix.profile }}
-      QEMU_SMOKE: ${{ github.event.inputs.qemu_smoke || 'true' }}
+      VENVWIN_PROFILE: ${{ inputs.profile || 'standard' }}
+      VENVWIN_PORTABLE_PROFILE: ${{ inputs.profile || 'standard' }}
+      QEMU_SMOKE: ${{ inputs.qemu_smoke || 'true' }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
