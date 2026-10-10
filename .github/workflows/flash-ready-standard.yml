@@ -30,10 +30,10 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -e . pytest
 
-      - name: Install ISO build tools
+      - name: Confirm Docker build tooling
         run: |
-          sudo apt-get update
-          sudo apt-get install -y live-build rsync xorriso grub-pc-bin grub-efi-amd64-bin grub-common mtools dosfstools squashfs-tools qemu-system-x86 ovmf
+          docker --version
+          docker info >/dev/null
 
       - name: Check out BEAN AI Bridge
         uses: actions/checkout@v4
@@ -50,7 +50,7 @@ jobs:
           chmod +x venvwin-portable/pre-iso-readiness.sh
           chmod +x venvwin-portable/build-iso.sh
           chmod +x venvwin-portable/build-flash-ready-standard.sh
-          ./venvwin-portable/build-flash-ready-standard.sh
+          ./venvwin-portable/build-in-bookworm.sh
 
       - name: BEAN bridge repeated evidence gate
         if: always()
