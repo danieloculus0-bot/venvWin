@@ -24,6 +24,7 @@ echo "== venvWin Portable flash-ready standard build =="
 echo "Step 1: Pre-ISO readiness gate"
 chmod +x venvwin-portable/pre-iso-readiness.sh
 ./venvwin-portable/pre-iso-readiness.sh
+printf 'PRE-ISO READINESS: PASS\n' > dist/venvwin-preflight-pass.txt
 
 echo "Step 2: Build standard ISO"
 chmod +x venvwin-portable/build-iso.sh
@@ -131,20 +132,82 @@ done
 xorriso -indev "${ISO}" -find / -name vmlinuz -print | head -n 1 | grep -q vmlinuz
 xorriso -indev "${ISO}" -find / -name initrd.img -print | head -n 1 | grep -q initrd.img
 
-echo "Step 6: QEMU boot smoke"
+echo "STATIC_ISO_VALID" > dist/venvwin-static-pass.txt
+echo "Step 6: QEMU actual guest-side smoke, not a timeout-only pass"
+QEMU_LOG="dist/venvwin-qemu-serial.log"
+rm -f "${QEMU_LOG}"
 set +e
-timeout 150s qemu-system-x86_64 -m 2048 -smp 2 -cdrom "${ISO}" -boot d -display none -serial mon:stdio -no-reboot -net none
+timeout 270s qemu-system-x86_64 -m 3072 -smp 2 -cdrom "${ISO}" -boot d -display none -serial "file:${QEMU_LOG}" -monitor none -no-reboot -net none
 code=$?
 set -e
-if [[ "${code}" -ne 124 ]]; then
+if [[ -f "${QEMU_LOG}" ]]; then tail -n 80 "${QEMU_LOG}" || true; fi
+if [[ ! -f "${QEMU_LOG}" ]] || ! grep -q '^BEAN_GUEST_READY
+
+ISO_BYTES="$(stat -c%s "${ISO}")"
+ISO_MB="$(( (ISO_BYTES + 1048575) / 1048576 ))"
+cat > "${VERDICT}" <<PASS
+venvWin Portable Flash-Ready Verdict
+status=FLASH_READY
+profile=standard
+public_product_name=venvWin Portable
+iso=${ISO}
+sha256=${SHA}
+manifest=${MANIFEST}
+size_mb=${ISO_MB}
+pre_iso_readiness=pass
+manifest_flags=pass
+static_iso_inspection=pass
+squashfs_static_inspection=pass
+boot_toram_absent=pass
+live_user_autologin=pass
+storage_source_marker=pass
+qemu_smoke=guest_side_proven\nfirst_run_smoke=guest_side_proven
+office_tools=abiword,gnumeric,libreoffice-writer,libreoffice-calc
+included_games=present
+included_game_launchers=present
+included_game_icons=present
+PASS
+
+cat "${VERDICT}"
+echo "FLASH READY: ${ISO}"
+ "${QEMU_LOG}" || ! grep -q '^BEAN_GUEST_FIRST_RUN_PASS
+
+ISO_BYTES="$(stat -c%s "${ISO}")"
+ISO_MB="$(( (ISO_BYTES + 1048575) / 1048576 ))"
+cat > "${VERDICT}" <<PASS
+venvWin Portable Flash-Ready Verdict
+status=FLASH_READY
+profile=standard
+public_product_name=venvWin Portable
+iso=${ISO}
+sha256=${SHA}
+manifest=${MANIFEST}
+size_mb=${ISO_MB}
+pre_iso_readiness=pass
+manifest_flags=pass
+static_iso_inspection=pass
+squashfs_static_inspection=pass
+boot_toram_absent=pass
+live_user_autologin=pass
+storage_source_marker=pass
+qemu_smoke=pass
+office_tools=abiword,gnumeric,libreoffice-writer,libreoffice-calc
+included_games=present
+included_game_launchers=present
+included_game_icons=present
+PASS
+
+cat "${VERDICT}"
+echo "FLASH READY: ${ISO}"
+ "${QEMU_LOG}"; then
   cat > "${VERDICT}" <<FAIL
 venvWin Portable Flash-Ready Verdict
 status=NOT_READY
-reason=qemu_exited_early
+reason=missing_guest_side_boot_and_first_run_evidence
 qemu_exit_code=${code}
 iso=${ISO}
 FAIL
-  exit "${code}"
+  exit 1
 fi
 
 ISO_BYTES="$(stat -c%s "${ISO}")"
