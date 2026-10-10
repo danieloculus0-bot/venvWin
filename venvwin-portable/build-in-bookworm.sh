@@ -12,7 +12,6 @@ docker run --rm --privileged \
   bash -lc '
     set -euo pipefail
     export DEBIAN_FRONTEND=noninteractive
-    git config --global --add safe.directory /workspace
     apt-get update
     apt-get install -y --no-install-recommends \
       python3 python3-venv python3-pip python3-full \
@@ -20,6 +19,7 @@ docker run --rm --privileged \
       grub-pc-bin grub-efi-amd64-bin grub-common \
       mtools dosfstools squashfs-tools qemu-system-x86 \
       curl ca-certificates wget gzip file
+    git config --global --add safe.directory /workspace
     python3 -m venv /tmp/venvwin-build-venv
     /tmp/venvwin-build-venv/bin/python -m pip install -e . pytest
     export PATH="/tmp/venvwin-build-venv/bin:$PATH"
