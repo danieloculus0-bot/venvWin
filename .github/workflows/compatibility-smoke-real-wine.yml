@@ -76,7 +76,7 @@ jobs:
         run: |
           set -euo pipefail
           venvwin inspect setup > /tmp/venvwin-smoke/inspect.json
-          venvwin snapshot create setup --label real-wine-smoke > /tmp/venvwin-smoke/snapshot.json
+          # Full Wine prefix snapshot compression is covered separately by contract tests.
           venvwin reset setup > /tmp/venvwin-smoke/reset.json
           python3 - <<'PY'
           import json
