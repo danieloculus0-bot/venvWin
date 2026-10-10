@@ -12,7 +12,7 @@ docker run --rm --privileged \
   bash -lc '
     set -euo pipefail
     export DEBIAN_FRONTEND=noninteractive
-    apt-get update
+    git config --global --add safe.directory /workspace\n    apt-get update
     apt-get install -y --no-install-recommends \
       python3 python3-venv python3-pip python3-full \
       live-build sudo git rsync xorriso \
