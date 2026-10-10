@@ -79,10 +79,19 @@ def is_writable_directory(path: Path) -> bool:
 
 def make_candidate(path: Path, source: str) -> PersistenceCandidate:
     portable_owned, host_risk = classify_candidate(path, source)
+    # Never create a supposed USB/live mount path just to test it.
+    # Doing so while building as root fabricates fake 'persistent' storage.
+    external = source in {
+        "live-persistence", "persistence-root", "mounted-venvwin-persistence",
+        "usb-label-venvwindata", "usb-label-venvwindata-mixed",
+    }
+    source_present = (path.parent.is_dir() and
+                      (running_from_live_media() if source == "live-persistence" else True))
+    writable = is_writable_directory(path) if (not external or source_present) else False
     return PersistenceCandidate(
         path=path,
         source=source,
-        writable=is_writable_directory(path),
+        writable=writable,
         portable_owned=portable_owned,
         host_risk=host_risk,
     )

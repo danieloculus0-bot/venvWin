@@ -1,60 +1,51 @@
-# venvWin Portable QEMU Smoke Test
+# venvWin Portable QEMU smoke and BEAN Bridge evidence
 
-## Purpose
+The canonical build is `.github/workflows/flash-ready-standard.yml`. It uses
+`venvwin-portable/build-in-bookworm.sh`, building Debian Bookworm inside a
+Docker container with GRUB BIOS/EFI boot files.
 
-This is the first virtual learing loop for the ISO.
+## Actual acceptance
 
-The test does not prove the desktop is beautiful or that every app works. It proves the ISO is not obviously dead on arrival.
+The job must complete the Python tests, generate an ISO/checksum/manifest,
+verify the extracted SquashFS contents and boot the **actual ISO** with QEMU.
 
-## Current GitHub Actions flow
+A systemd one-shot probe **inside the guest**, enabled at boot, waits for:
+- a running XFCE desktop session for the live user
+- first-run completion and a desktop proof file
+- an HTTP response from the local dashboard
+- a functioning venvWin CLI entrypoint
 
-The `build-venvwin-iso` workflow now does this:
+Only when all checks succeed does it write the literal serial markers:
+`BEAN_GUEST_FIRST_RUN_PASS` and `BEAN_GUEST_READY`.
 
-```text
-Install live-build and QEMU tooling
-Build venvWin Portable ISO
-Verify checksum
-Inspect ISO boot structure with xorriso
-Look for filesystem.squashfs
-Look for kernel/initrd paths
-Boot ISO headless in QEMU for 150 seconds
-Upload ISO artifact if the smoke test survives
-```
+The parent host checks the serial log for both markers. QEMU remaining alive
+for 270 seconds **does not count as success**. Missing markers, an aborted ISO
+build or an absent checksum is failure.
 
-## Why timeout can pass
+## BEAN AI Bridge laboratory
 
-For the alpha smoke test, QEMU staying alive for 150 seconds is treated as a pass.
+The workflow checks out the pinned BEAN AI Bridge smoke lab, constructs a
+machine-evidence report and processes it with `ezbean.smoke_lab`.
 
-That means:
+Four required ISO checks:
+- preflight package installation
+- static boot structure and built ISO
+- in-VM guest readiness
+- in-VM first-run readiness
 
-```text
-The ISO booted far enough not to instantly crash, panic, or exit.
-```
+BEAN replays the evidence assessment five times against the append-only
+SQLite ledger and rejects missing proofs. Its ratio is evidence coverage,
+not a confidence probability.
 
-It does not mean:
+Actions uploads ISO files and the BEAN report, receipt, ledger, and QEMU
+serial evidence even on build failure. A failed build will *never* be
+silently promoted to `status=FLASH_READY`.
 
-```text
-The GUI is good.
-Persistence works.
-EXE double-click is perfect.
-The product is ready.
-```
+## Puppy Linux comparison
 
-## Next virtual test upgrades
+This builds a Debian `filesystem.squashfs` image, rather than copying
+Puppy's exact names. The frugal Puppy reference is still useful: compressed
+OS, separate save layer, and a kernel/initramfs managed by the bootloader.
 
-Future improvements:
-
-- boot with serial console target
-- grep boot logs for Linux kernel startup
-- test boot menu behavior
-- run a tiny VM disk for persistence testing
-- use QEMU screenshots or VNC for desktop proof
-- run a guest-side first-run marker check
-
-## Product-ready rule
-
-Passing QEMU smoke means only one thing:
-
-```text
-The corpse twitched. Now we see if it can walk.
-```
+USB persistence across a full reboot is **a separate release gate**. One
+successful desktop boot proves Alpha readiness only, not product readiness.

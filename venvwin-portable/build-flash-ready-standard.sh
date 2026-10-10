@@ -24,6 +24,7 @@ echo "== venvWin Portable flash-ready standard build =="
 echo "Step 1: Pre-ISO readiness gate"
 chmod +x venvwin-portable/pre-iso-readiness.sh
 ./venvwin-portable/pre-iso-readiness.sh
+printf 'PRE-ISO READINESS: PASS\n' > dist/venvwin-preflight-pass.txt
 
 echo "Step 2: Build standard ISO"
 chmod +x venvwin-portable/build-iso.sh
@@ -95,6 +96,9 @@ for required_path in \
   'squashfs-root/usr/local/bin/venvwin-first-run' \
   'squashfs-root/usr/local/bin/venvwin-first-boot-gui' \
   'squashfs-root/usr/local/bin/venvwin-dashboard' \
+  'squashfs-root/usr/local/bin/venvwin-guest-probe' \
+  'squashfs-root/etc/systemd/system/venvwin-guest-probe.service' \
+  'squashfs-root/etc/systemd/system/multi-user.target.wants/venvwin-guest-probe.service' \
   'squashfs-root/usr/share/applications/venvwin-dashboard.desktop' \
   'squashfs-root/usr/share/applications/venvwin-frontier-trail.desktop' \
   'squashfs-root/usr/share/pixmaps/venvwin-frontier-trail.svg' \
@@ -131,20 +135,24 @@ done
 xorriso -indev "${ISO}" -find / -name vmlinuz -print | head -n 1 | grep -q vmlinuz
 xorriso -indev "${ISO}" -find / -name initrd.img -print | head -n 1 | grep -q initrd.img
 
-echo "Step 6: QEMU boot smoke"
+echo "STATIC_ISO_VALID" > dist/venvwin-static-pass.txt
+echo "Step 6: QEMU guest evidence: require actual desktop and first-run proof"
+QEMU_LOG="dist/venvwin-qemu-serial.log"
+rm -f "${QEMU_LOG}"
 set +e
-timeout 150s qemu-system-x86_64 -m 2048 -smp 2 -cdrom "${ISO}" -boot d -display none -serial mon:stdio -no-reboot -net none
+timeout 270s qemu-system-x86_64 -m 3072 -smp 2 -cdrom "${ISO}" -boot d -display none -serial "file:${QEMU_LOG}" -monitor none -no-reboot -net none
 code=$?
 set -e
-if [[ "${code}" -ne 124 ]]; then
+if [[ -f "${QEMU_LOG}" ]]; then tail -n 80 "${QEMU_LOG}" || true; fi
+if [[ ! -f "${QEMU_LOG}" ]] || ! grep -Fxq "BEAN_GUEST_READY" "${QEMU_LOG}" || ! grep -Fxq "BEAN_GUEST_FIRST_RUN_PASS" "${QEMU_LOG}"; then
   cat > "${VERDICT}" <<FAIL
 venvWin Portable Flash-Ready Verdict
 status=NOT_READY
-reason=qemu_exited_early
+reason=missing_guest_side_boot_and_first_run_evidence
 qemu_exit_code=${code}
 iso=${ISO}
 FAIL
-  exit "${code}"
+  exit 1
 fi
 
 ISO_BYTES="$(stat -c%s "${ISO}")"
@@ -165,7 +173,8 @@ squashfs_static_inspection=pass
 boot_toram_absent=pass
 live_user_autologin=pass
 storage_source_marker=pass
-qemu_smoke=pass
+qemu_smoke=guest_side_proven
+first_run_smoke=guest_side_proven
 office_tools=abiword,gnumeric,libreoffice-writer,libreoffice-calc
 included_games=present
 included_game_launchers=present

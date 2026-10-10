@@ -30,20 +30,71 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -e . pytest
 
-      - name: Install ISO build tools
+      - name: Confirm Docker build tooling
         run: |
-          sudo apt-get update
-          sudo apt-get install -y live-build rsync xorriso isolinux syslinux-common squashfs-tools qemu-system-x86 ovmf
+          docker --version
+          docker info >/dev/null
+
+      - name: Check out BEAN AI Bridge
+        uses: actions/checkout@v4
+        with:
+          repository: danieloculus0-bot/BEAN-AI-Bridge-
+          ref: f4a74b8ea29e1c740c1d9d415a507c709edcc956
+          path: bean-bridge
 
       - name: Run flash-ready standard gate
+        id: build
+        continue-on-error: true
         run: |
           echo "flash-ready-standard trigger: v2"
           chmod +x venvwin-portable/pre-iso-readiness.sh
           chmod +x venvwin-portable/build-iso.sh
           chmod +x venvwin-portable/build-flash-ready-standard.sh
-          ./venvwin-portable/build-flash-ready-standard.sh
+          bash ./venvwin-portable/build-in-bookworm.sh
+
+      - name: BEAN bridge repeated evidence gate
+        if: always()
+        run: |
+          mkdir -p dist
+          python3 - <<'PY'
+          import datetime
+          import json
+          from pathlib import Path
+
+          dist = Path("dist")
+          def contains(name, marker):
+              path = dist / name
+              return path.is_file() and marker in path.read_text(encoding="utf-8", errors="replace")
+          def evidence(passed, path, marker):
+              return {"status": "pass" if passed else "fail", "evidence": f"{path}:{marker}" if passed else ""}
+          preflight = contains("venvwin-preflight-pass.txt", "PRE-ISO READINESS: PASS")
+          static = contains("venvwin-static-pass.txt", "STATIC_ISO_VALID")
+          guest = contains("venvwin-qemu-serial.log", "BEAN_GUEST_READY")
+          first = contains("venvwin-qemu-serial.log", "BEAN_GUEST_FIRST_RUN_PASS")
+          package = dist / "venvwin-portable-alpha-standard.iso"
+          report = {
+              "project": "venvwin",
+              "phase": "iso",
+              "observed_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+              "checks": {
+                  "package_install": evidence(preflight, "venvwin-preflight-pass.txt", "PRE-ISO READINESS: PASS"),
+                  "boot_structure": evidence(static and package.is_file(), "venvwin-static-pass.txt", "STATIC_ISO_VALID"),
+                  "guest_boot": evidence(guest, "venvwin-qemu-serial.log", "BEAN_GUEST_READY"),
+                  "first_run": evidence(first, "venvwin-qemu-serial.log", "BEAN_GUEST_FIRST_RUN_PASS"),
+              }
+          }
+          (dist / "venvwin-bean-report.json").write_text(json.dumps(report, indent=2) + "\n")
+          print(json.dumps(report, indent=2))
+          PY
+          PYTHONPATH="bean-bridge/src" python3 -m ezbean.smoke_lab \
+            --report dist/venvwin-bean-report.json \
+            --phase iso \
+            --ledger dist/venvwin-bean-evidence.sqlite \
+            --receipt dist/venvwin-bean-receipt.json \
+            --repeat 5
 
       - name: Upload flash-ready artifacts
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: venvwin-portable-flash-ready-standard
@@ -52,4 +103,24 @@ jobs:
             dist/venvwin-portable-alpha-standard.iso.sha256
             dist/venvwin-portable-alpha-standard-manifest.txt
             dist/venvwin-flash-ready-verdict.txt
-          if-no-files-found: error
+            dist/venvwin-qemu-serial.log
+            dist/venvwin-bean-report.json
+            dist/venvwin-bean-receipt.json
+            dist/venvwin-bean-evidence.sqlite
+            dist/venvwin-preflight-pass.txt
+            dist/venvwin-static-pass.txt
+          if-no-files-found: warn
+
+      - name: Enforce final flash-ready verdict
+        if: always()
+        run: |
+          test "${{ steps.build.outcome }}" = "success"
+          grep -q '^status=FLASH_READY$' dist/venvwin-flash-ready-verdict.txt
+          python3 - <<'PY'
+          import json
+          with open("dist/venvwin-bean-receipt.json", encoding="utf-8") as f:
+              result = json.load(f)
+          assert result["verdict"] == "PASS", result
+          assert result["repetitions"] == 5, result
+          print("FLASH READY + BEAN BRIDGE EVIDENCE: PASS")
+          PY
