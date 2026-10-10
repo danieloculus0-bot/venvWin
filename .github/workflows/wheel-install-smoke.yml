@@ -1,0 +1,58 @@
+name: wheel-install-smoke
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/wheel-install-smoke.yml"
+      - "pyproject.toml"
+      - "src/**"
+
+permissions:
+  contents: read
+
+jobs:
+  install-wheel-in-clean-venv:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build distributable wheel
+        run: |
+          python -m pip install --upgrade build
+          python -m build --wheel --outdir dist
+          test -n "$(find dist -name 'venvwin-*.whl' -print -quit)"
+      - name: Fresh standalone installation outside the source directory
+        run: |
+          set -euo pipefail
+          VENV_DIR="$RUNNER_TEMP/clean-wheel-env"
+          python -m venv "$VENV_DIR"
+          "$VENV_DIR/bin/python" -m pip install dist/venvwin-*.whl
+          cd "$RUNNER_TEMP"
+          unset PYTHONPATH || true
+          export VENVWIN_HOME="$RUNNER_TEMP/venvwin-wheel-state"
+          "$VENV_DIR/bin/python" - <<'PY'
+          import venvwin
+          from pathlib import Path
+          loc = Path(venvwin.__file__).resolve()
+          assert 'site-packages' in str(loc), f'Imported source tree instead of installed wheel: {loc}'
+          print('INSTALLED_WHEEL_IMPORT_PASS:', loc)
+          PY
+          "$VENV_DIR/bin/venvwin" init
+          "$VENV_DIR/bin/venvwin" create "Wheel Install Test"
+          "$VENV_DIR/bin/venvwin" list | grep 'wheel-install-test'
+          "$VENV_DIR/bin/venvwin" inspect wheel-install-test > "$RUNNER_TEMP/wheel-install-inspect.json"
+          "$VENV_DIR/bin/venvwin" associate --applications-dir "$RUNNER_TEMP/venvwin-handlers"
+          test -s "$RUNNER_TEMP/venvwin-handlers/venvwin-open-exe.desktop"
+          test -s "$RUNNER_TEMP/venvwin-handlers/venvwin-open-msi.desktop"
+          echo "CLEAN_WHEEL_INSTALL_PASS"
+      - name: Upload isolated install evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: clean-wheel-install-evidence
+          path: ${{ runner.temp }}/wheel-install-inspect.json
+          if-no-files-found: ignore
