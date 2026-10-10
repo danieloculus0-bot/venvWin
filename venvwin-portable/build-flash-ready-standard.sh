@@ -96,6 +96,9 @@ for required_path in \
   'squashfs-root/usr/local/bin/venvwin-first-run' \
   'squashfs-root/usr/local/bin/venvwin-first-boot-gui' \
   'squashfs-root/usr/local/bin/venvwin-dashboard' \
+  'squashfs-root/usr/local/bin/venvwin-guest-probe' \
+  'squashfs-root/etc/systemd/system/venvwin-guest-probe.service' \
+  'squashfs-root/etc/systemd/system/multi-user.target.wants/venvwin-guest-probe.service' \
   'squashfs-root/usr/share/applications/venvwin-dashboard.desktop' \
   'squashfs-root/usr/share/applications/venvwin-frontier-trail.desktop' \
   'squashfs-root/usr/share/pixmaps/venvwin-frontier-trail.svg' \
