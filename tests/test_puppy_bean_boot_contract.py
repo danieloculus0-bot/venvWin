@@ -34,7 +34,7 @@ def test_guest_boot_requires_real_serial_proof():
     workflow = (root / ".github" / "workflows" / "flash-ready-standard.yml").read_text()
     assert "BEAN_GUEST_READY" in build
     assert "BEAN_GUEST_FIRST_RUN_PASS" in build
-    assert 'grep -q \'^BEAN_GUEST_READY$\'' in build
+    assert 'grep -Fxq "BEAN_GUEST_READY"' in build
     assert "qemu_smoke=guest_side_proven" in build
     assert "BEAN_GUEST_NOT_READY" in iso
     assert "xfce4-session" in iso
