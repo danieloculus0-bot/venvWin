@@ -1,4 +1,4 @@
-name: build-venvwin-iso
+name: build-venvwin-iso-legacy-manual
 
 on:
   workflow_dispatch:
@@ -20,12 +20,6 @@ on:
         options:
           - "true"
           - "false"
-  push:
-    paths:
-      - "venvwin-portable/**"
-      - "src/**"
-      - "pyproject.toml"
-      - ".github/workflows/build-venvwin-iso.yml"
 
 jobs:
   iso:
