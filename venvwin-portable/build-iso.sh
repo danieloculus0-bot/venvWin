@@ -5,7 +5,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUILD_DIR="${ROOT_DIR}/build/venvwin-portable-iso"
 OUT_DIR="${ROOT_DIR}/dist"
 IMAGE_NAME="venvwin-portable-alpha"
-PROFILE="${VENVWIN_PORTABLE_PROFILE:-standard}"
+PROFILE="${VENVWIN_PORTABLE_PROFILE:-core}"
 PUBLIC_PRODUCT_NAME="venvWin Portable"
 
 if ! command -v lb >/dev/null 2>&1; then
@@ -37,7 +37,7 @@ lb config \
   --security false \
   --debian-installer false \
   --memtest none \
-  --bootappend-live "boot=live components persistence console=tty0 console=ttyS0,115200n8" \
+  --bootappend-live "boot=live components console=tty0 console=ttyS0,115200n8" \
   --iso-application "${PUBLIC_PRODUCT_NAME}" \
   --iso-publisher "venvWin" \
   --iso-volume "VENVWIN_PORTABLE"
@@ -185,14 +185,17 @@ torbrowser-launcher
 EOF
 fi
 
+# Product image receives ONLY executable application source, never the whole
+# development repository (tests, workflows, documentation, build scripts, etc.).
+# Keep embedded game assets living under src/venvwin intact.
 rsync -a \
-  --exclude .git \
-  --exclude build \
-  --exclude dist \
-  --exclude bean-bridge \
-  --exclude .pytest_cache \
-  --exclude __pycache__ \
-  "${ROOT_DIR}/" "config/includes.chroot/opt/venvwin/"
+  --exclude '__pycache__/' \
+  --exclude '*.pyc' \
+  --exclude '*.pyo' \
+  "${ROOT_DIR}/src/" "config/includes.chroot/opt/venvwin/src/"
+# One tiny offline introduction belongs on the USB; full developer docs do not.
+install -m 0644 "${ROOT_DIR}/venvwin-portable/README.md" \
+  "config/includes.chroot/opt/venvwin/README-PORTABLE.md"
 
 # Booted-guest proof: unlike a QEMU timeout, this proves an actual user session,
 # first-run desktop output, and HTTP dashboard response inside the guest.
@@ -696,6 +699,10 @@ sha256_file=${OUTPUT_ISO}.sha256
 leave_no_trace_default=true
 default_storage=venvWin Portable USB/install drive only
 boot_toram_default=false
+persistence_default=none
+persistence_opt_in=true
+packaged_payload=app_source_only
+boot_media_policy=read_only_by_default
 live_user_autologin=true
 first_boot_gui=true
 dashboard=true
@@ -734,8 +741,14 @@ EOF
 echo "Built ISO: ${OUTPUT_ISO}"
 echo "Size: ${ISO_MB} MB"
 echo "Checksum: ${OUTPUT_ISO}.sha256"
-if [[ "${ISO_MB}" -gt 3500 ]]; then
-  echo "Hard concern: ISO is over 3500 MB. Trim before product release."
-elif [[ "${ISO_MB}" -gt 2500 ]]; then
-  echo "Soft warning: ISO is over 2500 MB. Alpha can continue, but tune size later."
+# The Puppy-adjacent core should not silently balloon into the old ISO.
+# Size is measured from the finished image; don't fake a smaller number.
+if [[ "${PROFILE}" == core && "${ISO_MB}" -gt 900 ]]; then
+  echo "CORE_SIZE_BUDGET_FAIL: core ISO exceeds 900 MiB; review package dependencies." >&2
+  exit 1
+elif [[ "${PROFILE}" == core && "${ISO_MB}" -gt 512 ]]; then
+  echo "CORE_SIZE_WARNING: target is 512 MiB; actual image is ${ISO_MB} MiB."
+fi
+if [[ "${PROFILE}" != core && "${ISO_MB}" -gt 900 ]]; then
+  echo "HEAVY_PROFILE_WARNING: extra applications belong in optional SFS modules." >&2
 fi
