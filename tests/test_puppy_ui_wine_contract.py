@@ -12,6 +12,7 @@ BUILDER = (PUPPY / "build-puppy.sh").read_text()
 SESSION = (PUPPY / "venvwin-session").read_text()
 WINE = PUPPY / "venvwin-wine"
 CONTROL = PUPPY / "venvwin-control-center"
+CONTROL_TEXT = CONTROL.read_text()
 THEME = (PUPPY / "venvwin-gtk.css").read_text()
 GUI = (ROOT / "src/venvwin/gui_first_run.py").read_text()
 
@@ -39,9 +40,9 @@ def test_premium_mint_style_is_recovered_not_reinvented():
     assert "#ff8a00" in GUI
     assert '"Wine runner"' in GUI
     assert "Wine setup / status" in GUI
-    assert "Adwaita:dark" in CONTROL
-    assert "tkinter" in CONTROL
-    assert "yad" in CONTROL
+    assert "Adwaita:dark" in CONTROL_TEXT
+    assert "tkinter" in CONTROL_TEXT
+    assert "yad" in CONTROL_TEXT
 
 
 def test_startup_avoids_automatic_wine_and_persistent_host_writes():
