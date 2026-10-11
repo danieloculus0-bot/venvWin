@@ -683,6 +683,19 @@ if ! grep -Eq '^/live/filesystem.squashfs$' "${ISO_BOOT_FILE_LIST}"; then
 fi
 echo "ISO_BOOT_FILES_PRESENT: kernel, initrd, squashfs"
 
+# Enforce the core size gate before writing release artifacts.
+ISO_UNPUBLISHED_BYTES="$(stat -c%s "${ISO_PATH}")"
+ISO_UNPUBLISHED_MB="$(( (ISO_UNPUBLISHED_BYTES + 1048575) / 1048576 ))"
+if [[ "${PROFILE}" == core && "${ISO_UNPUBLISHED_MB}" -gt 900 ]]; then
+  echo "CORE_SIZE_BUDGET_FAIL: core ISO exceeds 900 MiB; refusing to publish." >&2
+  exit 1
+elif [[ "${PROFILE}" == core && "${ISO_UNPUBLISHED_MB}" -gt 512 ]]; then
+  echo "CORE_SIZE_WARNING: 512 MiB target exceeded: ${ISO_UNPUBLISHED_MB} MiB."
+fi
+if [[ "${PROFILE}" != core && "${ISO_UNPUBLISHED_MB}" -gt 900 ]]; then
+  echo "HEAVY_PROFILE_WARNING: full legacy profile; optional SFS packaging is not implemented." >&2
+fi
+
 OUTPUT_ISO="${OUT_DIR}/${IMAGE_NAME}-${PROFILE}.iso"
 cp "${ISO_PATH}" "${OUTPUT_ISO}"
 sha256sum "${OUTPUT_ISO}" > "${OUTPUT_ISO}.sha256"
@@ -776,14 +789,3 @@ EOF
 echo "Built ISO: ${OUTPUT_ISO}"
 echo "Size: ${ISO_MB} MB"
 echo "Checksum: ${OUTPUT_ISO}.sha256"
-# The Puppy-adjacent core should not silently balloon into the old ISO.
-# Size is measured from the finished image; don't fake a smaller number.
-if [[ "${PROFILE}" == core && "${ISO_MB}" -gt 900 ]]; then
-  echo "CORE_SIZE_BUDGET_FAIL: core ISO exceeds 900 MiB; review package dependencies." >&2
-  exit 1
-elif [[ "${PROFILE}" == core && "${ISO_MB}" -gt 512 ]]; then
-  echo "CORE_SIZE_WARNING: target is 512 MiB; actual image is ${ISO_MB} MiB."
-fi
-if [[ "${PROFILE}" != core && "${ISO_MB}" -gt 900 ]]; then
-  echo "HEAVY_PROFILE_WARNING: extra applications belong in optional SFS modules." >&2
-fi
