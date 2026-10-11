@@ -1,0 +1,32 @@
+name: Puppy native source contracts
+on:
+  push:
+    branches: [feat/puppy-bookworm64-native-20261011]
+    paths:
+      - "puppy-native/**"
+      - "tests/test_puppy_native_contract.py"
+      - ".github/workflows/puppy-native-source-checks.yml"
+      - ".github/workflows/puppy-native-boot-lab.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate native Puppy source contracts without downloading ISO
+        run: |
+          python -m pip install -e . pytest
+          python -m pytest -q tests/test_puppy_native_contract.py
+          bash -n puppy-native/build-puppy.sh
+          bash -n puppy-native/prove-puppy-qemu.sh
+          sh -n puppy-native/venvwin-guest-probe
+          sh -n puppy-native/venvwin-launcher
+          echo 'PUPPY_NATIVE_SOURCE_CONTRACTS_PASS (not VM boot proof)'

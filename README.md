@@ -1,207 +1,101 @@
-# venvWin
+# venvWin Portable — Puppy Linux native core
 
-venvWin is the Windows-app compatibility capsule engine for venvWin Portable.
+**Status: experimental Puppy-native branch, not a released operating system.**
 
-venvWin Portable is the lightweight Linux-based portable OS shell. It is meant to extend the usable life of older PCs by giving them a familiar desktop, portable storage behavior, and managed compatibility paths for old Windows apps, obsolete tech, and legacy workflows.
+venvWin is a modular Windows-application capsule system intended for a real,
+lightweight, portable Puppy Linux desktop. We are moving away from the previous
+homegrown Debian live-build OS. The entire old main-branch implementation is
+preserved at [archive/debian-live-build-20261011](../../tree/archive/debian-live-build-20261011).
+The existing [GRUB repair draft PR #17](../../pull/17) is historical comparison,
+not the foundation for this Puppy implementation.
 
-venvWin is the subsystem that manages isolated Windows-like app environments on Linux. It owns capsules, runner profiles, install routing, launch routing, snapshots, recovery, and compatibility backend selection.
+## Genuine upstream operating-system foundation
 
-The goal is not to rebuild Windows from scratch. The goal is to make older hardware useful again with a small, familiar Linux system where compatibility is boring, repeatable, isolated, recoverable, and easy enough that a normal user can install an app without spelunking through prefix hell.
+- **BookwormPup64 10.0.12** from the official Puppy Linux distributor:
+  https://distro.ibiblio.org/puppylinux/puppy-bookwormpup/BookwormPup64/10.0.12/
+- Expected upstream ISO SHA-256:
+  `ae65f6e6d70a96f48bdbb291c2426f8a2fd77a73692e149e81a5eecb6fe7509f`
+- Upstream is roughly 791 MiB. Actual remastered size requires measured CI results.
+- Puppy already provides a real bootloader, kernel, initramfs, modular compressed
+  SFS system, OverlayFS live root, desktop, and Puppy persistence mechanisms.
+- venvWin is added as an **independent `ydrv_dpupbw64_10.0.12.sfs` layer**,
+  not by replacing the official base, its firmware, initramfs, or bootloader.
+- `xorriso` remasters the ISO with its original El Torito/EFI boot records
+  replayed. Real BIOS and UEFI guest boots remain separate tests.
 
-Wine is allowed as backend number one. Wine is not the product. The product is the repeatable capsule environment and venvWin Portable shell wrapped around it.
+## What venvWin adds
 
-## Product intent
+The Python app source under `src/venvwin` stays intact and is integrated as
+`/opt/venvwin/src`. The small wrapper at `/usr/local/bin/venvwin` supports
+the same capsule create/list/inspect, installer routing, snapshots, recovery,
+EXE/MSI association handling, CLI tools and local dashboard architecture.
 
-venvWin Portable should feel more like a practical 2011-era lightweight Linux appliance than a bloated modern desktop distro.
+Actual Windows EXE execution requires a compatible **Wine runner**; it is not
+silently assumed to be included with the Puppy core. Wine support can be
+packaged later as its own independent SFS module.
 
-Target direction:
+If Python 3.10+ is missing in a live Puppy guest, venvWin reports the missing
+dependency instead of claiming working application integration. The guest
+boot probe must actually execute the capsule CLI before core boot is accepted.
 
-- bootable portable OS
-- Windows-familiar shell and launcher flow without impersonating Windows
-- visible desktop shortcuts on first boot
-- useful on older 2010-ish PCs where practical
-- compatibility layer for obsolete tech and legacy apps
-- low background overhead
-- local dashboard, not cloud dependency
-- no host hard-drive usage by default
-- venvWin-owned state, logs, and capsules
-- Windows app routing through venvWin capsules
+## Tested stages and gates
 
-Leave No Trace means no unwanted host hard-drive writes. It does not mean stealth, hidden use, or hacker bullshit. venvWin Portable should keep visible proof and logs inside its own session/storage while avoiding host desktop/browser residue.
+Source-only checks:
+`python -m pytest -q tests/test_puppy_native_contract.py`.
 
-## Current status
+One isolated real ISO/QEMU experiment:
+`puppy-native/build-puppy.sh` and
+`puppy-native/prove-puppy-qemu.sh`, run by
+[the native Puppy guest build workflow](../../actions/workflows/puppy-native-boot-lab.yml)
+on the isolated branch.
 
-Pre-alpha skeleton with real plumbing:
+The CI gate rejects images with a bad upstream SHA-256, missing Puppy files,
+an already-used `ydrv` filename, missing remaster boot records, or absent
+**guest-origin serial markers**. A QEMU window or successful shell syntax
+check is never treated as proof that the desktop booted.
 
-- Python CLI package
-- per-app capsule metadata
-- runner profiles
-- Wine backend command preparation
-- installer recording
-- EXE/MSI file classification
-- desktop handler generation
-- visible first-boot desktop launchers
-- launcher generation
-- capsule snapshots and reset backups
-- first-run storage flow
-- LNT storage reporting
-- local venvWin Portable dashboard
-- ISO build script for venvWin Portable profiles
-- CI smoke gates and pre-ISO readiness checks
+| Product gate | Proof still required |
+| --- | --- |
+| Genuine upstream Puppy kernel, bootloader and SFS | Pinned ISO checksum and remaster inventory |
+| Guest Linux and graphical session | Guest-origin QEMU serial marker |
+| Actual writable live OverlayFS | Guest mount evidence |
+| venvWin capsule engine in the live desktop | Guest-origin init/list tests |
+| Optional copy-to-RAM | Measured SFS sizes, available RAM and actual copy |
+| User-chosen persistence | Savefile/savefolder proven after genuine reboot |
+| External app modules | Independently loaded/unloaded SFS with hash and behavior |
+| Windows compatibility | End-to-end EXE installation and rollback inside live Puppy |
 
-This is not native Windows compatibility yet. It is the product structure needed to make compatibility inspectable, recoverable, and less stupid than prefix chaos.
+Passing the first three live checks is **not** evidence that the full product
+gates passed. Full six-gate BEAN readiness requires additional repeated
+post-reboot verification and real application tests.
 
-## Product split
+## Build locally
 
-```text
-venvWin Portable
-  Lightweight bootable Linux OS shell
-  Windows-familiar desktop flow
-  First-boot setup
-  Visible desktop shortcuts
-  Local dashboard
-  App launcher UX
-  System settings direction
-  Storage policy
-  venvWin integration
+Requires Linux and `curl`, `xorriso`, `squashfs-tools`, `rsync`, QEMU,
+Python 3.10+, and optional KVM for faster tests.
 
-venvWin
-  Per-app capsules
-  Runner profiles
-  Isolated prefixes
-  Installer capture
-  Windows file routing
-  Legacy app compatibility
-  Obsolete tech compatibility layer
-  Launcher generation
-  Snapshots and rollback
-  Backend abstraction
-  VM fallback later
+```sh
+python -m pip install -e . pytest
+python -m pytest -q tests/test_puppy_native_contract.py
+bash puppy-native/build-puppy.sh
+bash puppy-native/prove-puppy-qemu.sh
 ```
 
-## Alpha product gate
+The build downloads an **unchanged authenticated upstream Puppy ISO** and adds
+a small version-specific SFS. It does not run the old Debian `live-build`
+system. The QEMU experiment has an isolated CD-ROM and no attached hard drive
+or guest networking.
 
-The hard definition of "real" lives here:
+**Release policy:** no ISO uploaded as a release candidate, no replacement
+of `main`, and no deletion of legacy code until native boot and application
+integration evidence genuinely pass. Even then, missing persistence, RAM,
+module and Wine gates must be explicitly documented, not disguised as success.
 
-`venvwin-portable/product-gate.md`
+## Development history
 
-venvWin Portable Alpha is real when a user can boot the image, see venvWin controls, initialize storage, double-click or route a Windows installer into a capsule, inspect the capsule, and understand where the app state lives.
-
-Until that boot-tested evidence exists, this project is pre-alpha with a strong skeleton.
-
-## First milestone
-
-Build and prove a boot-tested venvWin Portable Alpha ISO:
-
-- ISO boots to a usable lightweight desktop
-- first-run setup completes
-- first-boot GUI opens automatically
-- visible desktop shortcuts are present
-- dashboard opens locally
-- storage destination is visible
-- host write risk is reported
-- EXE/MSI handlers are installed
-- one dummy installer dry-run routes into a capsule
-- capsule create/list/inspect/install dry-run works
-- doctor/status output is visible
-- first-boot proof bundle appears in the venvWin Portable session
-
-Required first-boot desktop shortcuts:
-
-```text
-venvWin-First-Boot.desktop
-venvWin-Dashboard.desktop
-venvWin-Capsules.desktop
-venvWin-Doctor.desktop
-venvWin-Private-Browser.desktop
-```
-
-## Build gates
-
-Two GitHub Actions workflows exist:
-
-```text
-preflight-lite
-flash-ready-standard
-```
-
-If workflow runs do not appear after commits, check:
-
-```text
-Settings > Actions > General
-```
-
-Expected:
-
-```text
-Actions enabled
-workflow_dispatch available
-push workflows allowed
-artifact upload allowed
-```
-
-Manual build trigger from phone:
-
-```text
-Actions > flash-ready-standard > Run workflow > main
-```
-
-Build attempt checklist:
-
-```text
-venvwin-portable/build-attempt-checklist.md
-```
-
-Windows PowerShell WSL build runner:
-
-```powershell
-.\venvwin-portable\run-wsl-flash-ready.ps1
-```
-
-Local/WSL build guide:
-
-```text
-venvwin-portable/local-flash-ready-build.md
-```
-
-USB flash guide:
-
-```text
-venvwin-portable/usb-flash-guide.md
-```
-
-Flash-ready artifact bundle:
-
-```text
-venvwin-portable-flash-ready-standard
-```
-
-Required files:
-
-```text
-venvwin-portable-alpha-standard.iso
-venvwin-portable-alpha-standard.iso.sha256
-venvwin-portable-alpha-standard-manifest.txt
-venvwin-flash-ready-verdict.txt
-```
-
-Do not flash until the verdict file says:
-
-```text
-status=FLASH_READY
-```
-
-## Backend philosophy
-
-venvWin must not collapse into "Wine with a hat."
-
-The backend layer should support:
-
-- Wine
-- Proton-style runner profiles
-- Bottles-style managed runners
-- containerized runners
-- VM fallback
-- future compatibility shims
-
-The CLI, dashboard, capsule model, and venvWin Portable shell should survive backend changes without being rewritten from scratch.
+All prior Debian/XFCE scripts, historical Windows compatibility tests,
+documentation, and proof attempts remain recoverable in the archive branch.
+Once the native product passes its release criteria, the new main branch can
+be cleaned of the obsolete Debian builder and its workflows. Never delete
+`src/venvwin`, the tests for its actual functionality, or BEAN evidence
+contracts merely to save repository bytes.

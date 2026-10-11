@@ -1,0 +1,8 @@
+#!/bin/sh
+# Uses native Puppy Python; Wine is an optional separately tested module.
+export PYTHONPATH="/opt/venvwin/src${PYTHONPATH:+:$PYTHONPATH}"
+if ! command -v python3 >/dev/null 2>&1; then
+  echo 'VENVWIN_PUPPY_PYTHON_MISSING: Python >=3.10 needed for capsules' >&2
+  exit 70
+fi
+exec python3 -m venvwin.cli "$@"

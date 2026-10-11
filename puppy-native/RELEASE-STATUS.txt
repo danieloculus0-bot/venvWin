@@ -1,0 +1,7 @@
+venvWin Puppy native integration: experimental proof candidate.
+BookwormPup64 10.0.12 official upstream SHA256:
+ae65f6e6d70a96f48bdbb291c2426f8a2fd77a73692e149e81a5eecb6fe7509f
+Extra ydrv contains only venvWin app code and guest desktop proof.
+Wine runner is not assumed bundled. User-owned persistence, reboot,
+measured copy-to-RAM, optional modules, full Windows app tests
+must be individually demonstrated before a full release claim.
