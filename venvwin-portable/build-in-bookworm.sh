@@ -5,9 +5,16 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 command -v docker >/dev/null || { echo "Docker is required for the Bookworm build" >&2; exit 1; }
+# Two explicit, audited entrypoints; never infer a build from a branch name.
+VENVWIN_BOOKWORM_BUILD_TARGET="${VENVWIN_BOOKWORM_BUILD_TARGET:-standard}"
+case "${VENVWIN_BOOKWORM_BUILD_TARGET}" in
+  standard|core) ;;
+  *) echo "Unknown Bookworm build target: ${VENVWIN_BOOKWORM_BUILD_TARGET}" >&2; exit 2 ;;
+esac
 # Keep the evidence directory writable by the non-root GitHub Actions runner.
 mkdir -p dist
 docker run --rm --privileged \
+  -e VENVWIN_BOOKWORM_BUILD_TARGET \
   -v "$ROOT:/workspace" \
   -w /workspace \
   debian:bookworm \
@@ -25,5 +32,8 @@ docker run --rm --privileged \
     python3 -m venv /tmp/venvwin-build-venv
     /tmp/venvwin-build-venv/bin/python -m pip install -e . pytest
     export PATH="/tmp/venvwin-build-venv/bin:$PATH"
-    bash ./venvwin-portable/build-flash-ready-standard.sh
+    case "$VENVWIN_BOOKWORM_BUILD_TARGET" in
+      standard) bash ./venvwin-portable/build-flash-ready-standard.sh ;;
+      core) bash ./venvwin-portable/build-core-proof.sh ;;
+    esac
   '
