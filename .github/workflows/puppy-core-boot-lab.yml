@@ -1,0 +1,135 @@
+name: Puppy core boot lab
+
+# Explicit bounded experiment: never auto-build on main.
+on:
+  workflow_dispatch:
+  push:
+    branches: [feat/puppy-core-boot-lab-20261010]
+    paths:
+      - ".github/workflows/puppy-core-boot-lab.yml"
+      - "venvwin-portable/build-core-proof.sh"
+      - "venvwin-portable/build-in-bookworm.sh"
+      - "venvwin-portable/build-iso.sh"
+      - "tests/test_core_boot_lab_contract.py"
+
+jobs:
+  core-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 85
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install source test tools
+        run: |
+          python -m pip install -e . pytest
+          python -m pytest -q tests/test_core_boot_lab_contract.py
+      - name: Check Docker is available
+        run: |
+          docker --version
+          docker info >/dev/null
+      - name: Check out known BEAN Bridge evidence compiler
+        uses: actions/checkout@v4
+        with:
+          repository: danieloculus0-bot/BEAN-AI-Bridge-
+          ref: d1bd5a30c89de99455a436a57d66e064f34fe709
+          path: bean-bridge
+
+      - name: Build and boot isolated Puppy core
+        id: core_boot
+        continue-on-error: true
+        run: |
+          VENVWIN_BOOKWORM_BUILD_TARGET=core bash ./venvwin-portable/build-in-bookworm.sh
+
+      - name: Build exact ISO evidence report for BEAN
+        if: always()
+        run: |
+          mkdir -p dist
+          python3 - <<'PY'
+          import datetime
+          import json
+          from pathlib import Path
+          root = Path("dist")
+          def has(filename: str, marker: str) -> bool:
+              path = root / filename
+              return path.is_file() and marker in path.read_text(errors="replace")
+          def record(filename: str, marker: str) -> dict:
+              ok = has(filename, marker)
+              return {"status": "pass" if ok else "fail",
+                      "evidence": filename + ":" + marker if ok else ""}
+          checks = {
+              "package_install": record("venvwin-core-preflight-pass.txt", "PRE-ISO READINESS: PASS"),
+              "boot_structure": record("venvwin-core-static-pass.txt", "STATIC_CORE_BOOT_FILES_PRESENT"),
+              "guest_boot": record("venvwin-core-qemu-serial.log", "BEAN_GUEST_READY"),
+              "first_run": record("venvwin-core-qemu-serial.log", "BEAN_GUEST_FIRST_RUN_PASS"),
+          }
+          report = {"project": "venvwin", "phase": "iso",
+                    "observed_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                    "checks": checks,
+                    "note": "Core QEMU guest proof only; full Puppy architecture requires separate runtime evidence"}
+          (root / "venvwin-core-bean-report.json").write_text(json.dumps(report, indent=2) + "\n")
+          print(json.dumps(report, indent=2))
+          PY
+
+      - name: BEAN Bridge five-fold boot evidence replay
+        id: bean
+        if: always()
+        continue-on-error: true
+        run: |
+          PYTHONPATH=bean-bridge/src python3 -m ezbean.smoke_lab \
+            --report dist/venvwin-core-bean-report.json \
+            --phase iso \
+            --ledger dist/venvwin-core-bean-ledger.sqlite \
+            --receipt dist/venvwin-core-bean-receipt.json \
+            --repeat 5
+
+      - name: Upload diagnostics without unverified ISO
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: venvwin-puppy-core-boot-diagnostics
+          if-no-files-found: warn
+          path: |
+            dist/venvwin-core-preflight.log
+            dist/venvwin-core-preflight-pass.txt
+            dist/venvwin-core-build.log
+            dist/venvwin-core-size.txt
+            dist/venvwin-core-tested-iso.sha256
+            dist/venvwin-core-iso-inventory.txt
+            dist/venvwin-core-xorriso.log
+            dist/venvwin-core-static-pass.txt
+            dist/venvwin-core-qemu-serial.log
+            dist/venvwin-core-qemu-stderr.log
+            dist/venvwin-core-frame-*.ppm
+            dist/venvwin-core-boot-verdict.txt
+            dist/venvwin-core-bean-report.json
+            dist/venvwin-core-bean-receipt.json
+            dist/venvwin-core-bean-ledger.sqlite
+
+      - name: Upload boot-proven, size-accepted core ISO
+        if: steps.core_boot.outcome == 'success' && steps.bean.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: venvwin-puppy-core-boot-proven-iso
+          if-no-files-found: error
+          path: |
+            dist/venvwin-portable-alpha-core.iso
+            dist/venvwin-portable-alpha-core.iso.sha256
+            dist/venvwin-portable-alpha-core-manifest.txt
+            dist/venvwin-core-boot-verdict.txt
+
+      - name: Enforce verified-core gate (NOT final product gate)
+        if: always()
+        run: |
+          test "${{ steps.core_boot.outcome }}" = "success"
+          test "${{ steps.bean.outcome }}" = "success"
+          grep -Fxq 'status=CORE_GUEST_PROVEN' dist/venvwin-core-boot-verdict.txt
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          receipt = json.loads(Path("dist/venvwin-core-bean-receipt.json").read_text())
+          assert receipt["verdict"] == "PASS" and receipt["repetitions"] == 5
+          assert all(check["status"] == "pass" for check in receipt["checks"].values())
+          print("PUPPY_CORE_BOOT_PROVEN: baseline only; RAM, USB save and SFS remain unverified")
+          PY
