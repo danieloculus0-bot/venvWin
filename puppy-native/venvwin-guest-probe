@@ -1,0 +1,24 @@
+#!/bin/sh
+# Launched inside Puppy /root/Startup from its real desktop session.
+LOG="/tmp/venvwin-puppy-guest-proof.log"
+emit() {
+  printf '%s\n' "$1" >> "$LOG"
+  if [ -c /dev/ttyS0 ]; then printf '%s\n' "$1" > /dev/ttyS0 || true; fi
+}
+emit 'PUPPY_GUEST_STARTUP_EXECUTED'
+if [ -z "${DISPLAY:-}" ]; then emit 'PUPPY_NO_GRAPHICAL_DISPLAY'; exit 1; fi
+if [ ! -f /opt/venvwin/src/venvwin/cli.py ]; then emit 'PUPPY_YDRV_APP_MISSING'; exit 1; fi
+if ! awk '$3 == "overlay" || $3 == "aufs" {found=1} END {exit !found}' /proc/mounts; then
+  emit 'PUPPY_OVERLAY_NOT_OBSERVED'
+  exit 1
+fi
+emit 'PUPPY_GUI_AND_OVERLAY_PRESENT'
+RUNTIME="/tmp/venvwin-puppy-proof-$$"
+if /usr/local/bin/venvwin --root "$RUNTIME" init >/tmp/venvwin-proof-init.log 2>&1 &&
+   /usr/local/bin/venvwin --root "$RUNTIME" list >/tmp/venvwin-proof-list.log 2>&1; then
+  emit 'PUPPY_VENVWIN_CAPSULE_CLI_PASS'
+else
+  emit 'PUPPY_VENVWIN_CAPSULE_CLI_FAIL'
+  exit 1
+fi
+emit 'PUPPY_GUEST_BOOT_PROVEN'
