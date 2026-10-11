@@ -689,6 +689,40 @@ sha256sum "${OUTPUT_ISO}" > "${OUTPUT_ISO}.sha256"
 
 ISO_BYTES="$(stat -c%s "${OUTPUT_ISO}")"
 ISO_MB="$(( (ISO_BYTES + 1048575) / 1048576 ))"
+# Manifest reflects actual profile packages, never aspirational full-stack claims.
+# Source, modules, guest boot and persistence are separately audited by BEAN.
+if [[ "${PROFILE}" == core ]]; then
+  VENVWIN_MANIFEST_STANDARD_BROWSER="netsurf-gtk"
+  VENVWIN_MANIFEST_PRIVACY_BROWSER_PROFILE="not_bundled"
+  VENVWIN_MANIFEST_SOFTWARE_CENTER="not_bundled"
+  VENVWIN_MANIFEST_LIGHT_EDITOR="mousepad"
+  VENVWIN_MANIFEST_OFFICE_TOOLS="abiword,gnumeric"
+  VENVWIN_MANIFEST_PDF_VIEWER="not_bundled"
+  VENVWIN_MANIFEST_MEDIA_TOOLS="not_bundled"
+  VENVWIN_MANIFEST_CAMERA_TOOLS="not_bundled"
+  VENVWIN_MANIFEST_AUDIO_STACK="pipewire,pipewire-pulse,wireplumber,alsa-utils,xfce4-pulseaudio-plugin"
+  VENVWIN_MANIFEST_USB_SUPPORT="udisks2,gvfs-backends,pmount,usb-modeswitch,exfatprogs,ntfs-3g,dosfstools"
+  VENVWIN_MANIFEST_HARDWARE_PROBE_TOOLS="pciutils,usbutils,rfkill,nmcli,aplay,arecord"
+  VENVWIN_MANIFEST_RESCUE_TOOLS="not_bundled"
+  VENVWIN_MANIFEST_FIRMWARE_BUNDLE="firmware-iwlwifi,firmware-realtek,firmware-atheros,firmware-brcm80211,firmware-sof-signed"
+  VENVWIN_MANIFEST_STANDARD_PROFILE_POLICY="puppy_compact_core_with_opt_in_modules"
+else
+  VENVWIN_MANIFEST_STANDARD_BROWSER="netsurf-gtk,firefox-esr"
+  VENVWIN_MANIFEST_PRIVACY_BROWSER_PROFILE="torbrowser-launcher,tor,torsocks"
+  VENVWIN_MANIFEST_SOFTWARE_CENTER="synaptic,gdebi"
+  VENVWIN_MANIFEST_LIGHT_EDITOR="geany"
+  VENVWIN_MANIFEST_OFFICE_TOOLS="abiword,gnumeric,libreoffice-writer,libreoffice-calc"
+  VENVWIN_MANIFEST_PDF_VIEWER="evince"
+  VENVWIN_MANIFEST_MEDIA_TOOLS="mpv,ffmpeg"
+  VENVWIN_MANIFEST_CAMERA_TOOLS="guvcview,v4l-utils"
+  VENVWIN_MANIFEST_AUDIO_STACK="pipewire,pipewire-pulse,wireplumber,alsa-utils,pavucontrol,pamixer,xfce4-pulseaudio-plugin"
+  VENVWIN_MANIFEST_USB_SUPPORT="udisks2,gvfs-backends,pmount,usb-modeswitch,mtp-tools,jmtpfs,exfatprogs,ntfs-3g,dosfstools"
+  VENVWIN_MANIFEST_HARDWARE_PROBE_TOOLS="pciutils,usbutils,lshw,inxi,rfkill,nmcli,v4l2-ctl,aplay,arecord"
+  VENVWIN_MANIFEST_RESCUE_TOOLS="gparted,parted,testdisk,smartmontools,gsmartcontrol,ufw"
+  VENVWIN_MANIFEST_FIRMWARE_BUNDLE="firmware-linux,firmware-linux-nonfree,firmware-iwlwifi,firmware-realtek,firmware-atheros,firmware-brcm80211,firmware-misc-nonfree,firmware-sof-signed"
+  VENVWIN_MANIFEST_STANDARD_PROFILE_POLICY="lean_runtime_plus_puppy_era_essentials"
+fi
+
 cat > "${OUT_DIR}/${IMAGE_NAME}-${PROFILE}-manifest.txt" <<EOF
 venvWin Portable ISO Manifest
 profile=${PROFILE}
@@ -703,6 +737,7 @@ persistence_default=none
 persistence_opt_in=true
 packaged_payload=app_source_only
 boot_media_policy=read_only_by_default
+optional_launchers_may_require_modules=true
 live_user_autologin=true
 first_boot_gui=true
 dashboard=true
@@ -714,26 +749,26 @@ first_boot_desktop_launchers_list=venvWin-First-Boot.desktop,venvWin-Dashboard.d
 first_boot_proof_bundle=true
 first_boot_expected_desktop_files=venvWin-First-Boot.desktop,venvWin-Dashboard.desktop,venvWin-Capsules.desktop,venvWin-Private-Browser.desktop,venvWin-Software-Center.desktop,venvWin-Notepad.desktop,venvWin-Network-Settings.desktop,venvWin-Hardware-Check.desktop,venvWin-Media-Player.desktop,venvWin-Audio-Control.desktop,venvWin-Camera-Test.desktop,venvWin-Partition-Manager.desktop,venvWin-Drive-Health.desktop,venvWin-File-Recovery.desktop,venvWin-Quick-Start.txt,venvWin-First-Boot-Proof.txt,venvWin-Dashboard.txt,venvWin-First-Boot-Checklist.txt,venvwin-init.txt,venvwin-associate.txt,venvwin-first-run.txt,venvwin-storage.txt,venvwin-doctor.txt
 storage_source_marker=true
-standard_browser=netsurf-gtk,firefox-esr
-privacy_browser_profile=torbrowser-launcher,tor,torsocks
-software_center=synaptic,gdebi
+standard_browser=${VENVWIN_MANIFEST_STANDARD_BROWSER}
+privacy_browser_profile=${VENVWIN_MANIFEST_PRIVACY_BROWSER_PROFILE}
+software_center=${VENVWIN_MANIFEST_SOFTWARE_CENTER}
 notepad=mousepad
-light_editor=geany
-office_tools=abiword,gnumeric,libreoffice-writer,libreoffice-calc
-pdf_viewer=evince
+light_editor=${VENVWIN_MANIFEST_LIGHT_EDITOR}
+office_tools=${VENVWIN_MANIFEST_OFFICE_TOOLS}
+pdf_viewer=${VENVWIN_MANIFEST_PDF_VIEWER}
 image_tools=mtpaint,ristretto
-media_tools=mpv,ffmpeg
-camera_tools=guvcview,v4l-utils
-audio_stack=pipewire,pipewire-pulse,wireplumber,alsa-utils,pavucontrol,pamixer,xfce4-pulseaudio-plugin
+media_tools=${VENVWIN_MANIFEST_MEDIA_TOOLS}
+camera_tools=${VENVWIN_MANIFEST_CAMERA_TOOLS}
+audio_stack=${VENVWIN_MANIFEST_AUDIO_STACK}
 wireless_manager=network-manager,network-manager-gnome
-usb_support=udisks2,gvfs-backends,pmount,usb-modeswitch,mtp-tools,jmtpfs,exfatprogs,ntfs-3g,dosfstools
-hardware_probe_tools=pciutils,usbutils,lshw,inxi,rfkill,nmcli,v4l2-ctl,aplay,arecord
-rescue_tools=gparted,parted,testdisk,smartmontools,gsmartcontrol,ufw
+usb_support=${VENVWIN_MANIFEST_USB_SUPPORT}
+hardware_probe_tools=${VENVWIN_MANIFEST_HARDWARE_PROBE_TOOLS}
+rescue_tools=${VENVWIN_MANIFEST_RESCUE_TOOLS}
 included_games=daniel-boone-frontier-trail
 included_game_launchers=venvwin-frontier-trail.desktop
 included_game_icons=venvwin-frontier-trail.svg
-firmware_bundle=firmware-linux,firmware-linux-nonfree,firmware-iwlwifi,firmware-realtek,firmware-atheros,firmware-brcm80211,firmware-misc-nonfree,firmware-sof-signed
-standard_profile_policy=lean_runtime_plus_puppy_era_essentials
+firmware_bundle=${VENVWIN_MANIFEST_FIRMWARE_BUNDLE}
+standard_profile_policy=${VENVWIN_MANIFEST_STANDARD_PROFILE_POLICY}
 excluded_bloat=inkscape,cd_tools,dvd_tools,burners,audio_editors,extra_games_except_frontier_trail,full_libreoffice_suite,libreoffice-impress,libreoffice-draw,libreoffice-base,developer_stack
 product_gate=first boot must initialize storage, expose status, show setup UI, write proof bundle, show desktop launchers, start local dashboard, expose software center, expose notepad, expose network settings, provide audio/camera/media tools, provide document and CSV compatibility, expose Daniel Boone Frontier Trail in the app menu with icon, and provide hardware/driver/rescue diagnostics
 EOF
