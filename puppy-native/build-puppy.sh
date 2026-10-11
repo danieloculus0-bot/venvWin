@@ -38,8 +38,7 @@ STAGE="$OUT/module-stage"
 rm -rf "$STAGE"
 mkdir -p "$STAGE/opt/venvwin/src" "$STAGE/root/Startup" "$STAGE/root/Desktop" "$STAGE/usr/local/bin" \
   "$STAGE/usr/share/applications" "$STAGE/usr/share/venvwin/theme" \
-  "$STAGE/usr/share/backgrounds" "$STAGE/root/Choices/ROX-Filer" \
-  "$STAGE/opt/bean/core" "$STAGE/usr/local/lib/venvwin" "$STAGE/usr/share/venvwin/assets"
+  "$STAGE/usr/share/backgrounds" "$STAGE/root/Choices/ROX-Filer"
 # These are the ACTUAL artwork files installed in the Puppy boot screen and desktop,
 # not merely mockups or unused assets. Their editable sources remain in art/*.svg.
 rsvg-convert -w 800 -h 600 "$ROOT/puppy-native/art/venvwin-boot.svg" \
@@ -49,16 +48,6 @@ rsvg-convert -w 1920 -h 1080 "$ROOT/puppy-native/art/venvwin-wallpaper.svg" \
   -o "$OUT/venvwin-wallpaper.png"
 file "$OUT/venvwin-boot.png" "$OUT/venvwin-boot.jpg" "$OUT/venvwin-wallpaper.png"
 install -m 0644 "$OUT/venvwin-wallpaper.png" "$STAGE/usr/share/backgrounds/venvwin-wallpaper.png"
-# Bundle exact, independently maintained BEAN Core memory/identity/epistemic
-# modules. Native offline startup works WITHOUT model weights or Internet.
-rsync -a "$ROOT/puppy-native/bean-core/bean" "$STAGE/opt/bean/core/"
-install -m 0755 "$ROOT/puppy-native/venvwin-bean" "$STAGE/usr/local/bin/venvwin-bean"
-install -m 0644 "$ROOT/puppy-native/bean-mini-service.py" "$STAGE/usr/local/lib/venvwin/bean-mini-service.py"
-install -m 0644 "$ROOT/puppy-native/art/bean-official.webp" "$STAGE/usr/share/venvwin/assets/bean-official.webp"
-convert "$ROOT/puppy-native/art/bean-official.webp" "$STAGE/usr/share/venvwin/assets/bean-official.png"
-install -m 0644 "$ROOT/puppy-native/venvwin-bean.desktop" "$STAGE/usr/share/applications/venvwin-bean.desktop"
-install -m 0755 "$ROOT/puppy-native/venvwin-bean.desktop" "$STAGE/root/Desktop/venvwin-bean.desktop"
-
 install -m 0644 "$ROOT/puppy-native/art/PuppyPin" "$STAGE/root/Choices/ROX-Filer/PuppyPin"
 # Recover authentic JWM config from the checksum-verified upstream Puppy SFS.
 mkdir -p "$OUT/brand-core" "$STAGE/etc/xdg/templates"
@@ -101,8 +90,6 @@ for path in 'root/Startup/venvwin-session' 'usr/local/bin/venvwin-wine' \
   grep -q "squashfs-root/$path" "$OUT/venvwin-layer-inventory.txt"
 done
 for art in "root/Choices/ROX-Filer/PuppyPin" "usr/share/backgrounds/venvwin-wallpaper.png" \
-           "usr/local/bin/venvwin-bean" "usr/local/lib/venvwin/bean-mini-service.py" \
-           "usr/share/venvwin/assets/bean-official.webp" "opt/bean/core/bean/memory/store.py" \
            "etc/xdg/templates/_root_.jwmrc"; do
   grep -q "squashfs-root/$art" "$OUT/venvwin-layer-inventory.txt"
 done

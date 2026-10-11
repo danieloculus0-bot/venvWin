@@ -13,7 +13,7 @@ if command -v yad >/dev/null 2>&1; then
     --text='venvWin Portable\nDark Mint-style shell | orange actions\nWine loads only when selected. Storage may be disposable.' \
     --list --column='Select a task' \
     'Wine runner status' 'Install Wine (explicit confirmation)' 'Open Capsules' \
-    'Start Dashboard' 'Open BEAN Local' 'BEAN Core status' 'First-run storage report' 'Run Doctor' \
+    'Start Dashboard' 'First-run storage report' 'Run Doctor' \
     --print-column=1 --no-headers 2>/dev/null)" || exit 0
   case "$selection" in
     'Wine runner status') result="$(/usr/local/bin/venvwin-wine --status 2>&1)"; yad --info --title='Wine runner' --text="$result" ;;
@@ -21,11 +21,6 @@ if command -v yad >/dev/null 2>&1; then
       yad --info --title='Wine setup' --text='Open a terminal and run: venvwin-wine --install\nYou will be asked to confirm. This writes to the live Puppy layer.' ;;
     'Open Capsules') if command -v rox >/dev/null 2>&1; then rox "$HOME/.local/share/venvwin/capsules"; fi ;;
     'Start Dashboard') if command -v defaultbrowser >/dev/null 2>&1; then defaultbrowser http://127.0.0.1:8787; fi ;;
-    'Open BEAN Local') /usr/local/bin/venvwin-bean --open ;;
-    'BEAN Core status')
-      result="$(/usr/local/bin/venvwin-bean --status 2>&1)" || true
-      yad --info --title='BEAN Core actual status' --text="$result" ;;
-
     'First-run storage report') /usr/local/bin/venvwin storage >/tmp/venvwin-storage-ui.txt 2>&1; yad --text-info --filename=/tmp/venvwin-storage-ui.txt --title='Storage state' ;;
     'Run Doctor') /usr/local/bin/venvwin doctor >/tmp/venvwin-doctor-ui.txt 2>&1; yad --text-info --filename=/tmp/venvwin-doctor-ui.txt --title='Diagnostics' ;;
   esac

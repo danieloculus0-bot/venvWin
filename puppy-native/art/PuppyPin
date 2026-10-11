@@ -6,5 +6,4 @@
   <icon x="32" y="224" label="Web">/usr/local/bin/defaultbrowser</icon>
   <icon x="32" y="320" label="Trash">/usr/local/apps/Trash</icon>
   <icon x="32" y="415" label="venvWin">/root/Desktop/venvwin-app.desktop</icon>
-  <icon x="32" y="505" label="BEAN Local">/root/Desktop/venvwin-bean.desktop</icon>
 </pinboard>

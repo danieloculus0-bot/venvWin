@@ -146,7 +146,6 @@ class VenvWinFirstRunApp:
         self.button(parent, "▶  Run Windows App", self.run_windows_app, True).pack(fill="x", pady=(0, 9))
         self.button(parent, "▤  Initialize Storage", self.initialize).pack(fill="x", pady=(0, 9))
         self.button(parent, "◷  Open Dashboard", self.open_dashboard).pack(fill="x", pady=(0, 9))
-        self.button(parent, "●  BEAN Local", self.open_bean).pack(fill="x", pady=(0, 9))
         self.button(parent, "▧  Open Capsules", self.open_capsules).pack(fill="x", pady=(0, 9))
         self.button(parent, "+  Run Doctor", self.run_doctor).pack(fill="x", pady=(0, 9))
         self.button(parent, "◌  Private Browser", self.private_browser).pack(fill="x")
@@ -247,18 +246,6 @@ class VenvWinFirstRunApp:
             subprocess.Popen(["venvwin", "open", selected])
         except OSError:
             messagebox.showwarning("Run Windows App", f"Open a terminal and run:\nvenvwin open {selected}")
-
-    def open_bean(self) -> None:
-        try:
-            check = subprocess.run(["venvwin-bean", "--status"], text=True,
-                                   capture_output=True, check=False, timeout=3)
-            if check.returncode != 0:
-                messagebox.showwarning("BEAN local Core", (check.stdout + check.stderr).strip()
-                                       or "BEAN runtime is not active in this Puppy session.")
-                return
-            subprocess.Popen(["venvwin-bean", "--open"])
-        except (OSError, subprocess.TimeoutExpired):
-            messagebox.showwarning("BEAN local Core", "The BEAN local companion is unavailable.")
 
     def open_dashboard(self) -> None:
         try:
