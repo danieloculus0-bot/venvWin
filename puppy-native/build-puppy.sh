@@ -42,6 +42,7 @@ rsync -a --exclude='__pycache__/' --exclude='*.pyc' --exclude='*.pyo' \
   "$ROOT/src/venvwin" "$STAGE/opt/venvwin/src/"
 install -m 0755 "$ROOT/puppy-native/venvwin-launcher" "$STAGE/usr/local/bin/venvwin"
 install -m 0755 "$ROOT/puppy-native/venvwin-guest-probe" "$STAGE/root/Startup/venvwin-guest-probe"
+install -m 0755 "$ROOT/puppy-native/venvwin-diagnostic" "$STAGE/usr/local/bin/venvwin-diagnostic"
 # Additive native startup + original Control Center, no heavy desktop replacement.
 install -m 0755 "$ROOT/puppy-native/venvwin-session" "$STAGE/root/Startup/venvwin-session"
 install -m 0755 "$ROOT/puppy-native/venvwin-control-center" "$STAGE/usr/local/bin/venvwin-control-center"

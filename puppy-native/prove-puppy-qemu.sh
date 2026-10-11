@@ -19,7 +19,18 @@ qemu-system-x86_64 -accel "$ACCEL" -m 3072 -smp 2 \
   -serial "file:$SERIAL" -monitor "unix:$MONITOR,server=on,wait=off" \
   -no-reboot -net none >"$OUT/qemu-stderr.log" 2>&1 &
 PID=$!
+ASSIST_PID=
+if [[ "${VENVWIN_VNC_ASSIST:-0}" == "1" ]]; then
+  # Out-of-band GUI input can diagnose an otherwise blocked Quick Setup.
+  # NEVER claim GUI startup was automatic just because we clicked or typed.
+  (
+    sleep 315
+    python3 "$ROOT/puppy-native/qemu-vnc-guest-input.py" --output "$OUT"
+  ) >"$OUT/qemu-vnc-input.log" 2>&1 &
+  ASSIST_PID=$!
+fi
 cleanup() {
+  if [[ -n "$ASSIST_PID" ]]; then kill "$ASSIST_PID" 2>/dev/null || true; fi
   kill "$PID" 2>/dev/null || true
   wait "$PID" 2>/dev/null || true
   rm -f "$MONITOR"
