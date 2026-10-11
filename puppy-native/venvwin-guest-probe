@@ -6,6 +6,19 @@ emit() {
   if [ -c /dev/ttyS0 ]; then printf '%s\n' "$1" > /dev/ttyS0 || true; fi
 }
 emit 'PUPPY_GUEST_STARTUP_EXECUTED'
+# All diagnostics originate from the live guest, never the build host.
+emit "PUPPY_GUEST_KERNEL=$(uname -r)"
+if command -v python3 >/dev/null 2>&1; then
+  emit "PUPPY_GUEST_PYTHON=$(python3 --version 2>&1)"
+else
+  emit 'PUPPY_GUEST_PYTHON_MISSING'
+fi
+if command -v yad >/dev/null 2>&1; then emit 'PUPPY_GUEST_YAD_FOUND'; else emit 'PUPPY_GUEST_YAD_MISSING'; fi
+if command -v wine >/dev/null 2>&1; then emit "PUPPY_GUEST_WINE=$(wine --version 2>&1)"; else emit 'PUPPY_GUEST_WINE_NOT_BUNDLED'; fi
+if [ -x /root/Startup/venvwin-session ]; then emit 'PUPPY_GUEST_SESSION_HOOK_PRESENT'; else emit 'PUPPY_GUEST_SESSION_HOOK_MISSING'; fi
+if [ -x /usr/local/bin/venvwin-control-center ]; then emit 'PUPPY_GUEST_UI_LAUNCHER_PRESENT'; else emit 'PUPPY_GUEST_UI_LAUNCHER_MISSING'; fi
+if [ -r /proc/self/mountinfo ]; then emit 'PUPPY_GUEST_MOUNTINFO_ACCESSIBLE'; fi
+
 if [ -z "${DISPLAY:-}" ]; then emit 'PUPPY_NO_GRAPHICAL_DISPLAY'; exit 1; fi
 if [ ! -f /opt/venvwin/src/venvwin/cli.py ]; then emit 'PUPPY_YDRV_APP_MISSING'; exit 1; fi
 if ! awk '$3 == "overlay" || $3 == "aufs" {found=1} END {exit !found}' /proc/mounts; then
