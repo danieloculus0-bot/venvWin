@@ -97,3 +97,15 @@ def test_qemu_monitor_sends_real_enter_to_mock_grub_console(tmp_path):
     assert received == [b"sendkey ret\\n"]
     assert "QEMU_BOOT_MENU_ENTER_SENT" in result.stdout
     assert "BEAN_GUEST_READY" not in result.stdout
+
+
+def test_core_size_optimization_preserves_explicit_packages_and_other_profiles():
+    script = (ROOT / "venvwin-portable/build-iso.sh").read_text()
+    assert 'APT_RECOMMENDS=true' in script
+    assert 'if [[ "${PROFILE}" == "core" ]]; then APT_RECOMMENDS=false; fi' in script
+    assert '--apt-recommends "${APT_RECOMMENDS}"' in script
+    core_list = script.split("cat > config/package-lists/00-venvwin-core.list.chroot <<'EOF'\\n", 1)[1]
+    core_list = core_list.split("\\nEOF", 1)[0].splitlines()
+    assert len(core_list) == 61
+    assert {"linux-image-amd64", "live-boot", "live-config", "xfce4-session",
+            "network-manager", "python3", "pipewire"} <= set(core_list)
