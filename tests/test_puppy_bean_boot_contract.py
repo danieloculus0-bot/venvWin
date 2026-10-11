@@ -44,10 +44,11 @@ def test_guest_boot_requires_real_serial_proof():
     assert "--repeat 5" in workflow
 
 def test_iso_inventory_uses_supported_xorriso_find_action():
-    """xorriso -find defaults to echo; GNU find's -print breaks the ISO gate."""
-    source = (Path(__file__).resolve().parents[1] / "venvwin-portable" /
-              "build-flash-ready-standard.sh").read_text()
-    assert 'xorriso -indev "${ISO}" -find / -type f > "${ISO_FILE_LIST}"' in source
-    assert 'xorriso -indev "${ISO}" -find / -name vmlinuz | head' in source
-    assert 'xorriso -indev "${ISO}" -find / -name initrd.img | head' in source
-    assert " -print" not in source
+    """Use supported xorriso -exec echo, then normalize quoted ISO paths."""
+    root = Path(__file__).resolve().parents[1]
+    build = (root / "venvwin-portable" / "build-flash-ready-standard.sh").read_text()
+    assert 'xorriso -indev "${ISO}" -find / -type f -exec echo -- > "${ISO_FILE_LIST}"' in build
+    assert 'sed -i "s/^' in build
+    assert "STATIC_KERNEL_MISSING" in build
+    assert "STATIC_INITRD_MISSING" in build
+    assert "-find / -type f -print" not in build
