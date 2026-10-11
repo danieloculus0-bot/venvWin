@@ -42,13 +42,13 @@ def main() -> int:
             client.captureScreen(str(after_setup))
             # Prior screenshot showed a stationary pointer and Quick Setup open.
             # Do not type into the layout field unless the setup button changed.
-            region = (992, 677, 1045, 711)
+            region = (240, 106, 1045, 126)
             before = Image.open(out / "qemu-vnc-before.png").convert("RGB").crop(region)
             after = Image.open(after_setup).convert("RGB").crop(region)
             if ImageChops.difference(before, after).getbbox() is None:
                 print("VNC_QUICK_SETUP_UNCHANGED: skip typing", flush=True)
                 continue
-            print("VNC_QUICK_SETUP_REGION_CHANGED", flush=True)
+            print("VNC_QUICK_SETUP_TITLEBAR_CHANGED", flush=True)
             client.mouseMove(32, 122)
             client.mousePress(1)
             time.sleep(9)
@@ -57,6 +57,7 @@ def main() -> int:
             time.sleep(6)
             client.captureScreen(str(out / ("qemu-vnc-diagnostic-%s.png" % attempt)))
             print("VNC_GUEST_DIAGNOSTIC_INPUT_ATTEMPT=%s" % attempt, flush=True)
+            return 0
     return 0
 
 if __name__ == "__main__":
