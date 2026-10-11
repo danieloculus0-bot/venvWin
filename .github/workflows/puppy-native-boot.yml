@@ -1,0 +1,86 @@
+name: Puppy-native remaster and real boot proof
+on:
+  push:
+    branches: [feat/puppy-native-release-candidate-20261011]
+    paths:
+      - "puppy-native/**"
+      - ".github/workflows/puppy-native-boot.yml"
+      - "tests/test_puppy_native_contract.py"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  puppy-native:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Source-only gate
+        run: |
+          bash -n puppy-native/build.sh
+          python -m pip install pytest
+          python -m pytest -q tests/test_puppy_native_contract.py
+      - name: Install standard remaster and virtualization tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y xorriso squashfs-tools qemu-system-x86
+      - name: Build checksum-pinned Puppy-derived ISO
+        id: build
+        continue-on-error: true
+        run: |
+          mkdir -p dist
+          bash puppy-native/build.sh | tee dist/puppy-native-build-ci.log
+      - name: Boot actual remastered ISO, without attached disk
+        id: guest
+        if: steps.build.outcome == 'success'
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          iso=dist/venvwin-puppy-native-candidate.iso
+          test -s "$iso"
+          timeout --signal=TERM --kill-after=10 190 \
+            qemu-system-x86_64 -machine pc -accel tcg -m 3072 -smp 2 \
+              -boot d -cdrom "$iso" -net none -no-reboot \
+              -display none -vga std -serial file:dist/puppy-guest-serial.log \
+              -monitor none > dist/puppy-qemu-stderr.log 2>&1 || true
+          if [ ! -f dist/puppy-guest-serial.log ]; then
+            echo "NO_REAL_GUEST_SERIAL_LOG"; exit 1
+          fi
+          tail -n 100 dist/puppy-guest-serial.log
+          grep -Fxq PUPPY_GUEST_DESKTOP_STARTUP_PASS dist/puppy-guest-serial.log
+          grep -Fxq PUPPY_GUEST_VENVWIN_CLI_PASS dist/puppy-guest-serial.log
+          echo "PUPPY_NATIVE_GUEST_APP_PASS"
+      - name: Record fail-closed readiness
+        if: always()
+        run: |
+          mkdir -p dist
+          {
+            echo "PUPPY_BASE=BookwormPup64_10.0.12"
+            echo "PUPPY_SOURCE_SHA256=ae65f6e6d70a96f48bdbb291c2426f8a2fd77a73692e149e81a5eecb6fe7509f"
+            echo "DESKTOP_MARKER=$(grep -Fc PUPPY_GUEST_DESKTOP_STARTUP_PASS dist/puppy-guest-serial.log 2>/dev/null || :)"
+            echo "CLI_MARKER=$(grep -Fc PUPPY_GUEST_VENVWIN_CLI_PASS dist/puppy-guest-serial.log 2>/dev/null || :)"
+            echo "PERSISTENCE_REBOOT=UNVERIFIED"
+            echo "TORAM_OPTION=UNVERIFIED"
+            echo "WINDOWS_CAPSULE_INSIDE_PUPPY=UNVERIFIED"
+            echo "RELEASE_READY=NO"
+          } > dist/puppy-native-status.txt
+      - name: Upload diagnostics; never publish an unverified ISO
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: puppy-native-remaster-boot-diagnostics
+          retention-days: 14
+          if-no-files-found: warn
+          path: |
+            dist/*txt
+            dist/*log
+            dist/*.sha256
+      - name: Enforce genuine guest boot evidence
+        if: always()
+        run: |
+          grep -Fxq PUPPY_GUEST_DESKTOP_STARTUP_PASS dist/puppy-guest-serial.log
+          grep -Fxq PUPPY_GUEST_VENVWIN_CLI_PASS dist/puppy-guest-serial.log
+          echo "PUPPY_QEMU_GUEST_PROVEN; SIX_GATES_STILL_PENDING"
