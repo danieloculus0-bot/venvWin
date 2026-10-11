@@ -6,6 +6,7 @@ on:
     paths:
       - ".github/workflows/verify-existing-iso.yml"
       - ".github/scripts/verify-existing-iso.sh"
+      - ".github/scripts/diagnose-existing-iso.py"
 
 permissions:
   actions: read
@@ -30,7 +31,8 @@ jobs:
       - name: Install verification tools only (no live-build or compiler)
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y xorriso qemu-system-x86 qemu-utils
+          sudo apt-get install -y xorriso qemu-system-x86 qemu-utils ovmf
+          python3 -m pip install --user --break-system-packages Pillow
 
       - name: Recheck the unchanged ISO boot evidence
         run: |
@@ -47,4 +49,8 @@ jobs:
             dist/verify-existing-iso-file-list.txt
             dist/verify-existing-iso-eltorito.txt
             dist/verify-existing-iso-xorriso-stderr.log
+            dist/verify-qemu-visual-report.json
+            dist/verify-*-screen-*.png
+            dist/verify-*-serial.log
+            dist/verify-*-qemu-stderr.log
           if-no-files-found: warn
