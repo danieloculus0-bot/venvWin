@@ -147,3 +147,63 @@ def test_application_engine_still_available_from_repo_source(tmp_path):
         assert main(["--root", str(root), "init"]) == 0
         assert main(["--root", str(root), "list"]) == 0
     assert root.exists()
+
+
+def test_hmp_split_banner_must_finish_before_command_ack(tmp_path):
+    import socket
+    import threading
+    import time
+    monitor = tmp_path / "split.sock"
+    received = []
+    with socket.socket(socket.AF_UNIX) as server:
+        server.bind(str(monitor))
+        server.listen(1)
+        def serve():
+            with server.accept()[0] as peer:
+                peer.sendall(b"QEMU host monitor banner\n")
+                time.sleep(0.03)
+                peer.sendall(b"(qemu) ")
+                received.append(peer.recv(256))
+                time.sleep(0.05)
+                peer.sendall(b"\r\n(qemu) ")
+        thread = threading.Thread(target=serve, daemon=True)
+        thread.start()
+        result = subprocess.run(
+            [sys.executable, str(ROOT / "puppy-native/qemu-monitor-probe.py"),
+             "--socket", str(monitor), "--action", "enter"],
+            text=True, capture_output=True, timeout=10)
+        thread.join(timeout=3)
+    assert result.returncode == 0, result.stderr
+    assert received == [b"sendkey ret\n"]
+    assert "QEMU_ENTER_ACKNOWLEDGED" in result.stdout
+
+
+def test_hmp_screenshot_requires_actual_file_after_full_command_response(tmp_path):
+    import socket
+    import threading
+    output = tmp_path / "proof.ppm"
+    monitor = tmp_path / "screen.sock"
+    received = []
+    with socket.socket(socket.AF_UNIX) as server:
+        server.bind(str(monitor))
+        server.listen(1)
+        def serve():
+            with server.accept()[0] as peer:
+                peer.sendall(b"QEMU host monitor\n(qemu) ")
+                command = peer.recv(4096)
+                received.append(command)
+                output.write_bytes(b"P6\n1 1\n255\n" + b"\x00" * 200)
+                peer.sendall(b"\r\n(qemu) ")
+        thread = threading.Thread(target=serve, daemon=True)
+        thread.start()
+        result = subprocess.run(
+            [sys.executable, str(ROOT / "puppy-native/qemu-monitor-probe.py"),
+             "--socket", str(monitor), "--action", "screen",
+             "--output", str(output)],
+            text=True, capture_output=True, timeout=10)
+        thread.join(timeout=3)
+    assert result.returncode == 0, result.stderr
+    assert received == [("screendump " + str(output) + "\n").encode()]
+    assert "QEMU_SCREEN_SAVED" in result.stdout
+    assert output.stat().st_size >= 128
+    assert "PUPPY_GUEST_BOOT_PROVEN" not in result.stdout
