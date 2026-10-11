@@ -26,20 +26,25 @@ jobs:
           xorriso -indev puppy.iso -find / -type f -exec echo -- > iso-files.txt 2>iso-find.err
           grep -Ei '(grub|syslinux|isolinux|vesamenu|splash|background|\.cfg|\.jpg|\.png|\.bmp|\.tga)' iso-files.txt > boot-candidates.txt || true
           mkdir -p configs
-          grep -Ei '(/|^).*(grub.cfg|isolinux.cfg|syslinux.cfg|menu.cfg|boot.cfg|theme.txt|puppy.cfg|gfxboot.cfg)$' boot-candidates.txt | sed "s/^'//;s/'$//" | while IFS= read -r item; do
+          for item in /boot/grub/grub.cfg /boot/grub/menu.lst /boot/grub/loopback.cfg /boot/isolinux/isolinux.cfg /grub.cfg; do
             rel="${item#/}"
             mkdir -p "configs/$(dirname "$rel")"
-            xorriso -osirrox on -indev puppy.iso -extract "$item" "configs/$rel" >/dev/null 2>&1 || true
+            xorriso -osirrox on -indev puppy.iso -extract "$item" "configs/$rel" >>extract.log 2>&1 || echo "UNAVAILABLE=$item" >>extract.log
           done
-          xorriso -osirrox on -indev puppy.iso -extract /puppy_dpupbw64_10.0.12.sfs puppy-main.sfs >/dev/null 2>&1
-          mkdir -p core-snippets
-          unsquashfs -l puppy-main.sfs > sfs-files.txt
-          grep -Ei '(jwmrc|PuppyPin|wallpaper|defaultwallpaper|quicksetup|/root/Startup/|/etc/xdg/|/usr/share/backgrounds)' sfs-files.txt > desktop-candidates.txt || true
-          for spec in /root/.jwmrc /root/.jwmrc-tray /root/.config/rox.sourceforge.net/ROX-Filer/PuppyPin /root/Choices/ROX-Filer/PuppyPin /etc/xdg/templates/_root_.jwmrc /root/Startup/README.txt /etc/DISTRO_SPECS; do
-            file="core-snippets/${spec#/}"
-            mkdir -p "$(dirname "$file")"
-            unsquashfs -cat puppy-main.sfs "$spec" > "$file" 2>/dev/null || rm -f "$file"
-          done
+          # Core source (large) is optional to this boot-menu mapping; preserve its extraction diagnostics.
+          if xorriso -osirrox on -indev puppy.iso -extract /puppy_dpupbw64_10.0.12.sfs puppy-main.sfs >>extract.log 2>&1; then
+            unsquashfs -l puppy-main.sfs > sfs-files.txt 2>>extract.log || true
+            grep -Ei '(jwmrc|PuppyPin|wallpaper|defaultwallpaper|quicksetup|/root/Startup/|/etc/xdg/|/usr/share/backgrounds)' sfs-files.txt > desktop-candidates.txt || true
+            mkdir -p core-snippets
+            for spec in /root/.jwmrc /root/.jwmrc-tray /root/.config/rox.sourceforge.net/ROX-Filer/PuppyPin /root/Choices/ROX-Filer/PuppyPin /etc/xdg/templates/_root_.jwmrc /root/Startup/README.txt /etc/DISTRO_SPECS; do
+              file="core-snippets/${spec#/}"
+              mkdir -p "$(dirname "$file")"
+              unsquashfs -cat puppy-main.sfs "$spec" > "$file" 2>/dev/null || rm -f "$file"
+            done
+          else
+            echo "UPSTREAM_CORE_SFS_EXTRACTION_UNAVAILABLE" >> extract.log
+            mkdir -p core-snippets
+          fi
           find configs core-snippets -type f -maxdepth 10 -print > extracted.txt
           echo 'UPSTREAM_BOOT_LAYOUT_INSPECTED_WITH_CHECKSUM'
       - name: Preserve ONLY config and inventory text (not upstream ISO)
@@ -56,3 +61,4 @@ jobs:
             dist/brand-inspect/desktop-candidates.txt
             dist/brand-inspect/core-snippets/**
             dist/brand-inspect/extracted.txt
+            dist/brand-inspect/extract.log
