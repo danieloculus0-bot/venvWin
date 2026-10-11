@@ -80,7 +80,10 @@ jobs:
           xvfb-run -a timeout 190 venvwin open /tmp/venvwin-e2e/Demo.msi > /tmp/venvwin-e2e/msi-install.json
           python - <<'PY'
           import json,os,pathlib
-          row=json.loads(pathlib.Path('/tmp/venvwin-e2e/msi-install.json').read_text())
+          raw=pathlib.Path('/tmp/venvwin-e2e/msi-install.json').read_text()
+          start=raw.find('{')
+          assert start>=0, "No JSON from actual Windows installer: "+repr(raw[:1500])
+          row,_=json.JSONDecoder().raw_decode(raw[start:])
           assert row['exit_code']==0,row
           assert row['file_type']=='installer',row
           assert row['status']=='installed_shortcut_created_not_yet_launched',row
@@ -97,12 +100,14 @@ jobs:
           WINEDEBUG: -all
         run: |
           set -euo pipefail
-          target="$(python -c "import json; print(json.load(open('/tmp/venvwin-e2e/msi-install.json'))['launch_targets'][0])")"
+          target="$(python -c "import json; t=open('/tmp/venvwin-e2e/msi-install.json').read(); print(json.JSONDecoder().raw_decode(t[t.find('{'):])[0]['launch_targets'][0])")"
           xvfb-run -a timeout 180 venvwin run demo "$target" > /tmp/venvwin-e2e/exe-launch.json
           python - <<'PY'
           import json,pathlib
-          install=json.load(open('/tmp/venvwin-e2e/msi-install.json'))
-          launched=json.load(open('/tmp/venvwin-e2e/exe-launch.json'))
+          install_raw=pathlib.Path('/tmp/venvwin-e2e/msi-install.json').read_text()
+          launch_raw=pathlib.Path('/tmp/venvwin-e2e/exe-launch.json').read_text()
+          install,_=json.JSONDecoder().raw_decode(install_raw[install_raw.find('{'):])
+          launched,_=json.JSONDecoder().raw_decode(launch_raw[launch_raw.find('{'):])
           prefix=pathlib.Path(install['env']['WINEPREFIX'])
           output=prefix/'drive_c'/'venvwin-demo-output.txt'
           assert launched['exit_code']==0,launched
