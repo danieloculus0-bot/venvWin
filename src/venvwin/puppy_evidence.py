@@ -52,6 +52,7 @@ def build_report(root: Path) -> dict:
     gate, gate_id = _source(root, "venvwin-portable/build-flash-ready-standard.sh")
     persistence, persistence_id = _source(root, "src/venvwin/persistence.py")
     bootstate, bootstate_id = _source(root, "src/venvwin/bootstate.py")
+    heavy_ci, heavy_ci_id = _source(root, ".github/workflows/flash-ready-standard.yml")
     core = _heredoc_packages(builder, "00-venvwin-core.list.chroot")
     extras = _heredoc_packages(builder, "05-venvwin-utilities.list.chroot")
 
@@ -69,12 +70,27 @@ def build_report(root: Path) -> dict:
                      "lightdm", "xfce4-session", "network-manager"}
     must_be_optional = {"libreoffice-writer", "libreoffice-calc", "ffmpeg",
                         "guvcview", "gparted", "testdisk"}
+    # The core profile is the default, not the old heavyweight standard.
+    # Protect the actual ISO payload too: source code and a tiny readme,
+    # never the entire dev repository or an implicitly writable live system.
+    no_implicit_persistence = (
+        '--bootappend-live "boot=live components console=' in builder
+        and '--bootappend-live "boot=live components persistence ' not in builder
+        and "persistence_default=none" in builder
+    )
     lean = (core is not None and extras is not None and required_core <= core
             and not (must_be_optional & core) and must_be_optional <= extras
-            and "05-venvwin-utilities.list.chroot" in builder)
+            and "05-venvwin-utilities.list.chroot" in builder
+            and 'PROFILE="${VENVWIN_PORTABLE_PROFILE:-core}"' in builder
+            and 'packaged_payload=app_source_only' in builder
+            and '"${ROOT_DIR}/src/" "config/includes.chroot/opt/venvwin/src/"' in builder
+            and '"${ROOT_DIR}/" "config/includes.chroot/opt/venvwin/"' not in builder
+            and no_implicit_persistence
+            and "workflow_dispatch:" in heavy_ci
+            and "  push:" not in heavy_ci)
     core_status = _check(
-        lean if core is not None else None, builder_id,
-        reason="package-list_boundary_only; reduced ISO size not measured",
+        lean if core is not None and heavy_ci_id else None, builder_id, heavy_ci_id,
+        reason="lean_profile_source_policy_only; USB boot, size and host-write behavior not yet measured",
     )
 
     # No runtime claims may be inferred from prose, cmdline flags, or Path.exists.
