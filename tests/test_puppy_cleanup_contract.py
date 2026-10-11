@@ -26,6 +26,7 @@ def test_release_default_is_lean_puppy_core():
     assert 'VENVWIN_PORTABLE_PROFILE:-standard' not in text
     assert "CORE_SIZE_BUDGET_FAIL" in text
     assert "CORE_SIZE_WARNING" in text
+    assert text.index("CORE_SIZE_BUDGET_FAIL") < text.index('cp "${ISO_PATH}" "${OUTPUT_ISO}"')
 
 
 def test_dev_repository_is_not_embedded_in_live_os():
