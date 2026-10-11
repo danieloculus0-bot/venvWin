@@ -1,0 +1,58 @@
+name: Puppy upstream boot and JWM branding surface inspection
+# One-shot read-only upstream inspection; no experimental ISO, no release.
+on:
+  push:
+    branches: [feat/puppy-ui-wine-integration-20261011]
+    paths: [.github/workflows/puppy-branding-inspect-once.yml]
+  workflow_dispatch:
+permissions: {contents: read}
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install source-inspection tools only
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends xorriso squashfs-tools curl
+      - name: Inspect real pinned upstream boot files and Puppy desktop configuration
+        run: |
+          set -euo pipefail
+          mkdir -p dist/brand-inspect
+          cd dist/brand-inspect
+          curl --fail --location --retry 3 --max-time 1000 -o puppy.iso             https://distro.ibiblio.org/puppylinux/puppy-bookwormpup/BookwormPup64/10.0.12/BookwormPup64_10.0.12.iso
+          echo 'ae65f6e6d70a96f48bdbb291c2426f8a2fd77a73692e149e81a5eecb6fe7509f  puppy.iso' | sha256sum -c -
+          xorriso -indev puppy.iso -find / -type f -exec echo -- > iso-files.txt 2>iso-find.err
+          grep -Ei '(grub|syslinux|isolinux|vesamenu|splash|background|\.cfg|\.jpg|\.png|\.bmp|\.tga)' iso-files.txt > boot-candidates.txt || true
+          mkdir -p configs
+          grep -Ei '(/|^).*(grub.cfg|isolinux.cfg|syslinux.cfg|menu.cfg|boot.cfg|theme.txt|puppy.cfg|gfxboot.cfg)$' boot-candidates.txt | sed "s/^'//;s/'$//" | while IFS= read -r item; do
+            rel="${item#/}"
+            mkdir -p "configs/$(dirname "$rel")"
+            xorriso -osirrox on -indev puppy.iso -extract "$item" "configs/$rel" >/dev/null 2>&1 || true
+          done
+          xorriso -osirrox on -indev puppy.iso -extract /puppy_dpupbw64_10.0.12.sfs puppy-main.sfs >/dev/null 2>&1
+          mkdir -p core-snippets
+          unsquashfs -l puppy-main.sfs > sfs-files.txt
+          grep -Ei '(jwmrc|PuppyPin|wallpaper|defaultwallpaper|quicksetup|/root/Startup/|/etc/xdg/|/usr/share/backgrounds)' sfs-files.txt > desktop-candidates.txt || true
+          for spec in /root/.jwmrc /root/.jwmrc-tray /root/.config/rox.sourceforge.net/ROX-Filer/PuppyPin /root/Choices/ROX-Filer/PuppyPin /etc/xdg/templates/_root_.jwmrc /root/Startup/README.txt /etc/DISTRO_SPECS; do
+            file="core-snippets/${spec#/}"
+            mkdir -p "$(dirname "$file")"
+            unsquashfs -cat puppy-main.sfs "$spec" > "$file" 2>/dev/null || rm -f "$file"
+          done
+          find configs core-snippets -type f -maxdepth 10 -print > extracted.txt
+          echo 'UPSTREAM_BOOT_LAYOUT_INSPECTED_WITH_CHECKSUM'
+      - name: Preserve ONLY config and inventory text (not upstream ISO)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: puppy-upstream-boot-desktop-brand-surfaces
+          retention-days: 14
+          path: |
+            dist/brand-inspect/iso-files.txt
+            dist/brand-inspect/boot-candidates.txt
+            dist/brand-inspect/configs/**
+            dist/brand-inspect/sfs-files.txt
+            dist/brand-inspect/desktop-candidates.txt
+            dist/brand-inspect/core-snippets/**
+            dist/brand-inspect/extracted.txt
