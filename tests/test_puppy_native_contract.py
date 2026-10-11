@@ -82,9 +82,6 @@ def test_qemu_has_no_host_storage_or_net_and_requires_exact_guest_markers():
 def test_qemu_monitor_input_simulated_without_guest_proof(tmp_path):
     import socket
     import threading
-    script = BOOT.read_text()
-    marker = "python3 - \"$MONITOR\" <<'PY'"
-    client = script.split(marker, 1)[1].split("\n", 1)[1].split("\nPY", 1)[0]
     monitor = tmp_path / "monitor.sock"
     received = []
     with socket.socket(socket.AF_UNIX) as server:
@@ -93,18 +90,52 @@ def test_qemu_monitor_input_simulated_without_guest_proof(tmp_path):
 
         def recv_command():
             with server.accept()[0] as socket_client:
-                socket_client.sendall(b"(qemu) ")
+                socket_client.sendall(b"QEMU HMP ready\n(qemu) ")
                 received.append(socket_client.recv(128))
+                socket_client.sendall(b"\r\n(qemu) ")
 
         thread = threading.Thread(target=recv_command, daemon=True)
         thread.start()
-        result = subprocess.run([sys.executable, "-c", client, str(monitor)],
-                                text=True, capture_output=True, timeout=6)
+        result = subprocess.run(
+            [sys.executable, str(ROOT / "puppy-native/qemu-monitor-probe.py"),
+             "--socket", str(monitor), "--action", "enter"],
+            text=True, capture_output=True, timeout=10,
+        )
         thread.join(timeout=3)
     assert result.returncode == 0, result.stderr
     assert received == [b"sendkey ret\n"]
-    assert "UPSTREAM_BOOT_MENU_ENTER_SENT" in result.stdout
+    assert "QEMU_ENTER_ACKNOWLEDGED" in result.stdout
     assert "PUPPY_GUEST_BOOT_PROVEN" not in result.stdout
+
+
+def test_qemu_screendump_never_counts_as_saved_without_real_frame(tmp_path):
+    import socket
+    import threading
+    monitor = tmp_path / "monitor.sock"
+    received = []
+    with socket.socket(socket.AF_UNIX) as server:
+        server.bind(str(monitor))
+        server.listen(1)
+
+        def serve():
+            with server.accept()[0] as client:
+                client.sendall(b"QEMU monitor ready\n(qemu) ")
+                received.append(client.recv(512))
+                client.sendall(b"\r\n(qemu) ")
+
+        thread = threading.Thread(target=serve, daemon=True)
+        thread.start()
+        result = subprocess.run(
+            [sys.executable, str(ROOT / "puppy-native/qemu-monitor-probe.py"),
+             "--socket", str(monitor), "--action", "screen",
+             "--output", str(tmp_path / "frame.ppm")],
+            text=True, capture_output=True, timeout=10,
+        )
+        thread.join(timeout=3)
+    assert received and received[0].startswith(b"screendump ")
+    assert result.returncode != 0
+    assert "frame was not saved" in result.stderr
+    assert not (tmp_path / "frame.ppm").exists()
 
 
 def test_application_engine_still_available_from_repo_source(tmp_path):
