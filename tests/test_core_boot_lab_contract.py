@@ -52,3 +52,13 @@ def test_action_collects_real_evidence_but_never_uploads_a_failed_iso():
     assert "steps.core_boot.outcome == 'success' && steps.bean.outcome == 'success'" in workflow
     assert "venvwin-puppy-core-boot-proven-iso" in workflow
     assert "venvwin-core-qemu-serial.log" in workflow
+
+
+def test_headless_grub_selection_is_not_mistaken_for_guest_readiness():
+    script = CORE.read_text()
+    assert 'channel.sendall(b"sendkey ret\\n")' in script
+    assert "QEMU_BOOT_MENU_ENTER_SENT (not guest boot evidence)" in script
+    assert "QEMU_BOOT_MENU_ENTER_FAILED" in script
+    assert 'grep -Fxq "BEAN_GUEST_READY" "$SERIAL"' in script
+    assert 'grep -Fxq "BEAN_GUEST_FIRST_RUN_PASS" "$SERIAL"' in script
+    assert "status=CORE_GUEST_PROVEN" in script
