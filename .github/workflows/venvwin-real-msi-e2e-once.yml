@@ -1,0 +1,122 @@
+name: Real Windows MSI to app end-to-end under Wine
+# Separate from Puppy ISO. Only this workflow file triggers an automatic run.
+on:
+  push:
+    branches: [feat/puppy-ui-wine-integration-20261011]
+    paths:
+      - ".github/workflows/venvwin-real-msi-e2e-once.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  real-msi-app:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install genuine Windows packaging and Wine tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends wine wine64 gcc-mingw-w64-x86-64 xvfb xauth wixl
+          python -m pip install -e . pytest
+          wine --version
+          wixl --version
+      - name: Build actual 64-bit Windows program and MSI
+        run: |
+          mkdir -p /tmp/venvwin-e2e
+          cd /tmp/venvwin-e2e
+          cat > Demo.c <<'C'
+          #include <windows.h>
+          int main(void) {
+            HANDLE h = CreateFileA("C:\\venvwin-demo-output.txt", GENERIC_WRITE, 0,
+                                   NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+            if (h == INVALID_HANDLE_VALUE) return 55;
+            const char data[]="REAL_WINDOWS_APP_RAN_UNDER_WINE";
+            DWORD written=0;
+            BOOL success=WriteFile(h,data,sizeof(data)-1,&written,NULL);
+            CloseHandle(h);
+            return success && written==sizeof(data)-1 ? 0 : 56;
+          }
+          C
+          x86_64-w64-mingw32-gcc -Os Demo.c -o Demo.exe
+          file Demo.exe
+          cat > Demo.wxs <<'WXS'
+          <?xml version="1.0" encoding="utf-8"?>
+          <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+            <Product Id="*" UpgradeCode="C74B9A06-13F5-4B37-8076-CC3A843E4D88"
+                     Name="venvWin Demo" Version="1.0.0" Manufacturer="venvWin" Language="1033">
+              <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" Platform="x64" />
+              <Media Id="1" Cabinet="content.cab" EmbedCab="yes" />
+              <Directory Id="TARGETDIR" Name="SourceDir">
+                <Directory Id="ProgramFiles64Folder" Name="PFiles">
+                  <Directory Id="INSTALLDIR" Name="venvWin Demo">
+                    <Component Id="MainExecutable" Guid="27BA2F38-EEAD-4E6B-92E7-21D34652BABB">
+                      <File Id="DemoExecutable" Name="Demo.exe" Source="Demo.exe" DiskId="1" KeyPath="yes" />
+                    </Component>
+                  </Directory>
+                </Directory>
+              </Directory>
+              <Feature Id="Complete" Title="venvWin Demo" Level="1">
+                <ComponentRef Id="MainExecutable" />
+              </Feature>
+            </Product>
+          </Wix>
+          WXS
+          wixl --arch x64 --output Demo.msi Demo.wxs
+          file Demo.msi
+          sha256sum Demo.exe Demo.msi > real-windows-inputs.sha256
+      - name: MSI in, installed application and shortcut out
+        env:
+          VENVWIN_HOME: ${{ runner.temp }}/venvwin-msi-e2e
+          VENVWIN_DESKTOP_DIR: ${{ runner.temp }}/venvwin-msi-desktop
+          WINEDEBUG: -all
+        run: |
+          set -euo pipefail
+          mkdir -p "$VENVWIN_DESKTOP_DIR"
+          venvwin init
+          xvfb-run -a timeout 190 venvwin open /tmp/venvwin-e2e/Demo.msi > /tmp/venvwin-e2e/msi-install.json
+          python - <<'PY'
+          import json,os,pathlib
+          row=json.loads(pathlib.Path('/tmp/venvwin-e2e/msi-install.json').read_text())
+          assert row['exit_code']==0,row
+          assert row['file_type']=='installer',row
+          assert row['status']=='installed_shortcut_created_not_yet_launched',row
+          assert len(row['launch_targets'])==1,row
+          shortcut=pathlib.Path(row['desktop_shortcut'])
+          assert shortcut.exists(),row
+          assert 'run "demo"' in shortcut.read_text()
+          assert pathlib.Path(row['launch_targets'][0]).is_file(),row
+          print("MSI_INSTALLED_EXE_AND_SHORTCUT_FOUND")
+          PY
+      - name: Launch actual installed Windows EXE from its existing capsule
+        env:
+          VENVWIN_HOME: ${{ runner.temp }}/venvwin-msi-e2e
+          WINEDEBUG: -all
+        run: |
+          set -euo pipefail
+          target="$(python -c "import json; print(json.load(open('/tmp/venvwin-e2e/msi-install.json'))['launch_targets'][0])")"
+          xvfb-run -a timeout 180 venvwin run demo "$target" > /tmp/venvwin-e2e/exe-launch.json
+          python - <<'PY'
+          import json,pathlib
+          install=json.load(open('/tmp/venvwin-e2e/msi-install.json'))
+          launched=json.load(open('/tmp/venvwin-e2e/exe-launch.json'))
+          prefix=pathlib.Path(install['env']['WINEPREFIX'])
+          output=prefix/'drive_c'/'venvwin-demo-output.txt'
+          assert launched['exit_code']==0,launched
+          assert launched['status']=='windows_binary_executed'
+          assert output.read_text()=='REAL_WINDOWS_APP_RAN_UNDER_WINE',output
+          print('ACTUAL_MSI_TO_WINDOWS_APP_EXECUTION_PASS',output)
+          PY
+      - name: Store small actual Windows test evidence (not distro ISO)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: venvwin-real-msi-wine-e2e-proof
+          retention-days: 14
+          if-no-files-found: warn
+          path: |
+            /tmp/venvwin-e2e/*.json
+            /tmp/venvwin-e2e/*.sha256
