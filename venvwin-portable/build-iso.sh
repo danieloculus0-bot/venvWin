@@ -105,43 +105,47 @@ rsync
 netsurf-gtk
 adwaita-icon-theme
 hicolor-icon-theme
+pciutils
+usbutils
+firmware-iwlwifi
+firmware-realtek
+firmware-atheros
+firmware-brcm80211
+firmware-sof-signed
+pmount
+usb-modeswitch
+exfatprogs
+ntfs-3g
+ristretto
+mtpaint
+xarchiver
+abiword
+gnumeric
+galculator
+alsa-utils
+pipewire
+pipewire-pulse
+wireplumber
+xfce4-pulseaudio-plugin
 EOF
 
 # The existing standard/privacy ISO still includes every original package.
 # True independent app SFS modules remain a separate, unverified milestone.
 if [[ "${PROFILE}" == "standard" || "${PROFILE}" == "privacy" ]]; then
 cat > config/package-lists/05-venvwin-utilities.list.chroot <<'EOF'
-pciutils
-usbutils
 lshw
 inxi
 firmware-linux
 firmware-linux-nonfree
-firmware-iwlwifi
-firmware-realtek
-firmware-atheros
-firmware-brcm80211
 firmware-misc-nonfree
-firmware-sof-signed
-xfce4-pulseaudio-plugin
-pmount
-usb-modeswitch
 mtp-tools
 jmtpfs
-exfatprogs
-ntfs-3g
 geany
-ristretto
-mtpaint
-xarchiver
 file-roller
 evince
-abiword
-gnumeric
 libreoffice-writer
 libreoffice-calc
 libreoffice-gtk3
-galculator
 synaptic
 gdebi
 firefox-esr
@@ -149,10 +153,6 @@ mpv
 ffmpeg
 guvcview
 v4l-utils
-pipewire
-pipewire-pulse
-wireplumber
-alsa-utils
 pavucontrol
 pamixer
 gparted
