@@ -11,7 +11,7 @@ SFS="$OUT/$MODULE"
 URL="https://distro.ibiblio.org/puppylinux/puppy-bookwormpup/BookwormPup64/10.0.12/BookwormPup64_10.0.12.iso"
 UPSTREAM_SHA256="ae65f6e6d70a96f48bdbb291c2426f8a2fd77a73692e149e81a5eecb6fe7509f"
 mkdir -p "$OUT"
-for cmd in curl sha256sum xorriso mksquashfs unsquashfs rsync; do
+for cmd in curl sha256sum xorriso mksquashfs unsquashfs rsync rsvg-convert convert python3; do
   command -v "$cmd" >/dev/null || { echo "MISSING_TOOL=$cmd" >&2; exit 1; }
 done
 if [[ ! -f "$BASE" ]]; then
@@ -37,7 +37,29 @@ fi
 STAGE="$OUT/module-stage"
 rm -rf "$STAGE"
 mkdir -p "$STAGE/opt/venvwin/src" "$STAGE/root/Startup" "$STAGE/root/Desktop" "$STAGE/usr/local/bin" \
-  "$STAGE/usr/share/applications" "$STAGE/usr/share/venvwin/theme"
+  "$STAGE/usr/share/applications" "$STAGE/usr/share/venvwin/theme" \
+  "$STAGE/usr/share/backgrounds" "$STAGE/root/Choices/ROX-Filer" \
+  "$STAGE/opt/bean/core" "$STAGE/usr/local/lib/venvwin" "$STAGE/usr/share/venvwin/assets"
+# These are the ACTUAL artwork files installed in the Puppy boot screen and desktop,
+# not merely mockups or unused assets. Their editable sources remain in art/*.svg.
+rsvg-convert -w 800 -h 600 "$ROOT/puppy-native/art/venvwin-boot.svg" \
+  -o "$OUT/venvwin-boot.png"
+convert "$OUT/venvwin-boot.png" -quality 91 "$OUT/venvwin-boot.jpg"
+rsvg-convert -w 1920 -h 1080 "$ROOT/puppy-native/art/venvwin-wallpaper.svg" \
+  -o "$OUT/venvwin-wallpaper.png"
+file "$OUT/venvwin-boot.png" "$OUT/venvwin-boot.jpg" "$OUT/venvwin-wallpaper.png"
+install -m 0644 "$OUT/venvwin-wallpaper.png" "$STAGE/usr/share/backgrounds/venvwin-wallpaper.png"
+# Bundle exact, independently maintained BEAN Core memory/identity/epistemic
+# modules. Native offline startup works WITHOUT model weights or Internet.
+rsync -a "$ROOT/puppy-native/bean-core/bean" "$STAGE/opt/bean/core/"
+install -m 0755 "$ROOT/puppy-native/venvwin-bean" "$STAGE/usr/local/bin/venvwin-bean"
+install -m 0644 "$ROOT/puppy-native/bean-mini-service.py" "$STAGE/usr/local/lib/venvwin/bean-mini-service.py"
+install -m 0644 "$ROOT/puppy-native/art/bean-official.webp" "$STAGE/usr/share/venvwin/assets/bean-official.webp"
+convert "$ROOT/puppy-native/art/bean-official.webp" "$STAGE/usr/share/venvwin/assets/bean-official.png"
+install -m 0644 "$ROOT/puppy-native/venvwin-bean.desktop" "$STAGE/usr/share/applications/venvwin-bean.desktop"
+install -m 0755 "$ROOT/puppy-native/venvwin-bean.desktop" "$STAGE/root/Desktop/venvwin-bean.desktop"
+
+install -m 0644 "$ROOT/puppy-native/art/PuppyPin" "$STAGE/root/Choices/ROX-Filer/PuppyPin"
 rsync -a --exclude='__pycache__/' --exclude='*.pyc' --exclude='*.pyo' \
   "$ROOT/src/venvwin" "$STAGE/opt/venvwin/src/"
 install -m 0755 "$ROOT/puppy-native/venvwin-launcher" "$STAGE/usr/local/bin/venvwin"
@@ -64,14 +86,53 @@ for path in 'root/Startup/venvwin-session' 'usr/local/bin/venvwin-wine' \
             'usr/local/bin/venvwin-control-center' 'usr/share/venvwin/theme/gtk.css'; do
   grep -q "squashfs-root/$path" "$OUT/venvwin-layer-inventory.txt"
 done
+for art in "root/Choices/ROX-Filer/PuppyPin" "usr/share/backgrounds/venvwin-wallpaper.png" \
+           "usr/local/bin/venvwin-bean" "usr/local/lib/venvwin/bean-mini-service.py" \
+           "usr/share/venvwin/assets/bean-official.webp" "opt/bean/core/bean/memory/store.py"; do
+  grep -q "squashfs-root/$art" "$OUT/venvwin-layer-inventory.txt"
+done
 rm -f "$OUTPUT"
-# Replay exact El Torito/EFI settings AFTER mapping additional layer.
-xorriso -indev "$BASE" -outdev "$OUTPUT" -map "$SFS" "/$MODULE" \
+# Extract exact upstream menu sources. Never synthesize or alter Linux kernel options.
+mkdir -p "$OUT/brand-boot-input/boot/grub" "$OUT/brand-boot-output/boot/grub"
+for item in /grub.cfg /boot/grub/grub.cfg /boot/grub/menu.lst; do
+  destination="$OUT/brand-boot-input$item"
+  mkdir -p "$(dirname "$destination")"
+  xorriso -osirrox on -indev "$BASE" -extract "$item" "$destination" \
+    >>"$OUT/brand-boot-extract.log" 2>&1
+done
+for item in /grub.cfg /boot/grub/grub.cfg; do
+  python3 "$ROOT/puppy-native/brand-boot-menu.py" --kind grub \
+    --input "$OUT/brand-boot-input$item" --output "$OUT/brand-boot-output$item"
+done
+python3 "$ROOT/puppy-native/brand-boot-menu.py" --kind bios \
+  --input "$OUT/brand-boot-input/boot/grub/menu.lst" \
+  --output "$OUT/brand-boot-output/boot/grub/menu.lst"
+# Preserve upstream bootloader binaries/catalogs, kernel, initrd, normal/recovery
+# entries and all boot parameters. Map only the two splash images and 3 menu texts.
+xorriso -indev "$BASE" -outdev "$OUTPUT" \
+  -map "$SFS" "/$MODULE" \
+  -map "$OUT/venvwin-boot.png" "/boot/splash.png" \
+  -map "$OUT/venvwin-boot.jpg" "/boot/splash.jpg" \
+  -map "$OUT/brand-boot-output/grub.cfg" "/grub.cfg" \
+  -map "$OUT/brand-boot-output/boot/grub/grub.cfg" "/boot/grub/grub.cfg" \
+  -map "$OUT/brand-boot-output/boot/grub/menu.lst" "/boot/grub/menu.lst" \
   -boot_image any replay -commit >"$OUT/remaster-xorriso.log" 2>&1
 test -s "$OUTPUT"
 xorriso -indev "$OUTPUT" -find / -type f -exec echo -- 2>"$OUT/venvwin-iso-xorriso.log" |
   sed "s/^'//;s/'$//" > "$OUT/venvwin-iso-inventory.txt"
 grep -q "/${MODULE}$" "$OUT/venvwin-iso-inventory.txt"
+for branded in '/boot/splash.png' '/boot/splash.jpg' '/boot/grub/grub.cfg' '/boot/grub/menu.lst'; do
+  grep -q "$branded" "$OUT/venvwin-iso-inventory.txt"
+done
+# Prove output ISO embeds the intended bitmap and menu text, not merely local files.
+mkdir -p "$OUT/verify-brand"
+xorriso -osirrox on -indev "$OUTPUT" -extract /boot/splash.png "$OUT/verify-brand/splash.png" \
+  >"$OUT/verify-brand-extract.log" 2>&1
+cmp "$OUT/venvwin-boot.png" "$OUT/verify-brand/splash.png"
+xorriso -osirrox on -indev "$OUTPUT" -extract /boot/grub/grub.cfg "$OUT/verify-brand/grub.cfg" \
+  >>"$OUT/verify-brand-extract.log" 2>&1
+grep -q 'menuentry "venvWin Portable' "$OUT/verify-brand/grub.cfg"
+echo VENVWIN_BRANDED_SPLASH_AND_BOOT_MENU_ISO_CONTENT_VERIFIED
 for expected in 'vmlinuz' 'initrd' 'puppy_dpupbw64_10.0.12.sfs'; do
   grep -q "$expected" "$OUT/venvwin-iso-inventory.txt"
 done

@@ -1,0 +1,26 @@
+#!/bin/sh
+# BEAN Core starts locally. No LLM weights, network, microphone or device access.
+set -eu
+export PYTHONPATH="/opt/bean/core${PYTHONPATH:+:$PYTHONPATH}"
+case "${1:---status}" in
+ --serve)
+   command -v python3 >/dev/null 2>&1 || { echo BEAN_PYTHON_MISSING >&2; exit 69; }
+   exec python3 /usr/local/lib/venvwin/bean-mini-service.py --serve --db-path "${BEAN_DB_PATH:-${VENVWIN_HOME:-$HOME/venvWin-Capsules}/bean/bean_memory.db}"
+   ;;
+ --self-test)
+   exec python3 /usr/local/lib/venvwin/bean-mini-service.py --self-test
+   ;;
+ --status)
+   command -v python3 >/dev/null 2>&1 || { echo BEAN_PYTHON_MISSING; exit 69; }
+   python3 -c 'import urllib.request; o=urllib.request.build_opener(urllib.request.ProxyHandler({})); print(o.open("http://127.0.0.1:8788/status",timeout=2).read().decode())' ||
+     { echo BEAN_NOT_RUNNING; exit 70; }
+   ;;
+ --open)
+   if command -v defaultbrowser >/dev/null 2>&1; then
+     exec defaultbrowser http://127.0.0.1:8788/
+   fi
+   echo 'Browser unavailable. Open http://127.0.0.1:8788/' >&2
+   exit 69
+   ;;
+ *) echo 'Usage: venvwin-bean --serve|--status|--open|--self-test' >&2; exit 64 ;;
+esac

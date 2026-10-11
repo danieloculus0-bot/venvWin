@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=BEAN Local
+Comment=Real local BEAN Core memory and evidence review
+Exec=venvwin-bean --open
+Icon=/usr/share/venvwin/assets/bean-official.png
+Terminal=false
+Categories=Utility;Education;
