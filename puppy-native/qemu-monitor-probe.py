@@ -12,6 +12,23 @@ import time
 from pathlib import Path
 
 
+def _read_hmp_prompt(client: socket.socket, deadline: float) -> str:
+    """Consume one COMPLETE prompt; an initial banner is not a command ACK."""
+    buf = ""
+    while time.monotonic() < deadline:
+        client.settimeout(max(0.05, deadline - time.monotonic()))
+        try:
+            chunk = client.recv(8192)
+        except socket.timeout:
+            break
+        if not chunk:
+            raise RuntimeError("QEMU closed the monitor socket before its prompt")
+        buf += chunk.decode(errors="replace")
+        if buf.endswith("(qemu) ") or buf.endswith("(qemu)"):
+            return buf
+    raise RuntimeError("QEMU HMP prompt was not fully received: " + buf[-300:])
+
+
 def send_monitor_command(monitor: Path, command: str, timeout: float = 8.0) -> str:
     if not monitor.is_socket():
         raise RuntimeError("QEMU HMP Unix socket missing")
@@ -20,28 +37,13 @@ def send_monitor_command(monitor: Path, command: str, timeout: float = 8.0) -> s
     with socket.socket(socket.AF_UNIX) as client:
         client.settimeout(timeout)
         client.connect(str(monitor))
-        try:
-            banner = client.recv(8192).decode(errors="replace")
-        except socket.timeout:
-            banner = ""
+        # Do not reuse the first banner prompt as a post-command response.
+        _read_hmp_prompt(client, time.monotonic() + timeout)
         client.sendall((command + "\n").encode())
-        output = ""
-        end = time.monotonic() + timeout
-        while time.monotonic() < end:
-            try:
-                data = client.recv(8192)
-            except socket.timeout:
-                break
-            if not data:
-                break
-            output += data.decode(errors="replace")
-            if "(qemu)" in output:
-                break
-        if "unknown command" in output.lower() or "error:" in output.lower():
-            raise RuntimeError("QEMU rejected command: " + output[-300:])
-        if "(qemu)" not in output:
-            raise RuntimeError("QEMU did not acknowledge command (not proof it executed): " + output[-300:])
-        return output[-700:]
+        response = _read_hmp_prompt(client, time.monotonic() + timeout)
+        if "unknown command" in response.lower() or "error:" in response.lower():
+            raise RuntimeError("QEMU rejected command: " + response[-300:])
+        return response[-700:]
 
 
 def main(argv: list[str] | None = None) -> int:
