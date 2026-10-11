@@ -1,0 +1,32 @@
+name: Puppy core source-only checks
+
+# No ISO is built or released by this workflow.
+on:
+  push:
+    branches: [fix/puppy-core-boot-menu-apt-size-20261011]
+    paths:
+      - ".github/workflows/puppy-core-static-checks.yml"
+      - ".github/workflows/puppy-core-boot-lab.yml"
+      - "venvwin-portable/build-core-proof.sh"
+      - "venvwin-portable/build-in-bookworm.sh"
+      - "tests/test_core_boot_lab_contract.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  boot-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate boot scripts without building ISO
+        run: |
+          bash -n venvwin-portable/build-core-proof.sh
+          bash -n venvwin-portable/build-in-bookworm.sh
+          python -m pip install -e . pytest
+          python -m pytest -q tests/test_core_boot_lab_contract.py
