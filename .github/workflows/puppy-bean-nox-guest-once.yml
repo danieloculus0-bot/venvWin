@@ -1,0 +1,63 @@
+name: Puppy no-X guest BEAN source and offline self-test probe
+# One-shot QEMU guest execution. Does not run other system workflows or publish ISO.
+on:
+  push:
+    branches: [feat/puppy-ui-wine-integration-20261011]
+    paths: [".github/workflows/puppy-bean-nox-guest-once.yml"]
+  workflow_dispatch:
+permissions: {contents: read}
+jobs:
+  guest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - name: Actual BEAN core and boot-source safety checks
+        run: |
+          python -m pip install -e . pytest pillow vncdotool
+          python -m pytest -q tests/test_puppy_bean_local.py tests/test_puppy_boot_branding.py tests/test_puppy_jwm_branding.py
+          python -m py_compile puppy-native/qemu-nox-bean-probe.py
+          bash -n puppy-native/build-puppy.sh
+      - name: Host-only remaster and x86 emulation dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends             xorriso squashfs-tools qemu-system-x86 rsync curl librsvg2-bin imagemagick
+      - name: Build pinned REAL Puppy ISO with BEAN source and branding
+        id: build
+        run: |
+          bash puppy-native/build-puppy.sh
+          grep -q 'squashfs-root/opt/bean/core/bean/memory/store.py' dist/puppy-native/venvwin-layer-inventory.txt
+          echo 'BEAN_BINARY_LAYER_BUILT_NOT_GUEST_EXECUTION'
+      - name: Boot the upstream native No-X entry, test actual guest Python and BEAN
+        id: guest
+        run: |
+          set -euo pipefail
+          OUT="$PWD/dist/puppy-native"
+          qemu-system-x86_64 -accel tcg -m 3072 -smp 2 -boot order=d             -cdrom "$OUT/venvwin-puppy-native-10.0.12-experimental.iso"             -vga std -display vnc=127.0.0.1:0 -net none -no-reboot             -serial "file:$OUT/bean-nox-guest-serial.log"             -monitor "unix:$OUT/bean-nox-qemu.sock,server=on,wait=off"             >"$OUT/bean-nox-qemu-stderr.log" 2>&1 &
+          PID=$!
+          trap 'kill "$PID" 2>/dev/null || true; wait "$PID" 2>/dev/null || true' EXIT
+          sleep 7
+          python3 puppy-native/qemu-nox-bean-probe.py             --socket "$OUT/bean-nox-qemu.sock" --out "$OUT"
+          if grep -Fxq VENVWIN_BEAN_SFS_PRESENT "$OUT/bean-nox-guest-serial.log"; then
+            echo BEAN_SOURCE_PRESENT_CONFIRMED_FROM_REAL_PUPPY_GUEST
+          else
+            echo BEAN_GUEST_SFS_NOT_PROVEN
+          fi
+          grep -Fq 'BEAN_LOCAL_REAL_CORE_TEST_PASS' "$OUT/bean-nox-guest-serial.log"
+          echo ACTUAL_PUPPY_GUEST_BEAN_CORE_OFFLINE_SELFTEST_PASS
+      - name: Upload only guest-origin diagnostics and screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: venvwin-puppy-nox-bean-real-guest-evidence
+          retention-days: 14
+          if-no-files-found: warn
+          path: |
+            dist/puppy-native/bean-nox-guest-serial.log
+            dist/puppy-native/bean-nox-qemu-stderr.log
+            dist/puppy-native/puppy-nox-*.png
+            dist/puppy-native/upstream-checksum.log
+            dist/puppy-native/venvwin-layer-inventory.txt
+            dist/puppy-native/iso-size.txt
