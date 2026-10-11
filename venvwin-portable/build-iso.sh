@@ -63,6 +63,8 @@ cat > config/archives/bookworm-security.list.binary <<'EOF'
 deb http://security.debian.org/debian-security bookworm-security main contrib non-free non-free-firmware
 EOF
 
+# Puppy-adjacent core: boot, desktop, networking, Python and venvWin.
+# Full office/media/repair apps stay outside the lean core build.
 cat > config/package-lists/00-venvwin-core.list.chroot <<'EOF'
 linux-image-amd64
 live-boot
@@ -74,6 +76,41 @@ network-manager-gnome
 wpasupplicant
 wireless-tools
 rfkill
+xorg
+lightdm
+lightdm-gtk-greeter
+xfce4-session
+xfce4-panel
+xfce4-settings
+xfwm4
+xfdesktop4
+xfce4-terminal
+thunar
+gvfs
+gvfs-backends
+udisks2
+dosfstools
+mtools
+mousepad
+policykit-1
+python3
+python3-tk
+xdg-utils
+xdg-user-dirs
+desktop-file-utils
+shared-mime-info
+curl
+ca-certificates
+rsync
+netsurf-gtk
+adwaita-icon-theme
+hicolor-icon-theme
+EOF
+
+# The existing standard/privacy ISO still includes every original package.
+# True independent app SFS modules remain a separate, unverified milestone.
+if [[ "${PROFILE}" == "standard" || "${PROFILE}" == "privacy" ]]; then
+cat > config/package-lists/05-venvwin-utilities.list.chroot <<'EOF'
 pciutils
 usbutils
 lshw
@@ -86,29 +123,13 @@ firmware-atheros
 firmware-brcm80211
 firmware-misc-nonfree
 firmware-sof-signed
-xorg
-lightdm
-lightdm-gtk-greeter
-xfce4-session
-xfce4-panel
-xfce4-settings
 xfce4-pulseaudio-plugin
-xfwm4
-xfdesktop4
-xfce4-terminal
-thunar
-gvfs
-gvfs-backends
-udisks2
 pmount
 usb-modeswitch
 mtp-tools
 jmtpfs
 exfatprogs
 ntfs-3g
-dosfstools
-mtools
-mousepad
 geany
 ristretto
 mtpaint
@@ -123,17 +144,6 @@ libreoffice-gtk3
 galculator
 synaptic
 gdebi
-policykit-1
-python3
-python3-tk
-xdg-utils
-xdg-user-dirs
-desktop-file-utils
-shared-mime-info
-curl
-ca-certificates
-rsync
-netsurf-gtk
 firefox-esr
 mpv
 ffmpeg
@@ -151,9 +161,8 @@ testdisk
 smartmontools
 gsmartcontrol
 ufw
-adwaita-icon-theme
-hicolor-icon-theme
 EOF
+fi
 
 if [[ "${PROFILE}" == "standard" || "${PROFILE}" == "privacy" ]]; then
 cat > config/package-lists/10-venvwin-runner.list.chroot <<'EOF'
