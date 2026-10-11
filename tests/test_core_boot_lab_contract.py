@@ -81,7 +81,7 @@ def test_qemu_monitor_sends_real_enter_to_mock_grub_console(tmp_path):
 
         def serve():
             with server.accept()[0] as conn:
-                conn.sendall(b"QEMU monitor ready\\n(qemu) ")
+                conn.sendall(b"QEMU monitor ready\n(qemu) ")
                 received.append(conn.recv(128))
                 conn.sendall(b"(qemu) ")
 
@@ -94,7 +94,7 @@ def test_qemu_monitor_sends_real_enter_to_mock_grub_console(tmp_path):
         thread.join(timeout=3)
 
     assert result.returncode == 0, result.stderr
-    assert received == [b"sendkey ret\\n"]
+    assert received == [b"sendkey ret\n"]
     assert "QEMU_BOOT_MENU_ENTER_SENT" in result.stdout
     assert "BEAN_GUEST_READY" not in result.stdout
 
