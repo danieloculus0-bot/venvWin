@@ -60,6 +60,20 @@ install -m 0644 "$ROOT/puppy-native/venvwin-bean.desktop" "$STAGE/usr/share/appl
 install -m 0755 "$ROOT/puppy-native/venvwin-bean.desktop" "$STAGE/root/Desktop/venvwin-bean.desktop"
 
 install -m 0644 "$ROOT/puppy-native/art/PuppyPin" "$STAGE/root/Choices/ROX-Filer/PuppyPin"
+# Recover authentic JWM config from the checksum-verified upstream Puppy SFS.
+mkdir -p "$OUT/brand-core" "$STAGE/etc/xdg/templates"
+xorriso -osirrox on -indev "$BASE" \
+  -extract /puppy_dpupbw64_10.0.12.sfs "$OUT/brand-core/main.sfs" \
+  >"$OUT/brand-core-extract.log" 2>&1
+unsquashfs -cat "$OUT/brand-core/main.sfs" etc/xdg/templates/_root_.jwmrc \
+  >"$OUT/brand-core/jwmrc.upstream" 2>>"$OUT/brand-core-extract.log"
+test -s "$OUT/brand-core/jwmrc.upstream"
+python3 "$ROOT/puppy-native/brand-jwm-template.py" \
+  --input "$OUT/brand-core/jwmrc.upstream" \
+  --output "$OUT/brand-core/jwmrc.venvwin"
+install -m 0644 "$OUT/brand-core/jwmrc.venvwin" \
+  "$STAGE/etc/xdg/templates/_root_.jwmrc"
+
 rsync -a --exclude='__pycache__/' --exclude='*.pyc' --exclude='*.pyo' \
   "$ROOT/src/venvwin" "$STAGE/opt/venvwin/src/"
 install -m 0755 "$ROOT/puppy-native/venvwin-launcher" "$STAGE/usr/local/bin/venvwin"
@@ -88,7 +102,8 @@ for path in 'root/Startup/venvwin-session' 'usr/local/bin/venvwin-wine' \
 done
 for art in "root/Choices/ROX-Filer/PuppyPin" "usr/share/backgrounds/venvwin-wallpaper.png" \
            "usr/local/bin/venvwin-bean" "usr/local/lib/venvwin/bean-mini-service.py" \
-           "usr/share/venvwin/assets/bean-official.webp" "opt/bean/core/bean/memory/store.py"; do
+           "usr/share/venvwin/assets/bean-official.webp" "opt/bean/core/bean/memory/store.py" \
+           "etc/xdg/templates/_root_.jwmrc"; do
   grep -q "squashfs-root/$art" "$OUT/venvwin-layer-inventory.txt"
 done
 rm -f "$OUTPUT"

@@ -15,4 +15,8 @@ else
   cp "$source_file" "$dest"
   echo VENVWIN_THEME_GTK_ORANGE_APPLIED
 fi
-echo 'VENVWIN_JWM_THEME_NOT_CHANGED_UNTIL_GUEST_VALIDATION'
+if grep -q '<RootMenu label="venvWin"' /etc/xdg/templates/_root_.jwmrc 2>/dev/null; then
+  echo VENVWIN_JWM_BRANDED_TEMPLATE_PRESENT_GUEST_APPEARANCE_UNVERIFIED
+else
+  echo VENVWIN_JWM_BRANDED_TEMPLATE_NOT_OBSERVED
+fi
