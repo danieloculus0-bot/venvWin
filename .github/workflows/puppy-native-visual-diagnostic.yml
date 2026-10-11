@@ -1,6 +1,8 @@
 name: Puppy upstream QEMU visual diagnostic
 
 # Single upstream-only diagnostic. NO remaster and NO release ISO upload.
+# Repeat once after FIX: consume the HMP initial prompt before issuing commands,
+# confirmed by split-banner/real-frame regression tests in source-only CI.
 on:
   push:
     branches: [chore/puppy-native-cleanup-candidate-20261011]
