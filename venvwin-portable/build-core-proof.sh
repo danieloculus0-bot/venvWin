@@ -103,7 +103,7 @@ try:
             channel.recv(4096)
         except socket.timeout:
             pass
-        channel.sendall(b"sendkey ret\\n")
+        channel.sendall(b"sendkey ret\n")
         try:
             response = channel.recv(4096).decode(errors="replace")
         except socket.timeout:
