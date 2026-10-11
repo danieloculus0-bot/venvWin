@@ -1,0 +1,89 @@
+name: Puppy native corrected-HMP guest boot retry
+
+# On this branch, creation/change of THIS workflow triggers at most one
+# isolated experiment. No Debian build, no automatic main push. Only one corrected-HMP retry.
+on:
+  push:
+    branches: [chore/puppy-native-cleanup-candidate-20261011]
+    paths:
+      - ".github/workflows/puppy-native-boot-retry.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  puppy-iso-guest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out isolated native Puppy branch
+        uses: actions/checkout@v4
+      - name: Set up host Python for verifier (not guest)
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Source gate before any ISO work
+        run: |
+          python -m pip install -e . pytest
+          python -m pytest -q tests/test_puppy_native_contract.py
+          bash -n puppy-native/build-puppy.sh
+          bash -n puppy-native/prove-puppy-qemu.sh
+          sh -n puppy-native/venvwin-guest-probe
+          echo 'PUPPY_NATIVE_SOURCE_READY (not boot proof)'
+      - name: Install only host-side SquashFS, xorriso and QEMU
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            xorriso squashfs-tools qemu-system-x86 rsync curl
+      - name: Fetch checksum-pinned REAL Puppy ISO and add venvWin SFS
+        id: build
+        run: |
+          bash puppy-native/build-puppy.sh
+      - name: Boot remastered Puppy in QEMU with no host disk
+        id: boot
+        run: |
+          bash puppy-native/prove-puppy-qemu.sh
+      - name: Preserve bounded diagnostic records (NEVER upload rejected ISO)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: venvwin-puppy-native-guest-diagnostics
+          retention-days: 14
+          if-no-files-found: warn
+          path: |
+            dist/puppy-native/upstream-checksum.log
+            dist/puppy-native/upstream-inventory.txt
+            dist/puppy-native/upstream-xorriso.log
+            dist/puppy-native/venvwin-iso-inventory.txt
+            dist/puppy-native/venvwin-iso-xorriso.log
+            dist/puppy-native/venvwin-boot-catalog.txt
+            dist/puppy-native/venvwin-layer-inventory.txt
+            dist/puppy-native/mksquashfs.log
+            dist/puppy-native/remaster-xorriso.log
+            dist/puppy-native/iso-size.txt
+            dist/puppy-native/tested-sources.sha256
+            dist/puppy-native/qemu-guest-serial.log
+            dist/puppy-native/qemu-grub-input.log
+            dist/puppy-native/qemu-stderr.log
+            dist/puppy-native/qemu-frame-*.ppm
+            dist/puppy-native/puppy-guest-verdict.txt
+      - name: Publish only proven guest-boot experimental artifact
+        if: steps.build.outcome == 'success' && steps.boot.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: venvwin-puppy-native-guest-proven-experimental-iso
+          retention-days: 7
+          if-no-files-found: error
+          path: |
+            dist/puppy-native/venvwin-puppy-native-10.0.12-experimental.iso
+            dist/puppy-native/puppy-guest-verdict.txt
+            dist/puppy-native/tested-sources.sha256
+      - name: Enforce release candidate boundary
+        if: always()
+        run: |
+          test "${{ steps.build.outcome }}" = success
+          test "${{ steps.boot.outcome }}" = success
+          grep -Fxq 'status=PUPPY_CORE_GUEST_PROVEN' dist/puppy-native/puppy-guest-verdict.txt
+          grep -Fxq 'PUPPY_GUEST_BOOT_PROVEN' dist/puppy-native/qemu-guest-serial.log
+          echo 'PUPPY_GUEST_CORE_PROVEN (not full Puppy six-gate product readiness)'
