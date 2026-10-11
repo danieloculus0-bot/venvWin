@@ -1,36 +1,40 @@
-# venvWin Portable
+# venvWin Portable — Puppy-adjacent, not a Puppy fork
 
-venvWin Portable is the first shippable product target for venvWin.
+**Status: development / NOT BOOT-VERIFIED.** Do not flash as a finished product.
 
-It is a bootable Linux USB environment with venvWin preinstalled, persistent capsules, dark lightweight desktop styling, and EXE/MSI double-click routing.
+Lucid Puppy 5.2.8 is the architecture inspiration, not a kernel or package
+source to copy. venvWin should be a ridiculous amount of usefulness packed
+into a fast, compact USB-first environment on old x86_64 machines.
 
-## MVP promise
+## What belongs
 
-```text
-Flash USB.
-Boot venvWin Portable.
-Double-click Windows EXE/MSI.
-venvWin creates or reuses a capsule.
-App state persists.
-No VM required for the normal path.
-```
+- A small modern kernel/initramfs, compressed read-only SquashFS base and
+  a compact desktop with obvious launchers
+- Real everyday tools: browser, document and spreadsheet editing, graphics,
+  file management, audio, storage, diagnostics and rescue utilities
+- The **venvWin compatibility engine** for EXE/MSI routing, Wine capsules,
+  snapshots and recovery; large runners can be independent modules
+- Puppy-style sessions: a disposable writable RAM overlay by default,
+  optional copy-to-RAM when measurable and safe, **opt-in saving** to USB
+- Independent optional application, driver and development SFS packs
+- BEAN-backed evidence for boot, mount structure, memory, persistence,
+  module loading, and Windows-app behavior
 
-## Build target
+## What does NOT belong in the base image
 
-Start with a Debian/Ubuntu-family live image because package availability, live image tooling, and hardware compatibility matter.
+- The GitHub repository, tests, development toolchain or CI files
+- Heavy duplicate browsers and LibreOffice suites just to tick a box
+- Always-on persistence or unrequested host-disk writes
+- A giant standard-image build on every source-control push
+- Fake "boot-ready" labels inferred from shell scripts or static directory checks
 
-## Planned image contents
+The `core` profile is now the default source build target. The larger
+`standard` and `privacy` package sets remain available **only as legacy
+reference/testing profiles** until independent SFS app modules are verified.
+We have not yet measured the new core ISO size or proved it boots.
 
-- lightweight desktop environment
-- dark venvWin theme
-- venvWin CLI
-- venvWin file associations
-- Wine-compatible runner backend
-- persistent capsule storage path
-- offline quick-start guide
+The reusable application engine lives under `src/venvwin`. No existing
+application code is discarded solely to save bytes; only the contents
+packed into the always-loaded base image are cut.
 
-## Directory purpose
-
-This folder is for venvWin Portable build scripts, image configuration, branding assets, boot notes, and packaging docs.
-
-venvWin engine code stays in `src/venvwin`.
+See `docs/puppy-bean-evidence-contract.md` for evidence requirements.

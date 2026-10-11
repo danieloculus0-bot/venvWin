@@ -68,7 +68,12 @@ done
 
 rm -f "${SQUASHFS_COPY}" "${SQUASHFS_LIST}" "${ISO_FILE_LIST}" "${BOOT_CONFIG_TEXT}"
 xorriso -indev "${ISO}" -report_el_torito as_mkisofs >/tmp/venvwin-el-torito.txt
-xorriso -indev "${ISO}" -find / -type f > "${ISO_FILE_LIST}"
+xorriso -indev "${ISO}" -find / -type f -exec echo -- > "${ISO_FILE_LIST}"
+# xorriso echoes quoted paths: '/live/filesystem.squashfs'.
+# Normalize once, then make every required-file check fail closed.
+sed -i "s/^'//;s/'$//" "${ISO_FILE_LIST}"
+grep -Eq '^/live/vmlinuz([.-].*)?$' "${ISO_FILE_LIST}" || { echo "STATIC_KERNEL_MISSING" >&2; exit 1; }
+grep -Eq '^/live/initrd(\.img)?([.-].*)?$' "${ISO_FILE_LIST}" || { echo "STATIC_INITRD_MISSING" >&2; exit 1; }
 
 BOOT_CONFIG_PATHS="$(grep -E '/(grub|isolinux|syslinux|boot).*(grub\.cfg|live\.cfg|isolinux\.cfg|txt\.cfg|syslinux\.cfg)$|/(grub\.cfg|isolinux\.cfg|syslinux\.cfg)$' "${ISO_FILE_LIST}" || true)"
 if [[ -n "${BOOT_CONFIG_PATHS}" ]]; then
@@ -132,8 +137,9 @@ do
   grep -q "${required_path}" "${SQUASHFS_LIST}"
 done
 
-xorriso -indev "${ISO}" -find / -name vmlinuz | head -n 1 | grep -q vmlinuz
-xorriso -indev "${ISO}" -find / -name initrd.img | head -n 1 | grep -q initrd.img
+# Kernel and initrd presence already checked against normalized ISO inventory.
+grep -Eq '^/live/vmlinuz([.-].*)?$' "${ISO_FILE_LIST}"
+grep -Eq '^/live/initrd(\.img)?([.-].*)?$' "${ISO_FILE_LIST}"
 
 echo "STATIC_ISO_VALID" > dist/venvwin-static-pass.txt
 echo "Step 6: QEMU guest evidence: require actual desktop and first-run proof"

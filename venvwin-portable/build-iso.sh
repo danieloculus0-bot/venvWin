@@ -5,7 +5,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUILD_DIR="${ROOT_DIR}/build/venvwin-portable-iso"
 OUT_DIR="${ROOT_DIR}/dist"
 IMAGE_NAME="venvwin-portable-alpha"
-PROFILE="${VENVWIN_PORTABLE_PROFILE:-standard}"
+PROFILE="${VENVWIN_PORTABLE_PROFILE:-core}"
 PUBLIC_PRODUCT_NAME="venvWin Portable"
 
 if ! command -v lb >/dev/null 2>&1; then
@@ -32,12 +32,12 @@ lb config \
   --binary-images iso-hybrid \
   --bootloaders "grub-pc,grub-efi" \
   --archive-areas "main contrib non-free non-free-firmware" \
-  --linux-packages none \
-  --linux-flavours none \
+  --linux-packages linux-image \
+  --linux-flavours amd64 \
   --security false \
   --debian-installer false \
   --memtest none \
-  --bootappend-live "boot=live components persistence console=tty0 console=ttyS0,115200n8" \
+  --bootappend-live "boot=live components console=tty0 console=ttyS0,115200n8" \
   --iso-application "${PUBLIC_PRODUCT_NAME}" \
   --iso-publisher "venvWin" \
   --iso-volume "VENVWIN_PORTABLE"
@@ -63,6 +63,8 @@ cat > config/archives/bookworm-security.list.binary <<'EOF'
 deb http://security.debian.org/debian-security bookworm-security main contrib non-free non-free-firmware
 EOF
 
+# Puppy-adjacent core: boot, desktop, networking, Python and venvWin.
+# Full office/media/repair apps stay outside the lean core build.
 cat > config/package-lists/00-venvwin-core.list.chroot <<'EOF'
 linux-image-amd64
 live-boot
@@ -74,25 +76,12 @@ network-manager-gnome
 wpasupplicant
 wireless-tools
 rfkill
-pciutils
-usbutils
-lshw
-inxi
-firmware-linux
-firmware-linux-nonfree
-firmware-iwlwifi
-firmware-realtek
-firmware-atheros
-firmware-brcm80211
-firmware-misc-nonfree
-firmware-sof-signed
 xorg
 lightdm
 lightdm-gtk-greeter
 xfce4-session
 xfce4-panel
 xfce4-settings
-xfce4-pulseaudio-plugin
 xfwm4
 xfdesktop4
 xfce4-terminal
@@ -100,29 +89,9 @@ thunar
 gvfs
 gvfs-backends
 udisks2
-pmount
-usb-modeswitch
-mtp-tools
-jmtpfs
-exfatprogs
-ntfs-3g
 dosfstools
 mtools
 mousepad
-geany
-ristretto
-mtpaint
-xarchiver
-file-roller
-evince
-abiword
-gnumeric
-libreoffice-writer
-libreoffice-calc
-libreoffice-gtk3
-galculator
-synaptic
-gdebi
 policykit-1
 python3
 python3-tk
@@ -134,15 +103,56 @@ curl
 ca-certificates
 rsync
 netsurf-gtk
+adwaita-icon-theme
+hicolor-icon-theme
+pciutils
+usbutils
+firmware-iwlwifi
+firmware-realtek
+firmware-atheros
+firmware-brcm80211
+firmware-sof-signed
+pmount
+usb-modeswitch
+exfatprogs
+ntfs-3g
+ristretto
+mtpaint
+xarchiver
+abiword
+gnumeric
+galculator
+alsa-utils
+pipewire
+pipewire-pulse
+wireplumber
+xfce4-pulseaudio-plugin
+EOF
+
+# The existing standard/privacy ISO still includes every original package.
+# True independent app SFS modules remain a separate, unverified milestone.
+if [[ "${PROFILE}" == "standard" || "${PROFILE}" == "privacy" ]]; then
+cat > config/package-lists/05-venvwin-utilities.list.chroot <<'EOF'
+lshw
+inxi
+firmware-linux
+firmware-linux-nonfree
+firmware-misc-nonfree
+mtp-tools
+jmtpfs
+geany
+file-roller
+evince
+libreoffice-writer
+libreoffice-calc
+libreoffice-gtk3
+synaptic
+gdebi
 firefox-esr
 mpv
 ffmpeg
 guvcview
 v4l-utils
-pipewire
-pipewire-pulse
-wireplumber
-alsa-utils
 pavucontrol
 pamixer
 gparted
@@ -151,9 +161,8 @@ testdisk
 smartmontools
 gsmartcontrol
 ufw
-adwaita-icon-theme
-hicolor-icon-theme
 EOF
+fi
 
 if [[ "${PROFILE}" == "standard" || "${PROFILE}" == "privacy" ]]; then
 cat > config/package-lists/10-venvwin-runner.list.chroot <<'EOF'
@@ -176,14 +185,17 @@ torbrowser-launcher
 EOF
 fi
 
+# Product image receives ONLY executable application source, never the whole
+# development repository (tests, workflows, documentation, build scripts, etc.).
+# Keep embedded game assets living under src/venvwin intact.
 rsync -a \
-  --exclude .git \
-  --exclude build \
-  --exclude dist \
-  --exclude bean-bridge \
-  --exclude .pytest_cache \
-  --exclude __pycache__ \
-  "${ROOT_DIR}/" "config/includes.chroot/opt/venvwin/"
+  --exclude '__pycache__/' \
+  --exclude '*.pyc' \
+  --exclude '*.pyo' \
+  "${ROOT_DIR}/src/" "config/includes.chroot/opt/venvwin/src/"
+# One tiny offline introduction belongs on the USB; full developer docs do not.
+install -m 0644 "${ROOT_DIR}/venvwin-portable/README.md" \
+  "config/includes.chroot/opt/venvwin/README-PORTABLE.md"
 
 # Booted-guest proof: unlike a QEMU timeout, this proves an actual user session,
 # first-run desktop output, and HTTP dashboard response inside the guest.
@@ -649,12 +661,81 @@ if [[ -z "${ISO_PATH}" ]]; then
   exit 1
 fi
 
+# Fail before publishing the ISO if there is no bootable live kernel/initramfs.
+# GRUB + filesystem.squashfs alone is not a bootable Linux live image.
+# xorriso echoes single-quoted ISO paths; strip quotes before matching.
+command -v xorriso >/dev/null || { echo "xorriso is required for the ISO kernel gate" >&2; exit 1; }
+ISO_BOOT_FILE_LIST="$(mktemp)"
+trap 'rm -f "${ISO_BOOT_FILE_LIST}"' EXIT
+xorriso -indev "${ISO_PATH}" -find / -type f -exec echo -- 2>/dev/null |
+  sed "s/^'//;s/'$//" > "${ISO_BOOT_FILE_LIST}"
+if ! grep -Eq '^/live/vmlinuz([.-].*)?$' "${ISO_BOOT_FILE_LIST}"; then
+  echo "ISO_KERNEL_MISSING: /live/vmlinuz not found; refusing to publish an unbootable ISO" >&2
+  exit 1
+fi
+if ! grep -Eq '^/live/initrd(\.img)?([.-].*)?$' "${ISO_BOOT_FILE_LIST}"; then
+  echo "ISO_INITRD_MISSING: /live/initrd not found; refusing to publish an unbootable ISO" >&2
+  exit 1
+fi
+if ! grep -Eq '^/live/filesystem.squashfs$' "${ISO_BOOT_FILE_LIST}"; then
+  echo "ISO_SQUASHFS_MISSING: /live/filesystem.squashfs not found" >&2
+  exit 1
+fi
+echo "ISO_BOOT_FILES_PRESENT: kernel, initrd, squashfs"
+
+# Enforce the core size gate before writing release artifacts.
+ISO_UNPUBLISHED_BYTES="$(stat -c%s "${ISO_PATH}")"
+ISO_UNPUBLISHED_MB="$(( (ISO_UNPUBLISHED_BYTES + 1048575) / 1048576 ))"
+if [[ "${PROFILE}" == core && "${ISO_UNPUBLISHED_MB}" -gt 900 ]]; then
+  echo "CORE_SIZE_BUDGET_FAIL: core ISO exceeds 900 MiB; refusing to publish." >&2
+  exit 1
+elif [[ "${PROFILE}" == core && "${ISO_UNPUBLISHED_MB}" -gt 512 ]]; then
+  echo "CORE_SIZE_WARNING: 512 MiB target exceeded: ${ISO_UNPUBLISHED_MB} MiB."
+fi
+if [[ "${PROFILE}" != core && "${ISO_UNPUBLISHED_MB}" -gt 900 ]]; then
+  echo "HEAVY_PROFILE_WARNING: full legacy profile; optional SFS packaging is not implemented." >&2
+fi
+
 OUTPUT_ISO="${OUT_DIR}/${IMAGE_NAME}-${PROFILE}.iso"
 cp "${ISO_PATH}" "${OUTPUT_ISO}"
 sha256sum "${OUTPUT_ISO}" > "${OUTPUT_ISO}.sha256"
 
 ISO_BYTES="$(stat -c%s "${OUTPUT_ISO}")"
 ISO_MB="$(( (ISO_BYTES + 1048575) / 1048576 ))"
+# Manifest reflects actual profile packages, never aspirational full-stack claims.
+# Source, modules, guest boot and persistence are separately audited by BEAN.
+if [[ "${PROFILE}" == core ]]; then
+  VENVWIN_MANIFEST_STANDARD_BROWSER="netsurf-gtk"
+  VENVWIN_MANIFEST_PRIVACY_BROWSER_PROFILE="not_bundled"
+  VENVWIN_MANIFEST_SOFTWARE_CENTER="not_bundled"
+  VENVWIN_MANIFEST_LIGHT_EDITOR="mousepad"
+  VENVWIN_MANIFEST_OFFICE_TOOLS="abiword,gnumeric"
+  VENVWIN_MANIFEST_PDF_VIEWER="not_bundled"
+  VENVWIN_MANIFEST_MEDIA_TOOLS="not_bundled"
+  VENVWIN_MANIFEST_CAMERA_TOOLS="not_bundled"
+  VENVWIN_MANIFEST_AUDIO_STACK="pipewire,pipewire-pulse,wireplumber,alsa-utils,xfce4-pulseaudio-plugin"
+  VENVWIN_MANIFEST_USB_SUPPORT="udisks2,gvfs-backends,pmount,usb-modeswitch,exfatprogs,ntfs-3g,dosfstools"
+  VENVWIN_MANIFEST_HARDWARE_PROBE_TOOLS="pciutils,usbutils,rfkill,nmcli,aplay,arecord"
+  VENVWIN_MANIFEST_RESCUE_TOOLS="not_bundled"
+  VENVWIN_MANIFEST_FIRMWARE_BUNDLE="firmware-iwlwifi,firmware-realtek,firmware-atheros,firmware-brcm80211,firmware-sof-signed"
+  VENVWIN_MANIFEST_STANDARD_PROFILE_POLICY="puppy_compact_core_with_opt_in_modules"
+else
+  VENVWIN_MANIFEST_STANDARD_BROWSER="netsurf-gtk,firefox-esr"
+  VENVWIN_MANIFEST_PRIVACY_BROWSER_PROFILE="torbrowser-launcher,tor,torsocks"
+  VENVWIN_MANIFEST_SOFTWARE_CENTER="synaptic,gdebi"
+  VENVWIN_MANIFEST_LIGHT_EDITOR="geany"
+  VENVWIN_MANIFEST_OFFICE_TOOLS="abiword,gnumeric,libreoffice-writer,libreoffice-calc"
+  VENVWIN_MANIFEST_PDF_VIEWER="evince"
+  VENVWIN_MANIFEST_MEDIA_TOOLS="mpv,ffmpeg"
+  VENVWIN_MANIFEST_CAMERA_TOOLS="guvcview,v4l-utils"
+  VENVWIN_MANIFEST_AUDIO_STACK="pipewire,pipewire-pulse,wireplumber,alsa-utils,pavucontrol,pamixer,xfce4-pulseaudio-plugin"
+  VENVWIN_MANIFEST_USB_SUPPORT="udisks2,gvfs-backends,pmount,usb-modeswitch,mtp-tools,jmtpfs,exfatprogs,ntfs-3g,dosfstools"
+  VENVWIN_MANIFEST_HARDWARE_PROBE_TOOLS="pciutils,usbutils,lshw,inxi,rfkill,nmcli,v4l2-ctl,aplay,arecord"
+  VENVWIN_MANIFEST_RESCUE_TOOLS="gparted,parted,testdisk,smartmontools,gsmartcontrol,ufw"
+  VENVWIN_MANIFEST_FIRMWARE_BUNDLE="firmware-linux,firmware-linux-nonfree,firmware-iwlwifi,firmware-realtek,firmware-atheros,firmware-brcm80211,firmware-misc-nonfree,firmware-sof-signed"
+  VENVWIN_MANIFEST_STANDARD_PROFILE_POLICY="lean_runtime_plus_puppy_era_essentials"
+fi
+
 cat > "${OUT_DIR}/${IMAGE_NAME}-${PROFILE}-manifest.txt" <<EOF
 venvWin Portable ISO Manifest
 profile=${PROFILE}
@@ -665,6 +746,11 @@ sha256_file=${OUTPUT_ISO}.sha256
 leave_no_trace_default=true
 default_storage=venvWin Portable USB/install drive only
 boot_toram_default=false
+persistence_default=none
+persistence_opt_in=true
+packaged_payload=app_source_only
+boot_media_policy=read_only_by_default
+optional_launchers_may_require_modules=true
 live_user_autologin=true
 first_boot_gui=true
 dashboard=true
@@ -676,26 +762,26 @@ first_boot_desktop_launchers_list=venvWin-First-Boot.desktop,venvWin-Dashboard.d
 first_boot_proof_bundle=true
 first_boot_expected_desktop_files=venvWin-First-Boot.desktop,venvWin-Dashboard.desktop,venvWin-Capsules.desktop,venvWin-Private-Browser.desktop,venvWin-Software-Center.desktop,venvWin-Notepad.desktop,venvWin-Network-Settings.desktop,venvWin-Hardware-Check.desktop,venvWin-Media-Player.desktop,venvWin-Audio-Control.desktop,venvWin-Camera-Test.desktop,venvWin-Partition-Manager.desktop,venvWin-Drive-Health.desktop,venvWin-File-Recovery.desktop,venvWin-Quick-Start.txt,venvWin-First-Boot-Proof.txt,venvWin-Dashboard.txt,venvWin-First-Boot-Checklist.txt,venvwin-init.txt,venvwin-associate.txt,venvwin-first-run.txt,venvwin-storage.txt,venvwin-doctor.txt
 storage_source_marker=true
-standard_browser=netsurf-gtk,firefox-esr
-privacy_browser_profile=torbrowser-launcher,tor,torsocks
-software_center=synaptic,gdebi
+standard_browser=${VENVWIN_MANIFEST_STANDARD_BROWSER}
+privacy_browser_profile=${VENVWIN_MANIFEST_PRIVACY_BROWSER_PROFILE}
+software_center=${VENVWIN_MANIFEST_SOFTWARE_CENTER}
 notepad=mousepad
-light_editor=geany
-office_tools=abiword,gnumeric,libreoffice-writer,libreoffice-calc
-pdf_viewer=evince
+light_editor=${VENVWIN_MANIFEST_LIGHT_EDITOR}
+office_tools=${VENVWIN_MANIFEST_OFFICE_TOOLS}
+pdf_viewer=${VENVWIN_MANIFEST_PDF_VIEWER}
 image_tools=mtpaint,ristretto
-media_tools=mpv,ffmpeg
-camera_tools=guvcview,v4l-utils
-audio_stack=pipewire,pipewire-pulse,wireplumber,alsa-utils,pavucontrol,pamixer,xfce4-pulseaudio-plugin
+media_tools=${VENVWIN_MANIFEST_MEDIA_TOOLS}
+camera_tools=${VENVWIN_MANIFEST_CAMERA_TOOLS}
+audio_stack=${VENVWIN_MANIFEST_AUDIO_STACK}
 wireless_manager=network-manager,network-manager-gnome
-usb_support=udisks2,gvfs-backends,pmount,usb-modeswitch,mtp-tools,jmtpfs,exfatprogs,ntfs-3g,dosfstools
-hardware_probe_tools=pciutils,usbutils,lshw,inxi,rfkill,nmcli,v4l2-ctl,aplay,arecord
-rescue_tools=gparted,parted,testdisk,smartmontools,gsmartcontrol,ufw
+usb_support=${VENVWIN_MANIFEST_USB_SUPPORT}
+hardware_probe_tools=${VENVWIN_MANIFEST_HARDWARE_PROBE_TOOLS}
+rescue_tools=${VENVWIN_MANIFEST_RESCUE_TOOLS}
 included_games=daniel-boone-frontier-trail
 included_game_launchers=venvwin-frontier-trail.desktop
 included_game_icons=venvwin-frontier-trail.svg
-firmware_bundle=firmware-linux,firmware-linux-nonfree,firmware-iwlwifi,firmware-realtek,firmware-atheros,firmware-brcm80211,firmware-misc-nonfree,firmware-sof-signed
-standard_profile_policy=lean_runtime_plus_puppy_era_essentials
+firmware_bundle=${VENVWIN_MANIFEST_FIRMWARE_BUNDLE}
+standard_profile_policy=${VENVWIN_MANIFEST_STANDARD_PROFILE_POLICY}
 excluded_bloat=inkscape,cd_tools,dvd_tools,burners,audio_editors,extra_games_except_frontier_trail,full_libreoffice_suite,libreoffice-impress,libreoffice-draw,libreoffice-base,developer_stack
 product_gate=first boot must initialize storage, expose status, show setup UI, write proof bundle, show desktop launchers, start local dashboard, expose software center, expose notepad, expose network settings, provide audio/camera/media tools, provide document and CSV compatibility, expose Daniel Boone Frontier Trail in the app menu with icon, and provide hardware/driver/rescue diagnostics
 EOF
@@ -703,8 +789,3 @@ EOF
 echo "Built ISO: ${OUTPUT_ISO}"
 echo "Size: ${ISO_MB} MB"
 echo "Checksum: ${OUTPUT_ISO}.sha256"
-if [[ "${ISO_MB}" -gt 3500 ]]; then
-  echo "Hard concern: ISO is over 3500 MB. Trim before product release."
-elif [[ "${ISO_MB}" -gt 2500 ]]; then
-  echo "Soft warning: ISO is over 2500 MB. Alpha can continue, but tune size later."
-fi

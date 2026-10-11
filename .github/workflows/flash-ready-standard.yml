@@ -1,16 +1,9 @@
 name: flash-ready-standard
 
+# Heavy legacy standard builds are explicit engineering experiments only.
+# Never produce a 1.5 GB ISO on every push/merge.
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - "README.md"
-      - "docs/**"
-      - "venvwin-portable/**"
-      - "src/**"
-      - "tests/**"
-      - "pyproject.toml"
-      - ".github/workflows/flash-ready-standard.yml"
 
 jobs:
   flash-ready-standard:

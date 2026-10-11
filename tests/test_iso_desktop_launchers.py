@@ -27,7 +27,11 @@ def test_build_iso_creates_visible_desktop_launchers():
 def test_build_iso_disables_toram_and_adds_live_autologin():
     script = (ROOT / "venvwin-portable" / "build-iso.sh").read_text(encoding="utf-8")
 
-    assert '--bootappend-live "boot=live components persistence console=tty0 console=ttyS0,115200n8"' in script
+    assert '--bootappend-live "boot=live components console=tty0 console=ttyS0,115200n8"' in script
+    assert '--bootappend-live "boot=live components persistence ' not in script
+    assert "persistence_default=none" in script
+    assert "persistence_opt_in=true" in script
+    assert 'PROFILE="${VENVWIN_PORTABLE_PROFILE:-core}"' in script
     assert " toram" not in script
     assert "lightdm-gtk-greeter" in script
     assert "50-venvwin-live-autologin.conf" in script

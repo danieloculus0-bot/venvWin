@@ -29,11 +29,12 @@ class LayerState:
 @dataclass(frozen=True)
 class BootState:
     product: str = "venvWin Portable"
-    architecture: str = "puppy-style-overlayfs"
+    architecture: str = "puppy-adjacent-target-not-yet-boot-verified"
     boot_mode: str = "normal"
     save_mode: str = "unknown"
     session_layer: str = "tmpfs"
-    copy_to_ram: bool = False
+    copy_to_ram: bool = False  # verified copy only; flags are merely requests
+    copy_to_ram_requested: bool = False
     usb_first: bool = True
     root_device_hint: str = "UUID/PARTUUID/label preferred; never hard-code /dev/sdX"
     system_sfs: str = "venvwin-system.sfs"
@@ -57,6 +58,7 @@ class BootState:
             f"save_mode={self.save_mode}",
             f"session_layer={self.session_layer}",
             f"copy_to_ram={str(self.copy_to_ram).lower()}",
+            f"copy_to_ram_requested={str(self.copy_to_ram_requested).lower()}",
             f"usb_first={str(self.usb_first).lower()}",
             f"root_device_hint={self.root_device_hint}",
             f"system_sfs={self.system_sfs}",
@@ -156,10 +158,25 @@ def planned_layers() -> list[LayerState]:
     ]
 
 
-def runtime_layers() -> list[LayerState]:
+def observed_mount_points(path: Path = Path("/proc/self/mountinfo")) -> set[str]:
+    """Read real mount evidence; an existing directory is NOT a mounted layer."""
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return set()
+    mounts: set[str] = set()
+    for line in lines:
+        prefix = line.split(" - ", 1)[0].split()
+        if len(prefix) >= 5:
+            mounts.add(prefix[4].replace(r"\\040", " ").replace(r"\\011", "\\t"))
+    return mounts
+
+
+def runtime_layers(mountinfo_path: Path = Path("/proc/self/mountinfo")) -> list[LayerState]:
+    mounted_paths = observed_mount_points(mountinfo_path)
     layers: list[LayerState] = []
     for layer in planned_layers():
-        path = Path(layer.path)
+        is_mount = layer.path in mounted_paths
         layers.append(
             LayerState(
                 name=layer.name,
@@ -167,8 +184,8 @@ def runtime_layers() -> list[LayerState]:
                 path=layer.path,
                 writable=layer.writable,
                 required=layer.required,
-                mounted=path.exists(),
-                source="runtime" if path.exists() else "planned",
+                mounted=is_mount,
+                source="observed_mountinfo" if is_mount else "planned_unverified",
             )
         )
     return layers
@@ -180,7 +197,8 @@ def bootstate_report() -> BootState:
     return BootState(
         boot_mode=boot_mode,
         save_mode=detect_save_mode(cmdline),
-        copy_to_ram=detect_copy_to_ram(cmdline) or boot_mode == "ram",
+        copy_to_ram=False,  # no proof of an actual SFS RAM copy yet
+        copy_to_ram_requested=detect_copy_to_ram(cmdline) or boot_mode == "ram",
         cmdline=cmdline,
         layers=runtime_layers(),
     )
