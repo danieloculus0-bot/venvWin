@@ -134,3 +134,14 @@ Only a boot-tested and accurately labeled Puppy build may replace the old
 engine, while clearly identifying copy-to-RAM, chosen save/reboot persistence,
 standalone SFS modules, and real in-Puppy EXE execution as separately verified
 or still pending. No unproven ISO is a release.
+
+## Native dark-orange UI and Wine draft integration
+
+An isolated, **unreleased and unmerged** Puppy UI/Wine candidate is developed at
+`feat/puppy-ui-wine-integration-20261011`. It recovers the original charcoal,
+Mint-adjacent interface with premium **orange** accents from the existing
+Control Center. Puppy /root/Startup launches the GUI with a YAD fallback and
+records the Wine runner's real presence. It includes explicit, opt-in native
+Wine package/SFS setup and EXE/MSI capsule routing. **No Wine binary is
+bundled, no in-guest Windows execution is yet verified, and no ISO was built
+by this source-only patch.** See `puppy-native/WINE-AND-UI-INTEGRATION.md`.

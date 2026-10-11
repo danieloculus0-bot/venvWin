@@ -36,11 +36,22 @@ fi
 # Native ydrv SFS layer; original bootloader, main SFS and firmware remain untouched.
 STAGE="$OUT/module-stage"
 rm -rf "$STAGE"
-mkdir -p "$STAGE/opt/venvwin/src" "$STAGE/root/Startup" "$STAGE/usr/local/bin"
+mkdir -p "$STAGE/opt/venvwin/src" "$STAGE/root/Startup" "$STAGE/root/Desktop" "$STAGE/usr/local/bin" \
+  "$STAGE/usr/share/applications" "$STAGE/usr/share/venvwin/theme"
 rsync -a --exclude='__pycache__/' --exclude='*.pyc' --exclude='*.pyo' \
   "$ROOT/src/venvwin" "$STAGE/opt/venvwin/src/"
 install -m 0755 "$ROOT/puppy-native/venvwin-launcher" "$STAGE/usr/local/bin/venvwin"
 install -m 0755 "$ROOT/puppy-native/venvwin-guest-probe" "$STAGE/root/Startup/venvwin-guest-probe"
+# Additive native startup + original Control Center, no heavy desktop replacement.
+install -m 0755 "$ROOT/puppy-native/venvwin-session" "$STAGE/root/Startup/venvwin-session"
+install -m 0755 "$ROOT/puppy-native/venvwin-control-center" "$STAGE/usr/local/bin/venvwin-control-center"
+install -m 0755 "$ROOT/puppy-native/venvwin-wine" "$STAGE/usr/local/bin/venvwin-wine"
+install -m 0755 "$ROOT/puppy-native/venvwin-theme-apply" "$STAGE/usr/local/bin/venvwin-theme-apply"
+install -m 0644 "$ROOT/puppy-native/venvwin-gtk.css" "$STAGE/usr/share/venvwin/theme/gtk.css"
+install -m 0644 "$ROOT/puppy-native/venvwin-app.desktop" "$STAGE/usr/share/applications/venvwin-app.desktop"
+install -m 0644 "$ROOT/puppy-native/venvwin-wine.desktop" "$STAGE/usr/share/applications/venvwin-wine.desktop"
+install -m 0644 "$ROOT/puppy-native/venvwin-app.desktop" "$STAGE/root/Desktop/venvwin-app.desktop"
+install -m 0644 "$ROOT/puppy-native/WINE-AND-UI-INTEGRATION.md" "$STAGE/opt/venvwin/WINE-AND-UI-INTEGRATION.md"
 install -m 0644 "$ROOT/puppy-native/RELEASE-STATUS.txt" "$STAGE/opt/venvwin/RELEASE-STATUS.txt"
 rm -f "$SFS"
 mksquashfs "$STAGE" "$SFS" -noappend -all-root -comp xz -b 1048576 \
@@ -48,6 +59,10 @@ mksquashfs "$STAGE" "$SFS" -noappend -all-root -comp xz -b 1048576 \
 test -s "$SFS"
 unsquashfs -l "$SFS" > "$OUT/venvwin-layer-inventory.txt"
 grep -q 'squashfs-root/root/Startup/venvwin-guest-probe' "$OUT/venvwin-layer-inventory.txt"
+for path in 'root/Startup/venvwin-session' 'usr/local/bin/venvwin-wine' \
+            'usr/local/bin/venvwin-control-center' 'usr/share/venvwin/theme/gtk.css'; do
+  grep -q "squashfs-root/$path" "$OUT/venvwin-layer-inventory.txt"
+done
 rm -f "$OUTPUT"
 # Replay exact El Torito/EFI settings AFTER mapping additional layer.
 xorriso -indev "$BASE" -outdev "$OUTPUT" -map "$SFS" "/$MODULE" \

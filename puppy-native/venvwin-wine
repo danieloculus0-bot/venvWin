@@ -1,0 +1,74 @@
+#!/bin/sh
+# Explicit, isolated Wine integration. Never installs or initializes Wine at boot.
+set -eu
+usage() {
+  cat <<'HELP'
+venvWin Wine integration for native Puppy
+  venvwin-wine --status           Show actual guest runner availability
+  venvwin-wine --install          Opt-in native Puppy package installation
+  venvwin-wine --load-sfs FILE    Opt-in Puppy SFS loading (not automatic)
+  venvwin-wine --configure        Open winecfg in manually selected prefix
+  venvwin-wine FILE.exe           Route executable through a venvWin capsule
+  venvwin-wine FILE.msi           Route installer through a venvWin capsule
+NOTE: This is a wrapper, NOT a bundled or verified Wine runtime.
+HELP
+}
+status() {
+  if command -v wine >/dev/null 2>&1; then
+    printf 'WINE_RUNNER_FOUND=%s\n' "$(command -v wine)"
+    wine --version 2>&1 || true
+  else
+    echo 'WINE_RUNNER_MISSING: load a tested Wine SFS or opt in to installation.'
+    return 70
+  fi
+}
+action="${1:---help}"
+case "$action" in
+  --help|-h) usage ;;
+  --status) status ;;
+  --install)
+    if ! command -v apt-get >/dev/null 2>&1; then
+      echo 'WINE_INSTALL_UNAVAILABLE: no apt-get found in this guest.' >&2
+      exit 69
+    fi
+    if [ "${VENVWIN_WINE_INSTALL_CONFIRM:-}" != 'YES' ]; then
+      if [ ! -t 0 ]; then
+        echo 'WINE_INSTALL_CONFIRM_REQUIRED: run interactively; installation may be temporary without Puppy save.' >&2
+        exit 64
+      fi
+      printf '%s\n' 'This modifies the CURRENT Puppy writable layer and may consume substantial space.' \
+        'No persistent save is assumed. Install the native Wine packages now? Type INSTALL to confirm:'
+      IFS= read -r response
+      [ "$response" = INSTALL ] || { echo 'CANCELLED'; exit 64; }
+    fi
+    apt-get update
+    exec apt-get install --no-install-recommends wine wine64
+    ;;
+  --load-sfs)
+    [ "$#" -eq 2 ] || { usage >&2; exit 64; }
+    [ -f "$2" ] || { echo 'WINE_SFS_MISSING' >&2; exit 66; }
+    case "$2" in *.sfs) : ;; *) echo 'WINE_SFS_INVALID_EXTENSION' >&2; exit 64 ;; esac
+    command -v sfs_load >/dev/null 2>&1 || {
+      echo 'PUPPY_SFS_LOADER_MISSING' >&2; exit 69;
+    }
+    echo 'Loading an explicitly chosen external SFS. Check Puppy version / ABI compatibility first.'
+    sfs_load "$2"
+    ;;
+  --configure)
+    status || exit $?
+    command -v winecfg >/dev/null 2>&1 || { echo 'WINECFG_MISSING' >&2; exit 70; }
+    if [ -z "${VENVWIN_HOME:-}" ]; then
+      echo 'WINE_PREFIX_LOCATION_NOT_CHOSEN: select capsule storage before manual Wine setup.' >&2
+      exit 64
+    fi
+    export WINEPREFIX="$VENVWIN_HOME/manual-wine-prefix"
+    export WINEARCH=win64
+    exec winecfg
+    ;;
+  *.exe|*.EXE|*.msi|*.MSI)
+    [ "$#" -eq 1 ] || { echo 'Pass EXE/MSI file without extra arguments for capsule routing.' >&2; exit 64; }
+    status >/dev/null || exit $?
+    exec /usr/local/bin/venvwin open "$1"
+    ;;
+  *) echo "Unsupported venvWin Wine action: $action" >&2; usage >&2; exit 64 ;;
+esac
