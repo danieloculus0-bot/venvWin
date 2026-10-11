@@ -8,6 +8,7 @@ on:
       - ".github/workflows/puppy-core-static-checks.yml"
       - ".github/workflows/puppy-core-boot-lab.yml"
       - "venvwin-portable/build-core-proof.sh"
+      - "venvwin-portable/build-iso.sh"
       - "venvwin-portable/build-in-bookworm.sh"
       - "tests/test_core_boot_lab_contract.py"
   workflow_dispatch:
