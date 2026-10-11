@@ -50,15 +50,19 @@ for profile in "${PROFILES[@]}"; do
     echo "manifest=missing" >> "${REPORT}"
   fi
 
-  if [[ "${mb}" -gt 3500 ]]; then
-    echo "size_flag=hard-concern-bloated-goblin" >> "${REPORT}"
-  elif [[ "${mb}" -gt 2500 ]]; then
-    echo "size_flag=soft-warning-alpha-fat" >> "${REPORT}"
-  elif [[ "${mb}" -le 1200 ]]; then
-    echo "size_flag=sellable-target" >> "${REPORT}"
+  # Size does not prove bootability; report actual bytes and the source budget.
+  if [[ "${profile}" == core ]]; then
+    if [[ "${mb}" -gt 900 ]]; then
+      echo "size_flag=core_over_hard_budget" >> "${REPORT}"
+    elif [[ "${mb}" -gt 512 ]]; then
+      echo "size_flag=core_above_soft_target" >> "${REPORT}"
+    else
+      echo "size_flag=core_within_size_goal_boot_unverified" >> "${REPORT}"
+    fi
   else
-    echo "size_flag=acceptable-alpha-beta" >> "${REPORT}"
+    echo "size_flag=historical_full_profile_manual_only" >> "${REPORT}"
   fi
+  echo "boot_verified=unverified_by_size_report" >> "${REPORT}"
 
   echo >> "${REPORT}"
 done

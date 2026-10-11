@@ -91,17 +91,24 @@ venvWin must support:
 - portable USB capsule path
 - later venvWin-managed storage discovery
 
-## First practical target
+## Puppy-adjacent architecture (actual product target)
 
 ```text
-Debian or Ubuntu-family live image
-XFCE or similarly lightweight desktop
-dark premium venvWin theme
-venvWin preinstalled
-EXE/MSI file association enabled
-persistent capsule partition
-optional RAM boot flag
+Modern x86_64 kernel + initial RAM filesystem
+Small compressed read-only base (SquashFS)
+Puppy-like RAM working layer through OverlayFS
+Tiny but useful desktop and everyday tools
+USB-first normal boot, no forced persistence
+Optional RAM copy only when measured memory allows
+Optional explicit save layer + independent application SFS packs
+venvWin EXE/MSI capsules and durable app state (if chosen)
 ```
+
+The current Debian Bookworm live-build and XFCE session are **temporary
+bootstrapping tooling**, not the product definition. The repo does not yet
+implement custom initramfs layer assembly, actual SFS modules, verified
+copy-to-RAM, or persistence across a real reboot. Do not call the ISO
+flash-ready until BEAN's guest and persistence evidence passes.
 
 ## Jetson-friendly target
 
