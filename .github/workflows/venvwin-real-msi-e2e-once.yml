@@ -5,6 +5,7 @@ on:
     branches: [feat/puppy-ui-wine-integration-20261011]
     paths:
       - ".github/workflows/venvwin-real-msi-e2e-once.yml"
+      - "src/venvwin/intake.py"  # retry only actual app-discovery changes; never rebuild Puppy ISO
   workflow_dispatch:
 permissions:
   contents: read

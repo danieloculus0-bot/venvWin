@@ -105,3 +105,20 @@ def test_desktop_paths_with_spaces_and_percent_are_escaped(tmp_path):
     assert '"test-100%%-win-app"' not in text
     assert str(exe).replace("%", "%%") in text
     assert 'run ' in text
+
+
+def test_wine_builtin_windows_apps_are_not_installer_targets(tmp_path):
+    prefix = tmp_path / "prefix"
+    builtin = prefix / "drive_c" / "Program Files"
+    for folder, name in [
+        ("Internet Explorer", "iexplore.exe"),
+        ("Windows Media Player", "wmplayer.exe"),
+        ("Windows NT/Accessories", "wordpad.exe"),
+    ]:
+        destination = builtin / folder / name
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_bytes(b"MZ wine stub")
+    actual = builtin / "venvWin Demo" / "Demo.exe"
+    actual.parent.mkdir()
+    actual.write_bytes(b"MZ installed")
+    assert discover_application_exes(str(prefix)) == [actual]

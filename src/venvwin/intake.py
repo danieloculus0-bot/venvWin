@@ -29,8 +29,17 @@ def discover_application_exes(prefix_path: str, limit: int = 24) -> list[Path]:
                 continue
             if candidate.name.lower().startswith(_SKIP_EXE):
                 continue
+            # Wine initializes several built-in Windows stubs even on a fresh
+            # prefix. Never offer IE/Media Player/WordPad as the installed app.
+            rel = candidate.relative_to(home)
+            builtins = {
+                "common files", "internet explorer", "windows media player",
+                "windows nt", "microsoft shared", "windowsapps",
+            }
+            if rel.parts and rel.parts[0].lower() in builtins:
+                continue
             if any(part.lower() in {"common files", "windows", "microsoft shared"}
-                   for part in candidate.parts):
+                   for part in rel.parts):
                 continue
             found.append(candidate)
             if len(found) >= limit:
