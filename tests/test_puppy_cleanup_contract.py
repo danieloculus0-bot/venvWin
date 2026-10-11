@@ -51,3 +51,32 @@ def test_bean_refuses_to_certify_unbuilt_puppy_runtime():
     for key in ("runtime_overlay", "ram_copy_verified", "persistence_reboot",
                 "external_app_modules"):
         assert report["checks"][key]["status"] != "pass"
+
+def test_manifest_does_not_claim_unbundled_core_applications():
+    text = BUILDER.read_text()
+    for entry in (
+        'VENVWIN_MANIFEST_STANDARD_BROWSER="netsurf-gtk"',
+        'VENVWIN_MANIFEST_OFFICE_TOOLS="abiword,gnumeric"',
+        'VENVWIN_MANIFEST_PDF_VIEWER="not_bundled"',
+        'VENVWIN_MANIFEST_SOFTWARE_CENTER="not_bundled"',
+        'VENVWIN_MANIFEST_PRIVACY_BROWSER_PROFILE="not_bundled"',
+    ):
+        assert entry in text
+    assert "optional_launchers_may_require_modules=true" in text
+
+
+def test_keep_useful_puppy_style_apps_and_hardware_drivers_in_core():
+    from venvwin.puppy_evidence import _heredoc_packages
+    script = BUILDER.read_text()
+    core = _heredoc_packages(script, "00-venvwin-core.list.chroot")
+    extra = _heredoc_packages(script, "05-venvwin-utilities.list.chroot")
+    assert core and extra
+    required_core = {"abiword", "gnumeric", "mtpaint", "ristretto", "xarchiver",
+                     "galculator", "alsa-utils", "pipewire", "ntfs-3g",
+                     "firmware-realtek", "firmware-iwlwifi", "pciutils", "usbutils"}
+    assert required_core <= core
+    required_extra = {"libreoffice-writer", "libreoffice-calc",
+                      "firefox-esr", "ffmpeg"}
+    assert required_extra <= extra
+    assert not required_extra & core
+    assert len(core | extra) == 89
