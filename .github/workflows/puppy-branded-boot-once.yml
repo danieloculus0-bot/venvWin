@@ -4,7 +4,7 @@ on:
   push:
     branches: [feat/puppy-ui-wine-integration-20261011]
     paths:
-      - ".github/workflows/puppy-branded-bean-once.yml"
+      - ".github/workflows/puppy-branded-boot-once.yml"
   workflow_dispatch:
 permissions:
   contents: read
@@ -33,7 +33,11 @@ jobs:
         run: |
           bash puppy-native/build-puppy.sh
           grep -q 'squashfs-root/etc/xdg/templates/_root_.jwmrc' dist/puppy-native/venvwin-layer-inventory.txt
-          echo VENVWIN_REAL_BIOS_AND_UEFI_BOOT_ART_PRESENT_NOT_GUEST_PROOF
+          if grep -Ei '(bean-core|venvwin-bean|bean-mini-service|opt/bean)' dist/puppy-native/venvwin-layer-inventory.txt; then
+            echo 'UNREQUESTED_BEAN_RUNTIME_BUNDLED' >&2
+            exit 1
+          fi
+          echo VENVWIN_BRANDED_ISO_WITHOUT_BEAN_SERVICE_VERIFIED
       - name: Observe branded BIOS boot menu inside actual QEMU
         id: observe
         run: |
