@@ -1,165 +1,43 @@
-# venvWin Puppy-style OverlayFS architecture
+# venvWin native Puppy filesystem architecture
 
-venvWin Portable uses Lucid Puppy as a design reference for portability, not as a codebase to copy.
+**Platform:** authentic BookwormPup64 10.0.12, based on the established Puppy live boot environment. The previous custom Debian `live-build` implementation is preserved on the `archive/debian-live-build-20261011` branch, not used as the new OS.
 
-The current alpha remains a Debian live-build image with venvWin bundled. This document defines the target boot/session architecture that should replace the simple live image over time.
+## Verified facts vs product requirements
 
-## Core idea
+The [upstream-only QEMU diagnostic](https://github.com/danieloculus0-bot/venvWin/actions/runs/38168125218) captured actual frame data. Its ~75-second frame visibly states:
+- Puppy Linux 6.1.148 started;
+- Puppy copied its main, adrv, bdrv, fdrv, zdrv and kbuild SFS layers to RAM;
+- Puppy completed `switch_root` into its overlay filesystem.
 
-Puppy feels fast because the visible filesystem is assembled from layers.
+This **visual boot log is not yet independent inspection of in-guest `/proc/self/mountinfo` or a measurement of free memory**, and was gathered from the unmodified upstream ISO. The [first native venvWin remaster](https://github.com/danieloculus0-bot/venvWin/actions/runs/38166940199) was ~791 MiB and preserved boot records, but did not produce the required guest-origin application/desktop proof. The subsequent corrected native boot attempt is a separate CI gate.
 
-For venvWin, the modern model is OverlayFS:
-
-```text
-visible /
-= session_rw      highest priority, writable tmpfs session layer
-+ save_rw         USB persistence layer or encrypted save image
-+ system_ro       pristine compressed base system image
-+ drivers_ro      optional driver and firmware module image
-+ apps_ro         optional app/module SFS layers
-+ dev_ro          optional developer SDK module
-```
-
-The base system stays pristine. Runtime changes land in a writable session layer. Persistence is explicit and can be skipped, encrypted, or manually saved.
-
-## Layer map
-
-Planned runtime mount points:
+## Genuine native Puppy structure
 
 ```text
-/initrd/venvwin/session_rw
-/initrd/venvwin/save_rw
-/initrd/venvwin/system_ro
-/initrd/venvwin/drivers_ro
-/initrd/venvwin/apps_ro
-/initrd/venvwin/dev_ro
+Authentic BookwormPup64 10.0.12 live ISO
+  original bootloader, kernel, initrd / native init logic
+  puppy_dpupbw64_10.0.12.sfs     original main read-only OS
+  adrv/bdrv/fdrv/zdrv/*          original native upstream SFS components
+  ydrv_dpupbw64_10.0.12.sfs      extra venvWin app layer (our addition)
+    /opt/venvwin/src/venvwin     existing Python capsule manager
+    /usr/local/bin/venvwin       launcher requiring Python 3.10+
+    /root/Startup/...           desktop-origin evidence probe
+  Puppy writable live overlay    actual mount requires guest proof
 ```
 
-Layer roles:
+Puppy's real working mount locations and actual overlay upperdir/workdir must be read from the live system (e.g. `/proc/self/mountinfo`). Never claim imaginary `/initrd/venvwin/*` directories are mounted.
 
-- `session_rw`: tmpfs session layer for speed and flash-life preservation.
-- `save_rw`: persistent USB save partition or image file.
-- `system_ro`: read-only `venvwin-system.sfs` base OS.
-- `drivers_ro`: read-only `venvwin-drivers.sfs` firmware/kernel module payload.
-- `apps_ro`: optional read-only app capsules/modules.
-- `dev_ro`: optional `venvwin-dev.sfs` SDK/build-tool module.
+The new OS must run without writing to the host's installed hard disk. QEMU core proof attaches **only a read-only ISO CD-ROM and no virtual hard disk/network**. Future save tests deliberately attach dedicated disposable save media; those tests must prove user choice and unchanged host state.
 
-## Boot modes
+## Still-required runtime experiments
 
-Target boot menu modes:
+1. Observe a venvWin desktop session and verify guest-origin `/proc/self/mountinfo` for true OverlayFS and its writable upper layer.
+2. Measure compressed SFS bytes, actual copied RAM bytes and remaining free RAM; distinguish default copy from user-selected `pfix=copy`/`pfix=nocopy` modes.
+3. Test `pfix=ram` or equivalent leave-no-save mode, then explicitly choose a USB-owned savefile/savefolder and verify a known unique marker **after reboot**.
+4. Independently mount and unmount a non-core application SFS, verify actual binary execution, record hashes and ensure no modification of the upstream Puppy base.
+5. Package a compatible Wine runner module, route a real .exe/.msi installer through venvWin, verify isolated capsule state, reset, backup, and repeat behavior **inside Puppy**, not on an unrelated Ubuntu CI runner.
+6. Re-run the six BEAN Puppy gates and separately test the full end-to-end product experience. A verified ISO is not automatically a verified or saleable product.
 
-- `normal`: live USB with persistence if configured.
-- `ram`: copy base image to RAM when enough memory exists.
-- `nosave`: ignore persistence and run disposable.
-- `repair`: shell/diagnostic boot for fixing storage, boot, or capsule issues.
-- `developer`: normal boot plus optional dev module.
+All acceptance evidence must include exact image SHA-256, executed boot mode, kernel version, guest-origin logs, observed mounts, and enough reproducible steps to rerun independently.
 
-Kernel parameter examples:
-
-```text
-venvwin.mode=normal
-venvwin.mode=ram
-venvwin.mode=nosave
-venvwin.mode=repair
-venvwin.mode=developer
-venvwin.save=plain
-venvwin.save=encrypted
-venvwin.save=none
-venvwin.ram
-venvwin.nocopy
-```
-
-Puppy compatibility-style flags may be interpreted where harmless:
-
-```text
-pfix=copy
-pfix=nocopy
-pfix=ram
-```
-
-## USB-first rules
-
-Do not hard-code `/dev/sdX`.
-
-Device resolution priority should be:
-
-1. UUID
-2. PARTUUID
-3. filesystem label
-4. known relative path from boot media
-5. last-resort scan with explicit warning
-
-Target save markers:
-
-```text
-filesystem label: VENVWIN_SAVE
-directory marker: .venvwin-save
-image filename: venvwin-save.img
-state file: /etc/venvwin/BOOTSTATE
-```
-
-## BOOTSTATE
-
-Runtime boot/session state should be visible in:
-
-```text
-/etc/venvwin/BOOTSTATE
-```
-
-Minimum fields:
-
-```text
-product=venvWin Portable
-architecture=puppy-style-overlayfs
-boot_mode=normal|ram|nosave|repair|developer
-save_mode=plain|encrypted|none|developer|unknown
-session_layer=tmpfs
-copy_to_ram=true|false
-usb_first=true
-system_sfs=venvwin-system.sfs
-drivers_sfs=venvwin-drivers.sfs
-dev_sfs=venvwin-dev.sfs
-save_target=venvwin-save partition or save image
-```
-
-## Persistence model
-
-First boot should offer:
-
-- no persistence
-- plain persistence
-- encrypted persistence
-- developer persistence
-
-Writes should first hit `session_rw`. For flash-drive life, persistence should be explicit:
-
-- save now
-- periodic save
-- save at shutdown
-- never save this session
-
-## Developer module
-
-Developer tools should not live in the normal user image.
-
-Target module:
-
-```text
-venvwin-dev.sfs
-```
-
-It should contain compilers, headers, packaging tools, and build dependencies. Load only in developer mode or by explicit user action.
-
-## Current alpha mapping
-
-Current alpha is not a full custom initramfs yet.
-
-It maps as:
-
-```text
-Debian live system = temporary system_ro approximation
-live persistence = temporary save_rw approximation
-venvWin capsules = app/user state under selected capsule store
-```
-
-The first implementation step is not to replace init. It is to expose the target model through BOOTSTATE, docs, manifest fields, and CLI inspection. Then the initramfs/OverlayFS work can happen without guessing.
+No automatic rewrite of upstream Puppy kernel/initramfs is necessary. Keep the authentic live architecture and add small, independently verifiable modules.
