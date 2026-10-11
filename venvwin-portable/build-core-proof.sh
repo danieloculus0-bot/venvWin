@@ -84,6 +84,39 @@ stop_qemu() {
 }
 trap 'stop_qemu; finish' EXIT
 
+# The Debian live GRUB menu may wait indefinitely for input in headless QEMU.
+# Use the existing QEMU human monitor to press Enter on its default entry.
+# This is only a boot attempt; readiness still requires markers emitted by
+# the guest itself, never this monitor acknowledgement.
+sleep 10
+echo "Selecting the default GRUB entry through the QEMU monitor"
+python3 - "$MONITOR" <<'PY' > dist/venvwin-core-qemu-boot-key.log 2>&1 || true
+import socket
+import sys
+
+monitor = sys.argv[1]
+try:
+    with socket.socket(socket.AF_UNIX) as channel:
+        channel.settimeout(4)
+        channel.connect(monitor)
+        try:
+            channel.recv(4096)
+        except socket.timeout:
+            pass
+        channel.sendall(b"sendkey ret\n")
+        try:
+            response = channel.recv(4096).decode(errors="replace")
+        except socket.timeout:
+            response = ""
+        if "unknown command" in response.lower() or "error:" in response.lower():
+            raise RuntimeError("QEMU monitor rejected sendkey ret: " + response[-300:])
+        print("QEMU_BOOT_MENU_ENTER_SENT (not guest boot evidence)")
+except (OSError, RuntimeError) as exc:
+    print("QEMU_BOOT_MENU_ENTER_FAILED: " + str(exc), file=sys.stderr)
+    raise SystemExit(1)
+PY
+cat dist/venvwin-core-qemu-boot-key.log
+
 # Screens diagnose firmware/login; only exact guest markers prove boot.
 for cycle in $(seq 1 16); do
   sleep 15
