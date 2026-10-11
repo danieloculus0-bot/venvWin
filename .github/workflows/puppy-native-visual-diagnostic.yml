@@ -1,0 +1,85 @@
+name: Puppy upstream QEMU visual diagnostic
+
+# Single upstream-only diagnostic. NO remaster and NO release ISO upload.
+# Repeat once after FIX: consume the HMP initial prompt before issuing commands,
+# confirmed by split-banner/real-frame regression tests in source-only CI.
+on:
+  push:
+    branches: [chore/puppy-native-cleanup-candidate-20261011]
+    paths:
+      - ".github/workflows/puppy-native-visual-diagnostic.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qemu-visual:
+    runs-on: ubuntu-latest
+    timeout-minutes: 16
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run QEMU monitor regression first
+        run: |
+          python -m pip install -e . pytest
+          python -m pytest -q tests/test_puppy_native_contract.py
+      - name: Install host-side QEMU only
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends qemu-system-x86
+      - name: Test the unchanged upstream Puppy ISO, never a homemade ISO
+        run: |
+          mkdir -p dist/puppy-upstream-diagnostic
+          cd dist/puppy-upstream-diagnostic
+          curl --fail --location --retry 3 --max-time 1000 \
+            -o upstream.iso \
+            https://distro.ibiblio.org/puppylinux/puppy-bookwormpup/BookwormPup64/10.0.12/BookwormPup64_10.0.12.iso
+          echo 'ae65f6e6d70a96f48bdbb291c2426f8a2fd77a73692e149e81a5eecb6fe7509f  upstream.iso' | sha256sum -c -
+          echo 'REAL_UPSTREAM_PUPPY_VERIFIED'
+          qemu-system-x86_64 -accel tcg -m 3072 -smp 2 \
+            -boot order=d -cdrom upstream.iso \
+            -vga std -display vnc=127.0.0.1:0 \
+            -serial file:guest-serial.log \
+            -monitor unix:qemu-hmp.sock,server=on,wait=off \
+            -net none -no-reboot >qemu-stderr.log 2>&1 &
+          PID=$!
+          trap 'kill "$PID" 2>/dev/null || true; wait "$PID" 2>/dev/null || true' EXIT
+          sleep 10
+          python3 ../../puppy-native/qemu-monitor-probe.py \
+            --socket qemu-hmp.sock --action enter \
+            > qemu-enter.log 2>&1 || true
+          sleep 25
+          python3 ../../puppy-native/qemu-monitor-probe.py \
+            --socket qemu-hmp.sock --action screen --output "$PWD/frame-35s.ppm" \
+            > qemu-screen-35s.log 2>&1 || true
+          sleep 40
+          python3 ../../puppy-native/qemu-monitor-probe.py \
+            --socket qemu-hmp.sock --action screen --output "$PWD/frame-75s.ppm" \
+            > qemu-screen-75s.log 2>&1 || true
+          sleep 40
+          python3 ../../puppy-native/qemu-monitor-probe.py \
+            --socket qemu-hmp.sock --action screen --output "$PWD/frame-115s.ppm" \
+            > qemu-screen-115s.log 2>&1 || true
+          cat qemu-enter.log qemu-screen-*.log
+          ls -l frame-*.ppm 2>/dev/null || true
+          if ! find . -name 'frame-*.ppm' -type f -size +128c | grep -q .; then
+            echo 'UPSTREAM_FRAME_PROOF_MISSING: QEMU HMP screen capture failed' >&2
+            exit 1
+          fi
+          echo 'UPSTREAM_QEMU_FRAME_CAPTURED (not guest app or desktop readiness)'
+      - name: Upload only boot diagnostics, never an unverified ISO
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: puppy-upstream-visual-diagnostic
+          retention-days: 10
+          if-no-files-found: warn
+          path: |
+            dist/puppy-upstream-diagnostic/guest-serial.log
+            dist/puppy-upstream-diagnostic/qemu-stderr.log
+            dist/puppy-upstream-diagnostic/qemu-enter.log
+            dist/puppy-upstream-diagnostic/qemu-screen-*.log
+            dist/puppy-upstream-diagnostic/frame-*.ppm

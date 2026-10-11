@@ -99,3 +99,38 @@ Once the native product passes its release criteria, the new main branch can
 be cleaned of the obsolete Debian builder and its workflows. Never delete
 `src/venvwin`, the tests for its actual functionality, or BEAN evidence
 contracts merely to save repository bytes.
+
+
+## Measured October 11 engineering evidence
+
+The first actual native-Puppy remaster was run by
+[GitHub Actions run 38166940199](../../actions/runs/38166940199).
+
+| Measurement | Verified result |
+| --- | --- |
+| Upstream Puppy 10.0.12 SHA-256 | Match against the official published digest |
+| venvWin add-on ydrv SFS | 40,960 bytes |
+| Remastered native Puppy ISO | **829,751,296 bytes, approximately 791 MiB** |
+| Upstream BIOS and UEFI boot records | Preserved and statically inspected with xorriso |
+| First attempted QEMU guest boot | **FAIL / not proven**: empty serial log, no in-guest readiness markers |
+| ISO promoted or published | **No** |
+
+[Actual diagnostics](../../actions/runs/38166940199/artifacts/11712488515)
+are retained; the rejected ISO was not released. The monitor-screenshot
+instrumentation was found to acknowledge the initial QEMU HMP prompt without
+waiting for the post-command response. An upstream-only diagnostic and
+corrected split-banner regression tests are isolated from the remaster.
+
+The current dedicated
+[cleanup draft PR #19](../../pull/19)
+removes 56 archived Debian-era builders, workflows, docs, and obsolete tests,
+while keeping the working capsule Python code. A green source test or static
+ISO inventory **does not prove that the live system boots**.
+
+### Promotion rule
+
+Only a boot-tested and accurately labeled Puppy build may replace the old
+`main`. It must retain actual overlay/mount behavior and the Windows capsule
+engine, while clearly identifying copy-to-RAM, chosen save/reboot persistence,
+standalone SFS modules, and real in-Puppy EXE execution as separately verified
+or still pending. No unproven ISO is a release.

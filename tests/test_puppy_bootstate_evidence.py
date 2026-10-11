@@ -42,3 +42,42 @@ def test_ram_boot_flag_is_not_ram_copy_proof(monkeypatch):
     assert report.copy_to_ram is False
     assert "target-not-yet-boot-verified" in report.architecture
     assert "copy_to_ram_requested=true" in report.to_lines()
+
+
+def test_native_puppy_actual_root_and_sfs_mounts_override_planned_paths(tmp_path):
+    from venvwin.bootstate import native_puppy_layers
+    info = tmp_path / "mountinfo"
+    info.write_text(
+        "20 1 0:3 / / rw,relatime - overlay overlay rw,lowerdir=/initrd/pup_ro2,upperdir=/initrd/pup_rw\n"
+        "21 1 7:0 / /initrd/pup_ro2 ro,relatime - squashfs /dev/loop0 ro\n"
+        "22 1 0:6 / /initrd/pup_rw rw,relatime - tmpfs tmpfs rw\n"
+    )
+    native = native_puppy_layers(info)
+    assert native is not None
+    assert {x.name for x in native} == {
+        "puppy_root_overlay", "pup_ro2", "puppy_rw",
+    }
+    assert all(x.source == "observed_mountinfo" and x.mounted for x in native)
+    assert {x.name for x in runtime_layers(info)} == {x.name for x in native}
+    assert not any(x.path.startswith("/initrd/venvwin/") for x in native)
+
+
+def test_arbitrary_host_overlay_root_is_not_puppy_evidence(tmp_path):
+    from venvwin.bootstate import native_puppy_layers
+    info = tmp_path / "host_mountinfo"
+    info.write_text(
+        "20 1 0:3 / / rw,relatime - overlay overlay rw,lowerdir=/var/lib/docker,upperdir=/tmp\n"
+        "21 1 7:1 / /mnt/iso ro - squashfs /dev/loop0 ro\n"
+    )
+    assert native_puppy_layers(info) is None
+    assert all(x.source == "planned_unverified" for x in runtime_layers(info))
+
+
+def test_unmounted_puppy_looking_directory_cannot_fake_native_root(tmp_path):
+    from venvwin.bootstate import native_puppy_layers
+    info = tmp_path / "bad_mountinfo"
+    info.write_text(
+        "20 1 0:3 / / rw,relatime - ext4 /dev/sda2 rw\n"
+        "21 1 7:0 / /initrd/pup_ro2 ro - squashfs /dev/loop0 ro\n"
+    )
+    assert native_puppy_layers(info) is None

@@ -27,45 +27,15 @@ cleanup() {
 trap cleanup EXIT
 sleep 10
 # Drive the EXISTING upstream Puppy ISO boot menu; not a proof of guest startup.
-python3 - "$MONITOR" <<'PY' > "$OUT/qemu-grub-input.log" 2>&1 || true
-import socket
-import sys
-try:
-    with socket.socket(socket.AF_UNIX) as s:
-        s.settimeout(4)
-        s.connect(sys.argv[1])
-        try:
-            s.recv(4096)
-        except socket.timeout:
-            pass
-        s.sendall(b"sendkey ret\n")
-        print("UPSTREAM_BOOT_MENU_ENTER_SENT (not guest evidence)")
-except (OSError, RuntimeError) as exc:
-    print("UPSTREAM_BOOT_MENU_ENTER_FAILED:", exc, file=sys.stderr)
-    raise SystemExit(1)
-PY
+python3 "$ROOT/puppy-native/qemu-monitor-probe.py" --socket "$MONITOR" \
+  --action enter > "$OUT/qemu-grub-input.log" 2>&1 || true
 cat "$OUT/qemu-grub-input.log" || true
 for cycle in $(seq 1 32); do
   sleep 15
   if [[ "$cycle" == 4 || "$cycle" == 12 || "$cycle" == 24 ]]; then
     DEST="$OUT/qemu-frame-$((cycle * 15))s.ppm"
-    python3 - "$MONITOR" "$DEST" <<'PY' || true
-import socket
-import sys
-from pathlib import Path
-try:
-    with socket.socket(socket.AF_UNIX) as s:
-        s.settimeout(5)
-        s.connect(sys.argv[1])
-        try:
-            s.recv(4096)
-        except socket.timeout:
-            pass
-        s.sendall(("screendump " + str(Path(sys.argv[2]).resolve()) + "\n").encode())
-        print("QEMU_SCREENSHOT_REQUESTED (not guest evidence)")
-except OSError as exc:
-    print("SCREENSHOT_FAILED:", exc)
-PY
+    python3 "$ROOT/puppy-native/qemu-monitor-probe.py" --socket "$MONITOR" \
+      --action screen --output "$DEST" || true
   fi
   if [[ -f "$SERIAL" ]] &&
      grep -Fxq 'PUPPY_GUI_AND_OVERLAY_PRESENT' "$SERIAL" &&

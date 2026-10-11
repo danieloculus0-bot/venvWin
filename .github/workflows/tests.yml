@@ -48,7 +48,8 @@ jobs:
           venvwin snapshot create notepad-plus-plus --label smoke
           venvwin reset notepad-plus-plus
 
-      - name: Pre-ISO readiness gate
+      - name: Native Puppy source tests (no image build)
         run: |
-          chmod +x venvwin-portable/pre-iso-readiness.sh
-          ./venvwin-portable/pre-iso-readiness.sh
+          python -m pytest -q tests/test_puppy_native_contract.py
+          bash -n puppy-native/build-puppy.sh
+          bash -n puppy-native/prove-puppy-qemu.sh

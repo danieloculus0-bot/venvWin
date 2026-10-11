@@ -47,15 +47,15 @@ Visual target:
 - no bloated theme gimmicks
 - Jetson-friendly and low-spec friendly
 
-## Technical base candidates
+## Technical foundation: native Puppy Linux
 
-Start with a Debian/Ubuntu-family live image because tooling and package availability matter more than being exotic.
+Use the genuine SHA-256-pinned BookwormPup64 10.0.12 image, keeping its proven live bootloader, kernel, initramfs, SFS and OverlayFS mechanism. The previous custom Debian/XFCE image remains available only in `archive/debian-live-build-20261011`.
 
-Likely desktop targets:
+Add the venvWin capsule manager through an independent Puppy SFS layer. Do not redesign Puppy's live init or replace it with a made-up package profile. More desktop applications, Wine, development tools and firmware can be independent modules after guest-side proof.
 
-- XFCE for lightweight builds
-- Cinnamon-like visual direction if performance allows
-- GTK-based venvWin GUI for low overhead
+The core should stay around the upstream ~791 MiB unless actual measured use justifies additions. The interface can evolve toward a dark Linux-Mint-adjacent appearance without replacing the lightweight Puppy desktop. Packaging a working Python runtime and Wine runners must be verified from inside the live Puppy guest.
+
+**Not yet sellable:** current CI proves an upstream Puppy boot through the overlay switch but has not verified the venvWin desktop or end-to-end Windows capsule workflow. Flash-ready/persistence/reboot, RAM measurement and modules require separate acceptance tests.
 
 ## Packaging idea
 

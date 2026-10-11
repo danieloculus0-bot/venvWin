@@ -172,7 +172,51 @@ def observed_mount_points(path: Path = Path("/proc/self/mountinfo")) -> set[str]
     return mounts
 
 
+def native_puppy_layers(mountinfo_path: Path = Path("/proc/self/mountinfo")) -> list[LayerState] | None:
+    """Use actual Puppy-specific OverlayFS mounts, never imaginary layer paths.
+
+    Return None when running on another Linux system or when no Puppy mount
+    evidence exists. An arbitrary overlay root is insufficient for Puppy proof.
+    """
+    try:
+        lines = mountinfo_path.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return None
+    found = []
+    root_overlay = None
+    for line in lines:
+        if " - " not in line:
+            continue
+        left, right = line.split(" - ", 1)
+        before, after = left.split(), right.split()
+        if len(before) < 6 or len(after) < 3:
+            continue
+        mountpoint = before[4].replace(r"\040", " ")
+        fs, device = after[0], after[1]
+        if mountpoint == "/" and fs in {"overlay", "aufs"}:
+            root_overlay = LayerState(
+                "puppy_root_overlay", "genuinely mounted union root",
+                "/", True, True, mounted=True, source="observed_mountinfo")
+        if mountpoint.startswith("/initrd/pup_ro") and fs == "squashfs":
+            found.append(LayerState(
+                mountpoint.removeprefix("/initrd/"),
+                "Puppy read-only original SFS layer",
+                mountpoint, False, True, mounted=True,
+                source="observed_mountinfo"))
+        elif mountpoint == "/initrd/pup_rw" and fs in {"tmpfs", "ext2", "ext3", "ext4", "fuseblk"}:
+            found.append(LayerState(
+                "puppy_rw", "observed writable session mount",
+                mountpoint, True, True, mounted=True,
+                source="observed_mountinfo"))
+    if root_overlay is None or not any(x.name.startswith("pup_ro") for x in found):
+        return None
+    return [root_overlay, *found]
+
+
 def runtime_layers(mountinfo_path: Path = Path("/proc/self/mountinfo")) -> list[LayerState]:
+    observed_native = native_puppy_layers(mountinfo_path)
+    if observed_native is not None:
+        return observed_native
     mounted_paths = observed_mount_points(mountinfo_path)
     layers: list[LayerState] = []
     for layer in planned_layers():
@@ -194,13 +238,20 @@ def runtime_layers(mountinfo_path: Path = Path("/proc/self/mountinfo")) -> list[
 def bootstate_report() -> BootState:
     cmdline = read_kernel_cmdline()
     boot_mode = detect_boot_mode(cmdline)
+    observed = runtime_layers()
+    native = any(layer.name == "puppy_root_overlay" and layer.mounted for layer in observed)
     return BootState(
+        architecture=("native-puppy-observed-overlay-root" if native
+                      else "puppy-adjacent-target-not-yet-boot-verified"),
+        system_sfs=("puppy_dpupbw64_10.0.12.sfs" if native else "venvwin-system.sfs"),
+        drivers_sfs=("zdrv_dpupbw64_10.0.12.sfs" if native else "venvwin-drivers.sfs"),
+        session_layer=("observed_native_overlay" if native else "tmpfs"),
         boot_mode=boot_mode,
         save_mode=detect_save_mode(cmdline),
         copy_to_ram=False,  # no proof of an actual SFS RAM copy yet
         copy_to_ram_requested=detect_copy_to_ram(cmdline) or boot_mode == "ram",
         cmdline=cmdline,
-        layers=runtime_layers(),
+        layers=observed,
     )
 
 
