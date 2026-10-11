@@ -71,7 +71,7 @@ def test_qemu_monitor_sends_real_enter_to_mock_grub_console(tmp_path):
     import threading
 
     script = CORE.read_text()
-    client = script.split('python3 - "$MONITOR" <<\'PY\'', 1)[1].split("\nPY", 1)[0]
+    client = script.split('python3 - "$MONITOR" <<\'PY\'', 1)[1].split("\n", 1)[1].split("\nPY", 1)[0]
     monitor = tmp_path / "qemu.sock"
     received = []
 
