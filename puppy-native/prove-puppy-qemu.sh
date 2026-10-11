@@ -15,7 +15,7 @@ ACCEL=tcg
 if [[ -r /dev/kvm && -w /dev/kvm ]]; then ACCEL=kvm; fi
 echo "ISOLATED_PUPPY_QEMU_ACCEL=$ACCEL"
 qemu-system-x86_64 -accel "$ACCEL" -m 3072 -smp 2 \
-  -boot order=d -cdrom "$ISO" -vga std -display vnc=127.0.0.1:0 \
+  -boot order=d -cdrom "$ISO" -vga std -usb -device usb-tablet -display vnc=127.0.0.1:0 \
   -serial "file:$SERIAL" -monitor "unix:$MONITOR,server=on,wait=off" \
   -no-reboot -net none >"$OUT/qemu-stderr.log" 2>&1 &
 PID=$!

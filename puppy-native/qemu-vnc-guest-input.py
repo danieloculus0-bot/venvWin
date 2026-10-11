@@ -4,7 +4,7 @@ from __future__ import annotations
 import argparse
 import time
 from pathlib import Path
-from PIL import Image
+from PIL import Image, ImageChops
 from vncdotool import api
 
 def type_guest(client, command: str) -> None:
@@ -38,7 +38,17 @@ def main() -> int:
             client.mouseMove(1017, 694)
             client.mousePress(1)
             time.sleep(8)
-            client.captureScreen(str(out / ("qemu-vnc-after-setup-%s.png" % attempt)))
+            after_setup = out / ("qemu-vnc-after-setup-%s.png" % attempt)
+            client.captureScreen(str(after_setup))
+            # Prior screenshot showed a stationary pointer and Quick Setup open.
+            # Do not type into the layout field unless the setup button changed.
+            region = (992, 677, 1045, 711)
+            before = Image.open(out / "qemu-vnc-before.png").convert("RGB").crop(region)
+            after = Image.open(after_setup).convert("RGB").crop(region)
+            if ImageChops.difference(before, after).getbbox() is None:
+                print("VNC_QUICK_SETUP_UNCHANGED: skip typing", flush=True)
+                continue
+            print("VNC_QUICK_SETUP_REGION_CHANGED", flush=True)
             client.mouseMove(32, 122)
             client.mousePress(1)
             time.sleep(9)
