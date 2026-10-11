@@ -4,6 +4,14 @@
 set -u
 export PYTHONPATH="/opt/venvwin/src${PYTHONPATH:+:$PYTHONPATH}"
 [ -n "${DISPLAY:-}" ] || exit 0
+# One session-local default for UI, CLI and Wine. No automatic persistent save.
+if [ -z "${VENVWIN_HOME:-}" ]; then
+  export VENVWIN_HOME="$HOME/venvWin-Capsules"
+  export VENVWIN_HOME_SOURCE="home-fallback"
+else
+  # A selected directory is not proof of host isolation or reboot persistence.
+  export VENVWIN_HOME_SOURCE="${VENVWIN_HOME_SOURCE:-advanced-user-selected}"
+fi
 STATE="/tmp/venvwin-session"
 mkdir -p "$STATE" 2>/dev/null || exit 0
 if ! mkdir "$STATE/once" 2>/dev/null; then exit 0; fi

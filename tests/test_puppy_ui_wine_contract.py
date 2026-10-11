@@ -53,6 +53,8 @@ def test_startup_avoids_automatic_wine_and_persistent_host_writes():
     assert "venvwin-control-center" in SESSION
     assert "PYTHONPATH=" in SESSION
     assert "venvwin dashboard" in SESSION
+    assert 'export VENVWIN_HOME_SOURCE="home-fallback"' in SESSION
+    assert "advanced-user-selected" in SESSION
 
 
 def test_missing_wine_runner_fails_closed_with_real_status():

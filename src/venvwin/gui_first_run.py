@@ -185,7 +185,7 @@ class VenvWinFirstRunApp:
         path = tk.Frame(card, bg=BG, padx=10, pady=9, highlightbackground=BORDER, highlightthickness=1)
         path.pack(fill="x")
         self.label(path, self.model["capsule_store"], 10, ACCENT, wrap=620).pack(anchor="w")
-        self.label(card, "Windows apps run inside isolated capsules. Your host stays clean unless you intentionally change storage.", 10, MUTED).pack(anchor="w", pady=(14, 0))
+        self.label(card, "Capsules keep app settings separate. Wine does not sandbox mounted drives. Choose save storage explicitly.", 10, MUTED).pack(anchor="w", pady=(14, 0))
         row = tk.Frame(card, bg=CARD)
         row.pack(fill="x", pady=(14, 0))
         self.button(row, "▣ Initialize / Repair", self.initialize, True).pack(side="left", padx=(0, 10))
