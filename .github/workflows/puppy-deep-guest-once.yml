@@ -18,7 +18,7 @@ jobs:
       - name: Host source tests and VNC library
         run: |
           python -m pip install -e . pytest pillow vncdotool==1.4.2
-          python -m pytest -q tests/test_puppy_native_contract.py tests/test_puppy_boot_branding.py tests/test_puppy_jwm_branding.py tests/test_puppy_bean_deferred.py
+          python -m pytest -q tests/test_puppy_native_contract.py tests/test_puppy_boot_branding.py tests/test_puppy_jwm_branding.py tests/test_puppy_bean_deferred.py tests/test_puppy_jwm_real_theme.py
           bash -n puppy-native/build-puppy.sh
           python -m py_compile puppy-native/qemu-desktop-guest-proof.py
           grep -q 'HOST_LATE_QUICK_SETUP_VISIBLE' puppy-native/qemu-desktop-guest-proof.py
@@ -32,6 +32,7 @@ jobs:
         run: |
           bash puppy-native/build-puppy.sh
           grep -q 'squashfs-root/usr/local/bin/venvwin-diagnostic' dist/puppy-native/venvwin-layer-inventory.txt
+          grep -q 'squashfs-root/root/.jwm/jwmrc-theme' dist/puppy-native/venvwin-layer-inventory.txt
           if grep -Ei 'bean-core|venvwin-bean|bean-mini-service|opt/bean' dist/puppy-native/venvwin-layer-inventory.txt; then
             echo BEAN_DEFAULT_INSTALL_FORBIDDEN
             exit 1
@@ -103,3 +104,5 @@ jobs:
             dist/puppy-native/venvwin-layer-inventory.txt
             dist/puppy-native/venvwin-boot-catalog.txt
             dist/puppy-native/iso-size.txt
+            dist/puppy-native/brand-core/jwmrc-theme.upstream
+            dist/puppy-native/brand-core/jwmrc-theme.venvwin

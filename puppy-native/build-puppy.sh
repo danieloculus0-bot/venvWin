@@ -62,6 +62,18 @@ python3 "$ROOT/puppy-native/brand-jwm-template.py" \
   --output "$OUT/brand-core/jwmrc.venvwin"
 install -m 0644 "$OUT/brand-core/jwmrc.venvwin" \
   "$STAGE/etc/xdg/templates/_root_.jwmrc"
+# JWM actually draws the live taskbar from /root/.jwm/jwmrc-theme, NOT from
+# the XDG template above. Use exact upstream byte-pinned source. Keep
+# upstream tray controls, menu shortcuts and all launch actions untouched.
+mkdir -p "$STAGE/root/.jwm"
+unsquashfs -no-wildcards -cat "$OUT/brand-core/main.sfs" root/.jwm/jwmrc-theme \
+  >"$OUT/brand-core/jwmrc-theme.upstream" 2>>"$OUT/brand-core-extract.log"
+test -s "$OUT/brand-core/jwmrc-theme.upstream"
+python3 "$ROOT/puppy-native/brand-jwm-theme.py" \
+  --input "$OUT/brand-core/jwmrc-theme.upstream" \
+  --output "$OUT/brand-core/jwmrc-theme.venvwin"
+install -m 0644 "$OUT/brand-core/jwmrc-theme.venvwin" \
+  "$STAGE/root/.jwm/jwmrc-theme"
 
 rsync -a --exclude='__pycache__/' --exclude='*.pyc' --exclude='*.pyo' \
   "$ROOT/src/venvwin" "$STAGE/opt/venvwin/src/"
@@ -90,7 +102,7 @@ for path in 'root/Startup/venvwin-session' 'usr/local/bin/venvwin-wine' \
   grep -q "squashfs-root/$path" "$OUT/venvwin-layer-inventory.txt"
 done
 for art in "root/Choices/ROX-Filer/PuppyPin" "usr/share/backgrounds/venvwin-wallpaper.png" \
-           "etc/xdg/templates/_root_.jwmrc"; do
+           "etc/xdg/templates/_root_.jwmrc" "root/.jwm/jwmrc-theme"; do
   grep -q "squashfs-root/$art" "$OUT/venvwin-layer-inventory.txt"
 done
 rm -f "$OUTPUT"
