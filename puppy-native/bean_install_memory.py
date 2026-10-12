@@ -101,7 +101,7 @@ def verify_receipt(path):
                         raise ValueError("incorrect Windows-generated marker")
                     outcome_ref = "sha256:windows-marker:" + r["marker_sha"]
                     if r["scope"] == "puppy-guest":
-                        serial = verified_file(folder, "guest-serial.log", r["serial_sha"]).read_bytes()
+                        serial = verified_file(folder, "guest-serial.log", r.get("serial_sha")).read_bytes()
                         expected = ("VENVWIN_GUEST_WINDOWS_APP_PASS=" + r["case"] + ":" + r["fingerprint"]).encode()
                         if expected not in serial.splitlines() or b"PUPPY_GUEST_BOOT_PROVEN" not in serial.splitlines():
                             raise ValueError("no true Puppy serial witness")
