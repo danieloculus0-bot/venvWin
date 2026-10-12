@@ -1,0 +1,53 @@
+name: Puppy QEMU KVM availability preflight (no ISO and no VM)
+on:
+  push:
+    branches: [experiment/puppy-wow64-sfs-20261012]
+    paths: [".github/workflows/puppy-kvm-availability-preflight.yml"]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  kvm-device:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect host nested virtualization and access (never guest proof)
+        run: |
+          set -euo pipefail
+          mkdir -p dist/puppy-kvm
+          uname -a | tee dist/puppy-kvm/host-kernel.txt
+          grep -E '(^flags|^Features)' /proc/cpuinfo | head -n 1 > dist/puppy-kvm/cpu-flags.txt || true
+          ls -l /dev/kvm 2>&1 | tee dist/puppy-kvm/device-status.txt || true
+          python3 - <<'PY' | tee dist/puppy-kvm/kvm-check.txt
+          import os, fcntl
+          print("KVM_DEVICE_EXISTS=", os.path.exists("/dev/kvm"))
+          print("KVM_DEVICE_RW=", os.access("/dev/kvm", os.R_OK | os.W_OK))
+          try:
+              with open("/dev/kvm", "rb+", buffering=0) as handle:
+                  api = fcntl.ioctl(handle.fileno(), 0xAE00, 0)
+                  print("KVM_NATIVE_API_VERSION=", api)
+                  print("KVM_GUEST_ACCEL_ELIGIBLE=", api == 12)
+          except OSError as e:
+              print("KVM_NATIVE_OPEN_FAILED=", type(e).__name__, str(e))
+          PY
+          if [ -e /dev/kvm ] && [ ! -r /dev/kvm ]; then
+            sudo chmod a+rw /dev/kvm
+            echo 'EPHEMERAL_HOST_DEVICE_PERMISSION_UPDATED'
+            python3 - <<'PY' | tee dist/puppy-kvm/kvm-after-permission.txt
+          import os, fcntl
+          try:
+              with open("/dev/kvm", "rb+", buffering=0) as h:
+                  print("KVM_AFTER_PERMISSION_VERSION=", fcntl.ioctl(h.fileno(), 0xAE00, 0))
+          except OSError as e:
+              print("KVM_AFTER_PERMISSION_OPEN_FAILED=", str(e))
+          PY
+          fi
+          echo KVM_HOST_PROBE_ONLY_NOT_PUPPY_BOOT_OR_WINDOWS_PROOF
+      - name: Save host-only KVM receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: puppy-kvm-native-host-preflight
+          path: dist/puppy-kvm/*
+          if-no-files-found: warn

@@ -1,0 +1,215 @@
+#!/bin/sh
+# Disposable Bookworm Wine64 guest-only test, NOT a production autostart.
+set -u
+LAB=/opt/venvwin/wine-lab
+[ -f "$LAB/EXPERIMENT_ONLY" ] || exit 0
+OUT=/tmp/venvwin-bookworm-wine64-lab
+mkdir -p "$OUT"
+exec >>"$OUT/guest.log" 2>&1
+emit() {
+  printf '%s\n' "$*"
+  if [ -c /dev/ttyS0 ]; then printf '%s\n' "$*" >/dev/ttyS0 2>/dev/null || true; fi
+}
+fail() { emit "VENVWIN_WINE_GUEST_BLOCKER=$1"; exit 1; }
+emit VENVWIN_WINE_GUEST_LAB_STARTED
+emit "VENVWIN_WINE_GUEST_KERNEL=$(uname -r)"
+emit "VENVWIN_WINE_GUEST_LIBC=$(getconf GNU_LIBC_VERSION 2>/dev/null || echo missing)"
+emit 'VENVWIN_WINE_RUNTIME_METHOD=OFFICIAL_DEBIAN_BOOKWORM_WINE64_SFS_NO_I386'
+for n in $(seq 1 45); do
+  grep -Fxq PUPPY_GUEST_BOOT_PROVEN /tmp/venvwin-puppy-guest-proof.log 2>/dev/null && break
+  sleep 4
+done
+grep -Fxq PUPPY_GUEST_BOOT_PROVEN /tmp/venvwin-puppy-guest-proof.log 2>/dev/null || fail NO_AUTOMATIC_PUPPY_GUEST_BOOT_WITNESS
+emit VENVWIN_WINE_GUEST_BOOT_INDEPENDENTLY_PROVEN
+command -v mount >/dev/null 2>&1 || fail NO_MOUNT
+for required in Setup.exe SimpleMsi.msi SmokeApp.exe manifest.sha256 selected-cases.txt; do
+  test -s "$LAB/$required" || fail MISSING_REAL_WINDOWS_FIXTURE
+done
+(cd "$LAB" && sha256sum -c manifest.sha256) >"$OUT/fixtures.sha256.log" 2>&1 || fail INSTALLER_HASH_MISMATCH
+CD=/mnt/venvwin-wow64-media
+ROOT=/mnt/venvwin-wow64-sfs
+MODULE=venvwin-bookworm-wine64-8.0.sfs
+mkdir -p "$CD" "$ROOT"
+FOUND=0
+for drive in /dev/sr1 /dev/sr0 /dev/sr2; do
+  [ -b "$drive" ] || continue
+  if mount -t iso9660 -o ro "$drive" "$CD" >"$OUT/media-mount.log" 2>&1; then
+    if [ -s "$CD/$MODULE" ]; then
+      emit "VENVWIN_WINE_MODULE_MEDIA_DEVICE=$drive"
+      FOUND=1
+      break
+    fi
+    umount "$CD" || fail MODULE_MEDIA_UNMOUNT
+  fi
+done
+[ "$FOUND" -eq 1 ] || fail MODULE_MEDIA_NOT_VISIBLE
+# BookwormPup's built-in dynamic SFS loader must expose /usr/lib/wine and
+# /usr/lib/x86_64-linux-gnu/wine into the live Puppy root. This is not host
+# installation, not a save file, and not permission to touch local disks.
+command -v sfs_load >/dev/null 2>&1 || fail PUPPY_SFS_LOAD_UNAVAILABLE
+sfs_load -qc "+$CD/$MODULE" >"$OUT/sfs-load.log" 2>&1 || {
+  tail -n 12 "$OUT/sfs-load.log" | while IFS= read -r l; do emit "GUEST_BOOKWORM_SFS_DIAGNOSTIC=$l"; done
+  fail NATIVE_SFS_LOAD_FAILED
+}
+test -x /usr/lib/wine/wine64 || fail WINE64_LOADER_NOT_EXPOSED
+test -d /usr/lib/x86_64-linux-gnu/wine || fail BOOKWORM_LIBWINE_NOT_EXPOSED
+test -x /usr/local/bin/wine || fail BOOKWORM_WINE_WRAPPER_NOT_EXPOSED
+# The real kernel records the loop DEVICE in /proc/self/mountinfo, not the
+# SFS filename. Follow Puppy's own sfs_load.overlay use of losetup -n -j.
+command -v losetup >/dev/null 2>&1 || fail NO_PUPPY_LOOP_SETUP_TOOL
+SFS_LOOP=$(losetup -n -j "$CD/$MODULE" | head -n 1 | cut -d: -f1)
+if [ -z "$SFS_LOOP" ] || ! grep -Fq " $SFS_LOOP " /proc/self/mountinfo; then
+  mount | grep -E 'squashfs|venvwin-bookworm' | while IFS= read -r l; do emit "GUEST_SFS_MOUNT_DIAGNOSTIC=$l"; done
+  fail NATIVE_SFS_LOOP_MOUNT_NOT_PROVEN
+fi
+test -f /usr/share/venvwin-wine-provenance.txt || fail DEBIAN_WINE_MODULE_PROVENANCE_NOT_EXPOSED
+emit VENVWIN_WINE_GUEST_EXTERNAL_SFS_MOUNTED
+export PATH="/usr/local/bin:$PATH"
+export WINEDEBUG=-all
+export WINEARCH=win64
+export WINEDLLOVERRIDES='winegstreamer='
+# This exact path resolved genuine guest Wine8 dynamic-link errors:
+# win32u.so needs ntdll.so; winex11.so needs both ntdll.so and win32u.so.
+# An SFS does not update ld.so.conf merely because it is mounted.
+WINE_UNIX_LIBDIR=/usr/lib/x86_64-linux-gnu/wine/x86_64-unix
+export LD_LIBRARY_PATH="$WINE_UNIX_LIBDIR${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+emit "GUEST_BOOKWORM_NATIVE_LIBRARY_PATH=$WINE_UNIX_LIBDIR"
+# A correct wrapper and a complete Wine SFS must resolve the runtime's
+# linked modules, not merely wine --version. Do not report a pass if DLLs fail.
+: > "$OUT/native-elf-unresolved.txt"
+if command -v ldd >/dev/null 2>&1; then
+  UNIX_WINE="$WINE_UNIX_LIBDIR"
+  for KIND in /usr/lib/wine/wine64 "$UNIX_WINE/ntdll.so" "$UNIX_WINE/win32u.so" "$UNIX_WINE/winex11.so" "$UNIX_WINE/gdi32.so" "$UNIX_WINE/user32.so"; do
+    [ -f "$KIND" ] || { emit "GUEST_BOOKWORM_MODULE_ABSENT=$KIND"; continue; }
+    ldd "$KIND" >"$OUT/ldd-$(basename "$KIND").log" 2>&1 || true
+    sed -n '/not found/p' "$OUT/ldd-$(basename "$KIND").log" | while IFS= read -r l; do
+      emit "GUEST_BOOKWORM_MISSING_SHARED_LIBRARY=$KIND:$l"
+      printf '%s: %s\n' "$KIND" "$l" >> "$OUT/native-elf-unresolved.txt"
+    done
+  done
+fi
+if [ -s "$OUT/native-elf-unresolved.txt" ]; then
+  fail WINE_NATIVE_LINK_DEPENDENCIES_UNRESOLVED
+fi
+emit GUEST_BOOKWORM_NATIVE_LINK_CLOSURE_PASS
+emit "GUEST_BOOKWORM_PE_USER32_PRESENT=$(test -s /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/user32.dll && echo YES || echo NO)"
+emit "GUEST_BOOKWORM_PE_KERNEL32_PRESENT=$(test -s /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/kernel32.dll && echo YES || echo NO)"
+version=$(timeout 30 wine --version 2>"$OUT/wine-version-stderr.log") || {
+  tail -n 10 "$OUT/wine-version-stderr.log" | while IFS= read -r l; do emit "GUEST_BOOKWORM_WINE_DIAGNOSTIC=$l"; done
+  fail NATIVE_WINE64_VERSION_FAILED
+}
+emit "VENVWIN_WINE_GUEST_VERSION=$version"
+emit VENVWIN_WINE_GUEST_RUNTIME_INSTALLED
+# Distinguish broken Wine runtime from venvWin's pre-populated capsule prefix.
+# First start Wine on a path that DOES NOT EXIST. Real Windows installation
+# still requires each normal venvWin capsule to pass independently below.
+CLEAN_PREFIX="$OUT/blank-native-prefix"
+[ ! -e "$CLEAN_PREFIX" ] || fail CLEAN_WINE_PREFIX_NOT_FRESH
+export WINEPREFIX="$CLEAN_PREFIX"
+emit VENVWIN_WINE_GUEST_CLEAN_PREFIX_INIT_START
+CLEAN_STARTED=$(date +%s)
+WINEDEBUG=+loaddll,+module,+seh timeout 75 wineboot --init >"$OUT/clean-prefix-init.log" 2>&1
+CLEAN_RESULT=$?
+emit "VENVWIN_WINE_GUEST_CLEAN_PREFIX_INIT_RESULT=$CLEAN_RESULT"
+emit "VENVWIN_WINE_GUEST_CLEAN_PREFIX_INIT_SECONDS=$(($(date +%s)-CLEAN_STARTED))"
+if [ "$CLEAN_RESULT" -ne 0 ]; then
+  grep -E 'err:|warn:module|unimplemented|status=c0000135|failed to load' "$OUT/clean-prefix-init.log" | head -n 45 |
+    while IFS= read -r l; do emit "GUEST_BOOKWORM_CLEAN_PREFIX_ERROR=$l"; done
+  emit VENVWIN_WINE_GUEST_CLEAN_PREFIX_FAILED
+  fail "CLEAN_WINEPREFIX_INIT_$CLEAN_RESULT"
+fi
+if [ ! -s "$CLEAN_PREFIX/system.reg" ] || [ ! -s "$CLEAN_PREFIX/user.reg" ]; then
+  fail CLEAN_PREFIX_REGISTRY_INCOMPLETE
+fi
+emit VENVWIN_WINE_GUEST_CLEAN_PREFIX_INIT_PASS
+ALL_PASS=1
+for CASE in nsis-exe wix-msi; do
+  grep -Fxq "$CASE" "$LAB/selected-cases.txt" || { emit "VENVWIN_WINE_GUEST_CASE_SKIPPED_BEAN_MEMORY=$CASE"; continue; }
+  case "$CASE" in
+    nsis-exe) SETUP="$LAB/Setup.exe"; CAPSULE=setup;;
+    wix-msi) SETUP="$LAB/SimpleMsi.msi"; CAPSULE=simplemsi;;
+  esac
+  HOME_DIR="$OUT/$CASE-capsule-store"
+  mkdir -p "$HOME_DIR"
+  export VENVWIN_HOME="$HOME_DIR"
+  /usr/local/bin/venvwin init >"$OUT/$CASE-init.log" 2>&1 || fail "$CASE-CAPSULE_INIT"
+  # Measure prefix bootstrap independently of the Windows installer. The prior
+  # real TCG guest spent 180 seconds in Wine on each installer without an app
+  # receipt. This separates slow/broken Wine initialization from NSIS/MSI.
+  /usr/local/bin/venvwin open "$SETUP" --dry-run >"$OUT/$CASE-plan.json" 2>"$OUT/$CASE-plan-stderr.log" ||
+    fail "$CASE-CAPSULE_PLAN"
+  PREFIX=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["prefix_path"])' \
+     "$HOME_DIR/capsules/$CAPSULE/venvwin.json" 2>/dev/null) ||
+    fail "$CASE-PREFIX_METADATA"
+  [ -d "$PREFIX" ] || fail "$CASE-PREFIX_DIRECTORY_MISSING"
+  export WINEPREFIX="$PREFIX"
+  STARTED_AT=$(date +%s)
+  emit "VENVWIN_WINE_GUEST_PREFIX_INIT_START=$CASE:$STARTED_AT"
+  # Avoid a blind increase to the EXE/MSI timeouts: explicitly call wineboot
+  # and independently verify the Windows registry/prefix after exit.
+  # Bounded diagnostic; previous genuine guest exited in one second with
+  # user32.CreateDialogParamW unresolved. Enable only DLL/module exception traces,
+  # never enormous relay logs; no reason to wait 210 seconds for unchanged failure.
+  WINEDEBUG=+loaddll,+module,+seh timeout 75 wineboot --init >"$OUT/$CASE-wineboot.log" 2>&1
+  INIT_RESULT=$?
+  FINISHED_AT=$(date +%s)
+  emit "VENVWIN_WINE_GUEST_PREFIX_INIT_ELAPSED=$CASE:$((FINISHED_AT - STARTED_AT))"
+  if [ "$INIT_RESULT" -ne 0 ]; then
+    emit "VENVWIN_WINE_GUEST_PREFIX_INIT_FAILED=$CASE:$INIT_RESULT"
+    tail -n 16 "$OUT/$CASE-wineboot.log" | while IFS= read -r l; do emit "GUEST_BOOKWORM_PREFIX_DIAGNOSTIC=$CASE:$l"; done
+    grep -E 'err:|not found|failed|unimplemented|CreateDialog|kernel32|user32|win32u|winex11' "$OUT/$CASE-wineboot.log" | tail -n 24 |
+      while IFS= read -r l; do emit "GUEST_BOOKWORM_DLL_LOAD_DIAGNOSTIC=$CASE:$l"; done
+    # Also preserve FIRST module-loader errors. The last lines often only
+    # repeat kernel32.dll failure and hide its root cause.
+    grep -E 'err:|warn:module|unimplemented|status=c0000135|failed to load' "$OUT/$CASE-wineboot.log" | head -n 45 |
+      while IFS= read -r l; do emit "GUEST_BOOKWORM_FIRST_DLL_ERROR=$CASE:$l"; done
+    ps -eo pid,ppid,stat,etime,pcpu,comm 2>/dev/null | grep -E '(wine|wineserver|services|explorer|rpcss)' | head -n 18 |
+      while IFS= read -r l; do emit "GUEST_BOOKWORM_PROCESS_DIAGNOSTIC=$CASE:$l"; done
+    fail "$CASE-WINEPREFIX_INIT_$INIT_RESULT"
+  fi
+  [ -s "$PREFIX/system.reg" ] && [ -s "$PREFIX/user.reg" ] ||
+    fail "$CASE-WINEPREFIX_REGISTRY_MISSING"
+  emit "VENVWIN_WINE_GUEST_PREFIX_INIT_PASS=$CASE"
+  emit "VENVWIN_WINE_GUEST_INSTALL_START=$CASE"
+  INSTALL_STARTED_AT=$(date +%s)
+  timeout 120 /usr/local/bin/venvwin open "$SETUP" >"$OUT/$CASE-install.json" 2>"$OUT/$CASE-install-stderr.log"
+  STATUS=$?
+  INSTALL_FINISHED_AT=$(date +%s)
+  emit "VENVWIN_WINE_GUEST_INSTALL_ELAPSED=$CASE:$((INSTALL_FINISHED_AT - INSTALL_STARTED_AT))"
+  if [ "$STATUS" -ne 0 ]; then
+    tail -n 8 "$OUT/$CASE-install-stderr.log" | while IFS= read -r l; do emit "GUEST_BOOKWORM_INSTALL_DIAGNOSTIC=$CASE:$l"; done
+    emit "VENVWIN_WINE_GUEST_INSTALL_FAILED=$CASE:$STATUS"
+    ALL_PASS=0
+    continue
+  fi
+  PREFIX=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["prefix_path"])' \
+     "$HOME_DIR/capsules/$CAPSULE/venvwin.json" 2>/dev/null) || { emit "VENVWIN_WINE_GUEST_PREFIX_UNOBSERVED=$CASE"; ALL_PASS=0; continue; }
+  TARGET=$(find "$PREFIX/drive_c" -type f -iname SmokeApp.exe 2>/dev/null | head -n 1)
+  [ -n "$TARGET" ] && [ -f "$TARGET" ] || { emit "VENVWIN_WINE_GUEST_APP_MISSING=$CASE"; ALL_PASS=0; continue; }
+  ORIG=$(sha256sum "$LAB/SmokeApp.exe" | cut -d' ' -f1)
+  ACTUAL=$(sha256sum "$TARGET" | cut -d' ' -f1)
+  [ "$ORIG" = "$ACTUAL" ] || { emit "VENVWIN_WINE_GUEST_APP_HASH_MISMATCH=$CASE"; ALL_PASS=0; continue; }
+  emit "VENVWIN_WINE_GUEST_APP_INSTALLED=$CASE"
+  timeout 90 /usr/local/bin/venvwin run "$CAPSULE" "$TARGET" >"$OUT/$CASE-launch.json" 2>"$OUT/$CASE-launch-stderr.log"
+  STATUS=$?
+  if [ "$STATUS" -ne 0 ]; then emit "VENVWIN_WINE_GUEST_LAUNCH_FAILED=$CASE:$STATUS"; ALL_PASS=0; continue; fi
+  MARKER="$PREFIX/drive_c/venvwin-simple-app-ran.txt"
+  [ -f "$MARKER" ] && [ "$(cat "$MARKER")" = REAL_WINDOWS_APPLICATION_LAUNCHED ] || {
+    emit "VENVWIN_WINE_GUEST_APPLICATION_MARKER_MISSING=$CASE"; ALL_PASS=0; continue;
+  }
+  emit "VENVWIN_WINE_GUEST_APP_MARKER_VERIFIED=$CASE"
+  for KIND in install launch marker; do
+    if [ "$KIND" = marker ]; then FILE="$MARKER"; else FILE="$OUT/$CASE-$KIND.json"; fi
+    emit "VENVWIN_WINE_GUEST_RECEIPT_BEGIN=$CASE:$KIND"
+    base64 "$FILE" | tr -d '\n' >/dev/ttyS0 2>/dev/null || true
+    printf '\n' >/dev/ttyS0 2>/dev/null || true
+    emit "VENVWIN_WINE_GUEST_RECEIPT_END=$CASE:$KIND"
+  done
+  FINGERPRINT=$(cat "$LAB/$CASE.fingerprint" 2>/dev/null) || fail MISSING_CASE_FINGERPRINT
+  [ "${#FINGERPRINT}" -eq 64 ] || fail INVALID_CASE_FINGERPRINT
+  case "$FINGERPRINT" in *[!0-9a-f]*|'') fail INVALID_CASE_FINGERPRINT;; esac
+  emit "VENVWIN_GUEST_WINDOWS_APP_PASS=$CASE:$FINGERPRINT"
+  emit "VENVWIN_WINE_GUEST_CASE_PASS=$CASE"
+done
+emit VENVWIN_WINE_GUEST_LAB_FINISHED
+[ "$ALL_PASS" -eq 1 ] || exit 1

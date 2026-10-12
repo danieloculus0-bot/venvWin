@@ -1,0 +1,114 @@
+name: Wine stable WoW64 native host acceptance comparison
+# Two published SHA256 pinned Wine stable builds. Host only, not Puppy acceptance.
+on:
+  push:
+    branches: [experiment/puppy-wow64-sfs-20261012]
+    paths: [".github/workflows/puppy-wine-stable-host-diagnostic.yml"]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  compare-stable:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - version: "11.0"
+            sha256: "39574efa1132c3ca0d5c77dd2eddbe4a49cca0d6cc2c290ff4924493a1c40314"
+          - version: "10.0"
+            sha256: "aeebbbf239e548f0136f1cd72a2e109dd9a572a8f703da3c09fa40d74d5c255f"
+    runs-on: ubuntu-24.04
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install native host Wine runtime dependencies, not Wine or Puppy
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            curl ca-certificates xz-utils xvfb xauth \
+            libasound2t64 libfaudio0 libfontconfig1 libfreetype6 libgl1 \
+            libglu1-mesa libgnutls30t64 libpulse0 libx11-6 libxext6 libxrender1 \
+            libxrandr2 libxi6
+      - name: SHA256 check and unpack official-source third-party prebuilt Wine
+        env:
+          VERSION: ${{ matrix.version }}
+          SHA256: ${{ matrix.sha256 }}
+        run: |
+          set -euo pipefail
+          mkdir -p dist/native-differential dist/native-differential/runtime
+          ARCHIVE="wine-${VERSION}-amd64-wow64.tar.xz"
+          curl --fail --location --retry 2 --connect-timeout 30 --max-time 600 \
+            -o "dist/native-differential/$ARCHIVE" \
+            "https://github.com/Kron4ek/Wine-Builds/releases/download/${VERSION}/$ARCHIVE"
+          printf '%s  %s\n' "$SHA256" "dist/native-differential/$ARCHIVE" | sha256sum -c - \
+            | tee dist/native-differential/archive-verification.log
+          tar -xJf "dist/native-differential/$ARCHIVE" -C dist/native-differential/runtime --no-same-owner
+          find dist/native-differential/runtime -type f -path '*/bin/wine' \
+            | tee dist/native-differential/launcher-paths.txt
+          test "$(wc -l < dist/native-differential/launcher-paths.txt)" -eq 1
+          echo STABLE_WINE_PINNED_BINARY_HASH_VERIFIED_NOT_GUEST_PROOF
+      - name: Instrument real Windows command on clean Wine prefix
+        id: differential
+        env:
+          VERSION: ${{ matrix.version }}
+        run: |
+          set -euo pipefail
+          OUT="$GITHUB_WORKSPACE/dist/native-differential"
+          BIN="$(dirname "$(cat "$OUT/launcher-paths.txt")")"
+          export WINEPREFIX="$OUT/clean-prefix"
+          export WINEARCH=win64
+          export WINEDLLOVERRIDES='winegstreamer='
+          export WINEDEBUG=-all
+          export PATH="$BIN:$PATH"
+          echo "WINE_VERSION=$("$BIN/wine" --version)" | tee "$OUT/summary.log"
+          ldd "$BIN/wine" >"$OUT/launcher-ldd.log" 2>&1 || true
+          grep -E 'not found' "$OUT/launcher-ldd.log" >"$OUT/launcher-unresolved.log" || true
+          echo "LIBRARY_LDD_MISSING=$(wc -l <"$OUT/launcher-unresolved.log")" | tee -a "$OUT/summary.log"
+          set +e
+          timeout 145 xvfb-run -a -s '-screen 0 1280x800x24' \
+            bash -c '
+              set +e
+              OUT="$1"; BIN="$2"
+              date +%s >"$OUT/prefix-start-epoch.txt"
+              timeout 62 "$BIN/wineboot" --init >"$OUT/wineboot.stdout" 2>"$OUT/wineboot.stderr"
+              RC=$?
+              echo "WINEBOOT_RC=$RC" | tee -a "$OUT/summary.log"
+              echo "WINEBOOT_SECONDS=$(($(date +%s)-$(cat "$OUT/prefix-start-epoch.txt")))" | tee -a "$OUT/summary.log"
+              timeout 50 "$BIN/wine" "C:\\windows\\system32\\cmd.exe" /c "echo VENVWIN_NATIVE_WINE_WINDOWS_COMMAND_EXECUTED" >"$OUT/cmd.stdout" 2>"$OUT/cmd.stderr"
+              CMD_RC=$?
+              echo "CMD_RC=$CMD_RC" | tee -a "$OUT/summary.log"
+              grep -a -F "VENVWIN_NATIVE_WINE_WINDOWS_COMMAND_EXECUTED" "$OUT/cmd.stdout" >/dev/null
+              MARKER=$?
+              echo "WINDOWS_COMMAND_MARKER_RC=$MARKER" | tee -a "$OUT/summary.log"
+              ps -eo pid,ppid,stat,etime,pcpu,comm | grep -E "(wine|wineboot|services|rpcss)" | head -n 12 >"$OUT/wine-processes.txt"
+              exit 0
+            ' _ "$OUT" "$BIN"
+          SCRIPT_RC=$?
+          set -e
+          echo "SCRIPT_RC=$SCRIPT_RC" | tee -a "$OUT/summary.log"
+          cat "$OUT/summary.log"
+          cat "$OUT/cmd.stdout" || true
+          cat "$OUT/cmd.stderr" || true
+          # This gate measures functionality, not premature installation claims.
+          grep -Fxq 'CMD_RC=0' "$OUT/summary.log"
+          grep -Fxq 'WINDOWS_COMMAND_MARKER_RC=0' "$OUT/summary.log"
+          echo HOST_WINDOWS_COMMAND_PROVEN_NOT_PUPPY_GUEST_PROOF
+      - name: Upload only receipts, never unproven runtimes or OS image
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wine-stable-${{ matrix.version }}-native-ABI-diagnostic
+          retention-days: 14
+          if-no-files-found: warn
+          path: |
+            dist/native-differential/archive-verification.log
+            dist/native-differential/summary.log
+            dist/native-differential/launcher-ldd.log
+            dist/native-differential/launcher-unresolved.log
+            dist/native-differential/launcher-paths.txt
+            dist/native-differential/wineboot.stdout
+            dist/native-differential/wineboot.stderr
+            dist/native-differential/cmd.stdout
+            dist/native-differential/cmd.stderr
+            dist/native-differential/wine-processes.txt

@@ -79,10 +79,18 @@ def main():
                 (out / "error.txt").write_text("incomplete_guest_receipt:" + str(exc)[:180])
         else:
             receipts_ok = False
-            candidates = [x for x in lines if x.startswith((
-                "VENVWIN_WINE_GUEST_BLOCKER=", "VENVWIN_WINE_GUEST_INSTALL_FAILED=",
-                "VENVWIN_WINE_GUEST_LAUNCH_FAILED=", "VENVWIN_WINE_GUEST_APP_MISSING="))]
-            note = candidates[-1] if candidates else "guest_wine_case_unverified"
+            # Never attribute the MSI failure to the EXE case (or vice versa).
+            # Historical serial streams can contain both failures from one VM.
+            common = [x for x in lines if x.startswith("VENVWIN_WINE_GUEST_BLOCKER=")]
+            case_prefixes = (
+                f"VENVWIN_WINE_GUEST_PREFIX_INIT_FAILED={case}:",
+                f"VENVWIN_WINE_GUEST_INSTALL_FAILED={case}:",
+                f"VENVWIN_WINE_GUEST_LAUNCH_FAILED={case}:",
+                f"VENVWIN_WINE_GUEST_APP_MISSING={case}",
+            )
+            case_errors = [x for x in lines if x.startswith(case_prefixes)]
+            note = case_errors[-1] if case_errors else (
+                common[-1] if common else "guest_wine_case_unverified")
             if not boot: note = "guest_boot_witness_absent"
             if not screenshot: note = "guest_screenshot_absent"
             (out / "error.txt").write_text(note[:220])
