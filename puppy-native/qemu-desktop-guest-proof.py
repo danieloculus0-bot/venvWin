@@ -71,33 +71,38 @@ def main():
             print("HOST_COULD_NOT_OBSERVE_GUEST_DESKTOP",flush=True)
             return 7
 
-        # Current release may bypass first-run setup and boot DIRECTLY into the
-        # branded venvWin desktop. Do not press alt-F4 on an empty desktop or
-        # mistake a correct desktop for a failed setup-dismissal attempt.
-        screenshot=Image.open(before).convert("RGB")
-        r,g,b=screenshot.getpixel((265,210))
-        branded=(r>=220 and 80<=g<=190 and b<85)
-        if branded:
-            print("HOST_OBSERVED_VENVWIN_ORANGE_BRANDED_WALLPAPER",flush=True)
-            setup=before
-        else:
-            print("HOST_DESKTOP_UNBRANDED_CHECK_FIRST_RUN_SETUP",flush=True)
-            client.keyPress("alt-f4")
-            time.sleep(7)
-            setup=out/"live-puppy-after-quicksetup-dismiss.png"
+        # Puppy may display the actual branded desktop for 10-25 seconds
+        # BEFORE its delayed Quick Setup steals keyboard focus. Wait for it.
+        time.sleep(28)
+        delayed=out/"live-puppy-first-run-settled.png"
+        client.captureScreen(str(delayed))
+        def setup_visible(path):
+            im=Image.open(path).convert("RGB")
+            r,g,b=im.getpixel((540,171))
+            return min(r,g,b)>170
+        print("HOST_LATE_QUICK_SETUP_VISIBLE="+str(setup_visible(delayed)),flush=True)
+        setup=out/"live-puppy-after-quicksetup-dismiss.png"
+        if setup_visible(delayed):
+            # The actual upstream window-close button is x1042,y116 at
+            # 1280x800. It dismisses the guest wizard without picking storage.
+            client.mouseMove(1042,116)
+            client.mousePress(1)
+            time.sleep(5)
             client.captureScreen(str(setup))
-            changed=fraction_changed(before,setup)
-            print(f"HOST_WINDOW_AFTER_ALT_F4_DIFFERENCE={changed:.4f}",flush=True)
-            if changed<0.08:
-                client.mouseMove(1017,692)
-                client.mousePress(1)
-                time.sleep(6)
+            if setup_visible(setup):
+                print("HOST_QUICK_SETUP_CLOSE_CLICK_INEFFECTIVE_TRY_ALT_F4",flush=True)
+                client.keyPress("alt-f4")
+                time.sleep(4)
                 client.captureScreen(str(setup))
-                changed=fraction_changed(before,setup)
-                print(f"HOST_WINDOW_AFTER_CLICK_OK_DIFFERENCE={changed:.4f}",flush=True)
-            if changed < 0.08:
-                print("HOST_QUICK_SETUP_NOT_DISMISSED_DO_NOT_TYPE",flush=True)
+            if setup_visible(setup):
+                print("HOST_LATE_QUICK_SETUP_STILL_PRESENT_DO_NOT_TYPE",flush=True)
                 return 8
+            print("HOST_SETUP_DISMISSED_ACTUAL_GUEST",flush=True)
+        else:
+            # When the first-run helper was already dismissed or did not
+            # spawn, its absence is a separate observed state, not a failure.
+            client.captureScreen(str(setup))
+            print("HOST_NO_FIRST_RUN_DIALOG_AT_SETTLED_DESKTOP",flush=True)
 
         # Stock BookwormPup64 terminal icon is x32,y122; the wallpaper/desktop
         # integration itself may be missing; rely on screenshots and serial.
@@ -115,6 +120,16 @@ def main():
         # It is safe to type the preinstalled *read-only* diagnostic manually.
         # This is not an autostart check. The utility writes guest findings to
         # /dev/ttyS0, independently collected by QEMU in CI.
+        # Explicitly foreground the real LXTerminal titlebar; Quick Setup
+        # may otherwise retain the keyboard even after the terminal opens.
+        client.mouseMove(121,36)
+        client.mousePress(1)
+        time.sleep(3)
+        client.captureScreen(str(out/"live-puppy-terminal-focused.png"))
+        if setup_visible(out/"live-puppy-terminal-focused.png"):
+            print("HOST_SETUP_REOPENED_TERMINAL_NOT_FOCUSED",flush=True)
+            return 10
+        print("HOST_TERMINAL_FOCUS_REQUESTED",flush=True)
         send_text(client,"venvwin-diagnostic")
         time.sleep(15)
         client.captureScreen(str(out/"live-puppy-diagnostic-response.png"))

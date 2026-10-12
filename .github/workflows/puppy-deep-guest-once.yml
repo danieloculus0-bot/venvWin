@@ -21,7 +21,7 @@ jobs:
           python -m pytest -q tests/test_puppy_native_contract.py tests/test_puppy_boot_branding.py tests/test_puppy_jwm_branding.py tests/test_puppy_bean_deferred.py
           bash -n puppy-native/build-puppy.sh
           python -m py_compile puppy-native/qemu-desktop-guest-proof.py
-          grep -q 'HOST_OBSERVED_VENVWIN_ORANGE_BRANDED_WALLPAPER' puppy-native/qemu-desktop-guest-proof.py
+          grep -q 'HOST_LATE_QUICK_SETUP_VISIBLE' puppy-native/qemu-desktop-guest-proof.py
           sh -n puppy-native/venvwin-diagnostic
       - name: Host-only QEMU and remaster tools
         run: |
