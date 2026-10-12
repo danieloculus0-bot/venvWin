@@ -68,10 +68,20 @@ export PATH="/usr/local/bin:$PATH"
 export WINEDEBUG=-all
 export WINEARCH=win64
 export WINEDLLOVERRIDES='winegstreamer='
+# Audit libraries loaded dynamically by Wine after startup. The wine64 ELF
+# loader can have a clean ldd while user32's Unix driver cannot load.
 if command -v ldd >/dev/null 2>&1; then
-  ldd /usr/lib/wine/wine64 >"$OUT/wine-ldd.log" 2>&1 || true
-  sed -n '/not found/p' "$OUT/wine-ldd.log" | while IFS= read -r l; do emit "GUEST_BOOKWORM_LINK_DIAGNOSTIC=$l"; done
+  UNIX_WINE=/usr/lib/x86_64-linux-gnu/wine/x86_64-unix
+  for KIND in /usr/lib/wine/wine64 "$UNIX_WINE/ntdll.so" "$UNIX_WINE/win32u.so" "$UNIX_WINE/winex11.so" "$UNIX_WINE/gdi32.so" "$UNIX_WINE/user32.so"; do
+    [ -f "$KIND" ] || { emit "GUEST_BOOKWORM_MODULE_ABSENT=$KIND"; continue; }
+    ldd "$KIND" >"$OUT/ldd-$(basename "$KIND").log" 2>&1 || true
+    sed -n '/not found/p' "$OUT/ldd-$(basename "$KIND").log" | while IFS= read -r l; do
+      emit "GUEST_BOOKWORM_MISSING_SHARED_LIBRARY=$KIND:$l"
+    done
+  done
 fi
+emit "GUEST_BOOKWORM_PE_USER32_PRESENT=$(test -s /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/user32.dll && echo YES || echo NO)"
+emit "GUEST_BOOKWORM_PE_KERNEL32_PRESENT=$(test -s /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/kernel32.dll && echo YES || echo NO)"
 version=$(timeout 30 wine --version 2>"$OUT/wine-version-stderr.log") || {
   tail -n 10 "$OUT/wine-version-stderr.log" | while IFS= read -r l; do emit "GUEST_BOOKWORM_WINE_DIAGNOSTIC=$l"; done
   fail NATIVE_WINE64_VERSION_FAILED
@@ -103,13 +113,18 @@ for CASE in nsis-exe wix-msi; do
   emit "VENVWIN_WINE_GUEST_PREFIX_INIT_START=$CASE:$STARTED_AT"
   # Avoid a blind increase to the EXE/MSI timeouts: explicitly call wineboot
   # and independently verify the Windows registry/prefix after exit.
-  timeout 210 wineboot --init >"$OUT/$CASE-wineboot.log" 2>&1
+  # Bounded diagnostic; previous genuine guest exited in one second with
+  # user32.CreateDialogParamW unresolved. Enable only DLL/module exception traces,
+  # never enormous relay logs; no reason to wait 210 seconds for unchanged failure.
+  WINEDEBUG=+loaddll,+module,+seh timeout 75 wineboot --init >"$OUT/$CASE-wineboot.log" 2>&1
   INIT_RESULT=$?
   FINISHED_AT=$(date +%s)
   emit "VENVWIN_WINE_GUEST_PREFIX_INIT_ELAPSED=$CASE:$((FINISHED_AT - STARTED_AT))"
   if [ "$INIT_RESULT" -ne 0 ]; then
     emit "VENVWIN_WINE_GUEST_PREFIX_INIT_FAILED=$CASE:$INIT_RESULT"
-    tail -n 14 "$OUT/$CASE-wineboot.log" | while IFS= read -r l; do emit "GUEST_BOOKWORM_PREFIX_DIAGNOSTIC=$CASE:$l"; done
+    tail -n 16 "$OUT/$CASE-wineboot.log" | while IFS= read -r l; do emit "GUEST_BOOKWORM_PREFIX_DIAGNOSTIC=$CASE:$l"; done
+    grep -E 'err:|not found|failed|unimplemented|CreateDialog|kernel32|user32|win32u|winex11' "$OUT/$CASE-wineboot.log" | tail -n 24 |
+      while IFS= read -r l; do emit "GUEST_BOOKWORM_DLL_LOAD_DIAGNOSTIC=$CASE:$l"; done
     ps -eo pid,ppid,stat,etime,pcpu,comm 2>/dev/null | grep -E '(wine|wineserver|services|explorer|rpcss)' | head -n 18 |
       while IFS= read -r l; do emit "GUEST_BOOKWORM_PROCESS_DIAGNOSTIC=$CASE:$l"; done
     fail "$CASE-WINEPREFIX_INIT_$INIT_RESULT"
