@@ -54,11 +54,15 @@ sfs_load -qc "+$CD/$MODULE" >"$OUT/sfs-load.log" 2>&1 || {
 test -x /usr/lib/wine/wine64 || fail WINE64_LOADER_NOT_EXPOSED
 test -d /usr/lib/x86_64-linux-gnu/wine || fail BOOKWORM_LIBWINE_NOT_EXPOSED
 test -x /usr/local/bin/wine || fail BOOKWORM_WINE_WRAPPER_NOT_EXPOSED
-if ! grep -Fq "$MODULE" /proc/self/mountinfo; then
-  # Overlay loaders might mount with a loop device pathname, log both forms.
+# The real kernel records the loop DEVICE in /proc/self/mountinfo, not the
+# SFS filename. Follow Puppy's own sfs_load.overlay use of losetup -n -j.
+command -v losetup >/dev/null 2>&1 || fail NO_PUPPY_LOOP_SETUP_TOOL
+SFS_LOOP=$(losetup -n -j "$CD/$MODULE" | head -n 1 | cut -d: -f1)
+if [ -z "$SFS_LOOP" ] || ! grep -Fq " $SFS_LOOP " /proc/self/mountinfo; then
   mount | grep -E 'squashfs|venvwin-bookworm' | while IFS= read -r l; do emit "GUEST_SFS_MOUNT_DIAGNOSTIC=$l"; done
-  fail NATIVE_SFS_MOUNT_NOT_PROVEN
+  fail NATIVE_SFS_LOOP_MOUNT_NOT_PROVEN
 fi
+test -f /usr/share/venvwin-wine-provenance.txt || fail DEBIAN_WINE_MODULE_PROVENANCE_NOT_EXPOSED
 emit VENVWIN_WINE_GUEST_EXTERNAL_SFS_MOUNTED
 export PATH="/usr/local/bin:$PATH"
 export WINEDEBUG=-all
