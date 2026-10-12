@@ -71,25 +71,33 @@ def main():
             print("HOST_COULD_NOT_OBSERVE_GUEST_DESKTOP",flush=True)
             return 7
 
-        # Prior guest frame showed Quick Setup at x=230..1054, y=105..720.
-        # Close via a keyboard shortcut rather than misclicking its layout UI.
-        client.keyPress("alt-f4")
-        time.sleep(7)
-        setup=out/"live-puppy-after-quicksetup-dismiss.png"
-        client.captureScreen(str(setup))
-        changed=fraction_changed(before,setup)
-        print(f"HOST_WINDOW_AFTER_ALT_F4_DIFFERENCE={changed:.4f}",flush=True)
-        if changed<0.08:
-            # Try the real bottom-right Quick Setup OK with release (mousePress).
-            client.mouseMove(1017,692)
-            client.mousePress(1)
-            time.sleep(6)
+        # Current release may bypass first-run setup and boot DIRECTLY into the
+        # branded venvWin desktop. Do not press alt-F4 on an empty desktop or
+        # mistake a correct desktop for a failed setup-dismissal attempt.
+        screenshot=Image.open(before).convert("RGB")
+        r,g,b=screenshot.getpixel((265,210))
+        branded=(r>=220 and 80<=g<=190 and b<85)
+        if branded:
+            print("HOST_OBSERVED_VENVWIN_ORANGE_BRANDED_WALLPAPER",flush=True)
+            setup=before
+        else:
+            print("HOST_DESKTOP_UNBRANDED_CHECK_FIRST_RUN_SETUP",flush=True)
+            client.keyPress("alt-f4")
+            time.sleep(7)
+            setup=out/"live-puppy-after-quicksetup-dismiss.png"
             client.captureScreen(str(setup))
             changed=fraction_changed(before,setup)
-            print(f"HOST_WINDOW_AFTER_CLICK_OK_DIFFERENCE={changed:.4f}",flush=True)
-        if changed < 0.08:
-            print("HOST_QUICK_SETUP_NOT_DISMISSED_DO_NOT_TYPE",flush=True)
-            return 8
+            print(f"HOST_WINDOW_AFTER_ALT_F4_DIFFERENCE={changed:.4f}",flush=True)
+            if changed<0.08:
+                client.mouseMove(1017,692)
+                client.mousePress(1)
+                time.sleep(6)
+                client.captureScreen(str(setup))
+                changed=fraction_changed(before,setup)
+                print(f"HOST_WINDOW_AFTER_CLICK_OK_DIFFERENCE={changed:.4f}",flush=True)
+            if changed < 0.08:
+                print("HOST_QUICK_SETUP_NOT_DISMISSED_DO_NOT_TYPE",flush=True)
+                return 8
 
         # Stock BookwormPup64 terminal icon is x32,y122; the wallpaper/desktop
         # integration itself may be missing; rely on screenshots and serial.

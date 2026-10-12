@@ -21,6 +21,7 @@ jobs:
           python -m pytest -q tests/test_puppy_native_contract.py tests/test_puppy_boot_branding.py tests/test_puppy_jwm_branding.py tests/test_puppy_bean_deferred.py
           bash -n puppy-native/build-puppy.sh
           python -m py_compile puppy-native/qemu-desktop-guest-proof.py
+          grep -q 'HOST_OBSERVED_VENVWIN_ORANGE_BRANDED_WALLPAPER' puppy-native/qemu-desktop-guest-proof.py
           sh -n puppy-native/venvwin-diagnostic
       - name: Host-only QEMU and remaster tools
         run: |
@@ -40,7 +41,10 @@ jobs:
         run: |
           set -euo pipefail
           OUT="$PWD/dist/puppy-native"
-          qemu-system-x86_64 -accel tcg -m 3072 -smp 2 -boot order=d \
+          ACCEL=tcg
+          if test -r /dev/kvm && test -w /dev/kvm; then ACCEL=kvm; fi
+          echo "QEMU_EFFECTIVE_ACCEL=$ACCEL"
+          qemu-system-x86_64 -accel "$ACCEL" -m 3072 -smp 2 -boot order=d \
             -cdrom "$OUT/venvwin-puppy-native-10.0.12-experimental.iso" \
             -vga std -usb -device usb-tablet \
             -display vnc=127.0.0.1:0 -net none -no-reboot \
