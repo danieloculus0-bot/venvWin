@@ -76,8 +76,39 @@ for CASE in nsis-exe wix-msi; do
   mkdir -p "$HOME_DIR"
   export VENVWIN_HOME="$HOME_DIR"
   /usr/local/bin/venvwin init >"$OUT/$CASE-init.log" 2>&1 || fail "$CASE-CAPSULE_INIT"
+  # Measure prefix bootstrap independently of the Windows installer. The prior
+  # real TCG guest spent 180 seconds in Wine on each installer without an app
+  # receipt. This separates slow/broken Wine initialization from NSIS/MSI.
+  /usr/local/bin/venvwin open "$SETUP" --dry-run >"$OUT/$CASE-plan.json" 2>"$OUT/$CASE-plan-stderr.log" ||
+    fail "$CASE-CAPSULE_PLAN"
+  PREFIX=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["prefix_path"])' \
+     "$HOME_DIR/capsules/$CAPSULE/venvwin.json" 2>/dev/null) ||
+    fail "$CASE-PREFIX_METADATA"
+  [ -d "$PREFIX" ] || fail "$CASE-PREFIX_DIRECTORY_MISSING"
+  export WINEPREFIX="$PREFIX"
+  STARTED_AT=$(date +%s)
+  emit "VENVWIN_WINE_GUEST_PREFIX_INIT_START=$CASE:$STARTED_AT"
+  # Avoid a blind increase to the EXE/MSI timeouts: explicitly call wineboot
+  # and independently verify the Windows registry/prefix after exit.
+  timeout 420 wine wineboot --init >"$OUT/$CASE-wineboot.log" 2>&1
+  INIT_RESULT=$?
+  FINISHED_AT=$(date +%s)
+  emit "VENVWIN_WINE_GUEST_PREFIX_INIT_ELAPSED=$CASE:$((FINISHED_AT - STARTED_AT))"
+  if [ "$INIT_RESULT" -ne 0 ]; then
+    emit "VENVWIN_WINE_GUEST_PREFIX_INIT_FAILED=$CASE:$INIT_RESULT"
+    tail -n 14 "$OUT/$CASE-wineboot.log" | while IFS= read -r l; do emit "GUEST_WOW64_PREFIX_DIAGNOSTIC=$CASE:$l"; done
+    ps -eo pid,ppid,stat,etime,pcpu,comm 2>/dev/null | grep -E '(wine|wineserver|services|explorer|rpcss)' | head -n 18 |
+      while IFS= read -r l; do emit "GUEST_WOW64_PROCESS_DIAGNOSTIC=$CASE:$l"; done
+    fail "$CASE-WINEPREFIX_INIT_$INIT_RESULT"
+  fi
+  [ -s "$PREFIX/system.reg" ] && [ -s "$PREFIX/user.reg" ] ||
+    fail "$CASE-WINEPREFIX_REGISTRY_MISSING"
+  emit "VENVWIN_WINE_GUEST_PREFIX_INIT_PASS=$CASE"
   emit "VENVWIN_WINE_GUEST_INSTALL_START=$CASE"
+  INSTALL_STARTED_AT=$(date +%s)
   timeout 180 /usr/local/bin/venvwin open "$SETUP" >"$OUT/$CASE-install.json" 2>"$OUT/$CASE-install-stderr.log"
+  INSTALL_FINISHED_AT=$(date +%s)
+  emit "VENVWIN_WINE_GUEST_INSTALL_ELAPSED=$CASE:$((INSTALL_FINISHED_AT - INSTALL_STARTED_AT))"
   STATUS=$?
   if [ "$STATUS" -ne 0 ]; then
     tail -n 8 "$OUT/$CASE-install-stderr.log" | while IFS= read -r l; do emit "GUEST_WOW64_INSTALL_DIAGNOSTIC=$CASE:$l"; done
