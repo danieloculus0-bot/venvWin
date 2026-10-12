@@ -1,8 +1,8 @@
 name: Real Puppy external WoW64 SFS and Windows EXE MSI evidence
 # Experimental branch only: never publish, merge, or build Debian OS.
 on:
-  push:
-    branches: [experiment/puppy-wow64-sfs-20261012]
+  pull_request:
+    branches: [test/puppy-guest-wine-proof-20261012]
     paths: [".github/workflows/puppy-wow64-sfs-guest-once.yml"]
   workflow_dispatch:
 concurrency:
