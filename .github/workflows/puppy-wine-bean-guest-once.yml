@@ -101,6 +101,31 @@ jobs:
             sha256sum -c manifest.sha256
           )
           echo SOURCE_AND_TEST_IMAGE_INTEGRITY_ONLY_NOT_REAL_GUEST_PROOF
+      - name: Inject the single changed Wine guest lab into verified cached Puppy ydrv
+        run: |
+          set -euo pipefail
+          OUT="$GITHUB_WORKSPACE/dist/puppy-native"
+          ISO="$OUT/venvwin-puppy-native-10.0.12-experimental.iso"
+          TMP="$OUT/wine-lab-sfs-replacement"
+          mkdir -p "$TMP"
+          # Reuse pinned 791 MiB ISO byte-verified above, not a fresh Debian build.
+          # Repack ONLY its small Puppy ydrv SFS to carry the changed test lab.
+          xorriso -osirrox on -indev "$ISO" -extract /ydrv_dpupbw64_10.0.12.sfs "$TMP/previous.sfs" > "$TMP/extract.log" 2>&1
+          unsquashfs -d "$TMP/root" "$TMP/previous.sfs" > "$TMP/unsquashfs.log"
+          cmp "$TMP/root/root/Startup/venvwin-wine-guest-lab" puppy-native/venvwin-wine-guest-lab && {
+            echo REFUSE_UNCHANGED_WINE_LAB_RETEST; exit 1;
+          }
+          install -m 0755 puppy-native/venvwin-wine-guest-lab "$TMP/root/root/Startup/venvwin-wine-guest-lab"
+          cmp puppy-native/venvwin-wine-guest-lab "$TMP/root/root/Startup/venvwin-wine-guest-lab"
+          mksquashfs "$TMP/root" "$TMP/patched.sfs" -noappend -all-root -comp xz -b 1048576 > "$TMP/squashfs.log" 2>&1
+          xorriso -indev "$ISO" -outdev "$TMP/patched.iso" -map "$TMP/patched.sfs" /ydrv_dpupbw64_10.0.12.sfs -boot_image any replay -commit > "$TMP/remap.log" 2>&1
+          test -s "$TMP/patched.iso"
+          xorriso -osirrox on -indev "$TMP/patched.iso" -extract /ydrv_dpupbw64_10.0.12.sfs "$TMP/verified.sfs" > "$TMP/verify-extract.log" 2>&1
+          unsquashfs -cat "$TMP/verified.sfs" root/Startup/venvwin-wine-guest-lab > "$TMP/verified-wine-lab"
+          cmp "$TMP/verified-wine-lab" puppy-native/venvwin-wine-guest-lab
+          sha256sum "$ISO" "$TMP/patched.iso" "$TMP/verified.sfs" | tee "$OUT/wine-lab-patch-proof.log"
+          mv "$TMP/patched.iso" "$ISO"
+          echo VERIFIED_CHANGED_GUEST_CODE_EMBEDDED_IN_DISPOSABLE_CACHED_PUPPY_REMIX
       - name: Save exact test ISO in CI cache only, NEVER as a published artifact
         if: steps.iso-cache.outputs.cache-hit != 'true' && steps.build.outcome == 'success'
         uses: actions/cache/save@v4
