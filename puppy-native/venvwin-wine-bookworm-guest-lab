@@ -100,6 +100,28 @@ version=$(timeout 30 wine --version 2>"$OUT/wine-version-stderr.log") || {
 }
 emit "VENVWIN_WINE_GUEST_VERSION=$version"
 emit VENVWIN_WINE_GUEST_RUNTIME_INSTALLED
+# Distinguish broken Wine runtime from venvWin's pre-populated capsule prefix.
+# First start Wine on a path that DOES NOT EXIST. Real Windows installation
+# still requires each normal venvWin capsule to pass independently below.
+CLEAN_PREFIX="$OUT/blank-native-prefix"
+[ ! -e "$CLEAN_PREFIX" ] || fail CLEAN_WINE_PREFIX_NOT_FRESH
+export WINEPREFIX="$CLEAN_PREFIX"
+emit VENVWIN_WINE_GUEST_CLEAN_PREFIX_INIT_START
+CLEAN_STARTED=$(date +%s)
+WINEDEBUG=+loaddll,+module,+seh timeout 75 wineboot --init >"$OUT/clean-prefix-init.log" 2>&1
+CLEAN_RESULT=$?
+emit "VENVWIN_WINE_GUEST_CLEAN_PREFIX_INIT_RESULT=$CLEAN_RESULT"
+emit "VENVWIN_WINE_GUEST_CLEAN_PREFIX_INIT_SECONDS=$(($(date +%s)-CLEAN_STARTED))"
+if [ "$CLEAN_RESULT" -ne 0 ]; then
+  grep -E 'err:|warn:module|unimplemented|status=c0000135|failed to load' "$OUT/clean-prefix-init.log" | head -n 45 |
+    while IFS= read -r l; do emit "GUEST_BOOKWORM_CLEAN_PREFIX_ERROR=$l"; done
+  emit VENVWIN_WINE_GUEST_CLEAN_PREFIX_FAILED
+  fail "CLEAN_WINEPREFIX_INIT_$CLEAN_RESULT"
+fi
+if [ ! -s "$CLEAN_PREFIX/system.reg" ] || [ ! -s "$CLEAN_PREFIX/user.reg" ]; then
+  fail CLEAN_PREFIX_REGISTRY_INCOMPLETE
+fi
+emit VENVWIN_WINE_GUEST_CLEAN_PREFIX_INIT_PASS
 ALL_PASS=1
 for CASE in nsis-exe wix-msi; do
   grep -Fxq "$CASE" "$LAB/selected-cases.txt" || { emit "VENVWIN_WINE_GUEST_CASE_SKIPPED_BEAN_MEMORY=$CASE"; continue; }
@@ -137,6 +159,10 @@ for CASE in nsis-exe wix-msi; do
     tail -n 16 "$OUT/$CASE-wineboot.log" | while IFS= read -r l; do emit "GUEST_BOOKWORM_PREFIX_DIAGNOSTIC=$CASE:$l"; done
     grep -E 'err:|not found|failed|unimplemented|CreateDialog|kernel32|user32|win32u|winex11' "$OUT/$CASE-wineboot.log" | tail -n 24 |
       while IFS= read -r l; do emit "GUEST_BOOKWORM_DLL_LOAD_DIAGNOSTIC=$CASE:$l"; done
+    # Also preserve FIRST module-loader errors. The last lines often only
+    # repeat kernel32.dll failure and hide its root cause.
+    grep -E 'err:|warn:module|unimplemented|status=c0000135|failed to load' "$OUT/$CASE-wineboot.log" | head -n 45 |
+      while IFS= read -r l; do emit "GUEST_BOOKWORM_FIRST_DLL_ERROR=$CASE:$l"; done
     ps -eo pid,ppid,stat,etime,pcpu,comm 2>/dev/null | grep -E '(wine|wineserver|services|explorer|rpcss)' | head -n 18 |
       while IFS= read -r l; do emit "GUEST_BOOKWORM_PROCESS_DIAGNOSTIC=$CASE:$l"; done
     fail "$CASE-WINEPREFIX_INIT_$INIT_RESULT"
@@ -147,9 +173,9 @@ for CASE in nsis-exe wix-msi; do
   emit "VENVWIN_WINE_GUEST_INSTALL_START=$CASE"
   INSTALL_STARTED_AT=$(date +%s)
   timeout 120 /usr/local/bin/venvwin open "$SETUP" >"$OUT/$CASE-install.json" 2>"$OUT/$CASE-install-stderr.log"
+  STATUS=$?
   INSTALL_FINISHED_AT=$(date +%s)
   emit "VENVWIN_WINE_GUEST_INSTALL_ELAPSED=$CASE:$((INSTALL_FINISHED_AT - INSTALL_STARTED_AT))"
-  STATUS=$?
   if [ "$STATUS" -ne 0 ]; then
     tail -n 8 "$OUT/$CASE-install-stderr.log" | while IFS= read -r l; do emit "GUEST_BOOKWORM_INSTALL_DIAGNOSTIC=$CASE:$l"; done
     emit "VENVWIN_WINE_GUEST_INSTALL_FAILED=$CASE:$STATUS"

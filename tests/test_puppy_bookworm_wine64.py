@@ -27,6 +27,10 @@ def test_actual_guest_sfs_and_windows_execution_gates():
     assert "GUEST_BOOKWORM_NATIVE_LINK_CLOSURE_PASS" in s
     assert "WINE_NATIVE_LINK_DEPENDENCIES_UNRESOLVED" in s
     assert "GUEST_BOOKWORM_NATIVE_LIBRARY_PATH=" in s
+    assert "VENVWIN_WINE_GUEST_CLEAN_PREFIX_INIT_PASS" in s
+    assert "CLEAN_WINEPREFIX_INIT_" in s
+    assert 'STATUS=$?\n  INSTALL_FINISHED_AT=' in s
+    assert "GUEST_BOOKWORM_FIRST_DLL_ERROR=" in s
     assert "dpkg --add-architecture" not in s
     assert "apt-get install wine" not in s
 
