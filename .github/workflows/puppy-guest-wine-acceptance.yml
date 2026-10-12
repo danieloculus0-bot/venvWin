@@ -1,0 +1,31 @@
+# Real Puppy Wine guest acceptance (not a host Wine smoke test)
+# Manually dispatch only after a compatible Wine runtime is available to the guest.
+name: Puppy guest Wine acceptance
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  guest-wine:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Source-only preflight
+        run: |
+          set -eu
+          sh -n puppy-native/venvwin-wine
+          sh -n puppy-native/venvwin-diagnostic
+          test -f puppy-native/qemu-desktop-guest-proof.py
+          echo SOURCE_PREFLIGHT_ONLY_NOT_GUEST_PROOF
+      - name: Explain required in-guest evidence
+        run: |
+          cat <<'EOF'
+          This workflow deliberately does not claim success from Ubuntu Wine.
+          Required next: boot remastered Puppy in QEMU, provision ABI-compatible Wine
+          inside that guest, execute an actual PE EXE and MSI in a capsule,
+          capture guest-origin wine --version, process exit codes, output artifact,
+          guest mountinfo, and screenshot. Fail closed if any receipt is absent.
+          No release and no ISO upload.
+          EOF
+          exit 1
