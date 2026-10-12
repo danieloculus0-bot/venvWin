@@ -1,0 +1,45 @@
+name: Inspect pinned Debian Bookworm zlib Windows runtime dependency
+# Source-only official Debian package metadata, NOT Wine or guest acceptance.
+on:
+  push:
+    branches: [experiment/puppy-bookworm-wine64-fallback-20261012]
+    paths: [".github/workflows/bookworm-zlib-runtime-pin.yml"]
+permissions:
+  contents: read
+jobs:
+  official-debian-zlib:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch Bookworm Windows zlib dependency and record exact SHA256
+        run: |
+          set -euo pipefail
+          mkdir -p dist/bookworm-zlib
+          FILE=libz-mingw-w64_1.2.13+dfsg-1_all.deb
+          curl --fail --location --retry 2 --connect-timeout 30 --max-time 240 \
+            -o "dist/bookworm-zlib/$FILE" \
+            "https://deb.debian.org/debian/pool/main/libz/libz-mingw-w64/$FILE"
+          dpkg-deb --field "dist/bookworm-zlib/$FILE" Package Version Architecture \
+            | tee dist/bookworm-zlib/package-control.txt
+          grep -Fxq 'Package: libz-mingw-w64' dist/bookworm-zlib/package-control.txt
+          grep -Fxq 'Version: 1.2.13+dfsg-1' dist/bookworm-zlib/package-control.txt
+          grep -Fxq 'Architecture: all' dist/bookworm-zlib/package-control.txt
+          dpkg-deb --contents "dist/bookworm-zlib/$FILE" \
+            >dist/bookworm-zlib/package-inventory.txt
+          grep -Fq 'x86_64-w64-mingw32/lib/zlib1.dll' dist/bookworm-zlib/package-inventory.txt
+          sha256sum "dist/bookworm-zlib/$FILE" \
+            | tee dist/bookworm-zlib/bookworm-zlib-exact-sha256.txt
+          stat -c 'OFFICIAL_BOOKWORM_ZLIB_PACKAGE_BYTES=%s' "dist/bookworm-zlib/$FILE"
+          echo WINDOWS_ZLIB_PACKAGE_IDENTIFIED_AND_HOLD_FOR_STATIC_PIN_NOT_GUEST_PROOF
+      - name: Save only package checksum and metadata (not binary)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: official-bookworm-windows-zlib-metadata
+          retention-days: 14
+          if-no-files-found: warn
+          path: |
+            dist/bookworm-zlib/bookworm-zlib-exact-sha256.txt
+            dist/bookworm-zlib/package-control.txt
+            dist/bookworm-zlib/package-inventory.txt
