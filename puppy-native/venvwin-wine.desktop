@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=venvWin Wine Status
+Comment=Inspect optional Windows runner (no auto-install)
+Exec=/usr/local/bin/venvwin-control-center
+Terminal=false
+Icon=applications-system
+Categories=Utility;

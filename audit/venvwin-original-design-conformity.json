@@ -1,0 +1,187 @@
+{
+  "schema": "bean.software_audit.v1",
+  "project": "venvWin Portable native Puppy design conformity",
+  "baseline_ref": "51b8adc11108263c8d61f5781681f1663a7f921c",
+  "candidate_ref": "09bcd0e8db95a7207fe5877881b060f4138203eb",
+  "checks": [
+    {
+      "id": "public-name",
+      "kind": "same_bytes",
+      "path": "docs/branding.md",
+      "requirement": "Canonical original product name has not been rewritten",
+      "source_ref": "docs/branding.md",
+      "reference_path": "docs/branding.md"
+    },
+    {
+      "id": "lean-doctrine",
+      "kind": "same_bytes",
+      "path": "architecture/product-doctrine.md",
+      "requirement": "Everything needed; nothing extra original architecture is retained",
+      "source_ref": "architecture/product-doctrine.md",
+      "reference_path": "architecture/product-doctrine.md"
+    },
+    {
+      "id": "original-gui-vision",
+      "kind": "same_bytes",
+      "path": "docs/gui-vision.md",
+      "requirement": "Original lightweight capsule UI vision is preserved as history",
+      "source_ref": "docs/gui-vision.md",
+      "reference_path": "docs/gui-vision.md"
+    },
+    {
+      "id": "native-boot-art",
+      "kind": "contains_all",
+      "path": "puppy-native/build-puppy.sh",
+      "requirement": "Native splash and wallpaper remaster are wired into the actual ISO",
+      "source_ref": "docs/branding.md",
+      "tokens": [
+        "venvwin-boot.svg",
+        "venvwin-wallpaper.svg",
+        "/boot/splash.png",
+        "/boot/splash.jpg",
+        "brand-jwm-template.py"
+      ]
+    },
+    {
+      "id": "original-orange-control-center",
+      "kind": "contains_all",
+      "path": "src/venvwin/gui_first_run.py",
+      "requirement": "Tk GUI keeps approved charcoal/orange original capability",
+      "source_ref": "puppy-native/BRANDING.md",
+      "tokens": [
+        "ACCENT = \"#ff8a00\"",
+        "Run Windows App",
+        "Wine runner"
+      ]
+    },
+    {
+      "id": "original-control-center-entry",
+      "kind": "contains_all",
+      "path": "puppy-native/venvwin-control-center",
+      "requirement": "Actual startup launcher retains original Tk UI and YAD fallback",
+      "source_ref": "docs/gui-vision.md",
+      "tokens": [
+        "venvwin.gui_first_run",
+        "command -v yad",
+        "Wine runner status"
+      ]
+    },
+    {
+      "id": "real-native-session",
+      "kind": "contains_all",
+      "path": "puppy-native/venvwin-session",
+      "requirement": "Puppy session initiates venvWin not invented shell process",
+      "source_ref": "architecture/product-doctrine.md",
+      "tokens": [
+        "venvwin-theme-apply",
+        "venvwin-wine --status",
+        "venvwin-control-center"
+      ]
+    },
+    {
+      "id": "branded-jwm",
+      "kind": "contains_all",
+      "path": "puppy-native/brand-jwm-template.py",
+      "requirement": "Branded menu without wholesale desktop replacement",
+      "source_ref": "docs/gui-vision.md",
+      "tokens": [
+        "label=\"venvWin\"",
+        "#ff8a00",
+        "<Include>"
+      ]
+    },
+    {
+      "id": "boot-command-preservation",
+      "kind": "contains_all",
+      "path": "puppy-native/brand-boot-menu.py",
+      "requirement": "Boot branding retains original kernel and initrd commands",
+      "source_ref": "architecture/product-doctrine.md",
+      "tokens": [
+        "verify_preserves_boot_commands",
+        "GRUB_ENTRIES",
+        "BIOS_ENTRIES"
+      ]
+    },
+    {
+      "id": "no-bean-bundle",
+      "kind": "forbids_all",
+      "path": "puppy-native/build-puppy.sh",
+      "requirement": "BEAN startup integration deferred as directed; keep lean",
+      "source_ref": "puppy-native/BEAN-DEFERRED.md",
+      "tokens": [
+        "bean-core",
+        "bean-mini-service",
+        "venvwin-bean"
+      ]
+    },
+    {
+      "id": "no-bean-autostart",
+      "kind": "forbids_all",
+      "path": "puppy-native/venvwin-session",
+      "requirement": "BEAN does not boot automatically",
+      "source_ref": "puppy-native/BEAN-DEFERRED.md",
+      "tokens": [
+        "venvwin-bean",
+        "bean.log",
+        "BEAN_DB_PATH"
+      ]
+    },
+    {
+      "id": "manual-bean-boundary",
+      "kind": "contains_all",
+      "path": "puppy-native/BEAN-DEFERRED.md",
+      "requirement": "Manual BEAN launch remains separate from native venvWin",
+      "source_ref": "puppy-native/BEAN-DEFERRED.md",
+      "tokens": [
+        "manually",
+        "does not install BEAN Core"
+      ]
+    },
+    {
+      "id": "wine-no-sandbox-hype",
+      "kind": "contains_all",
+      "path": "src/venvwin/gui_first_run.py",
+      "requirement": "UI states host drive exposure risk honestly",
+      "source_ref": "architecture/product-doctrine.md",
+      "tokens": [
+        "Wine does not sandbox mounted drives",
+        "Host write risk"
+      ]
+    },
+    {
+      "id": "native-booted-guest",
+      "kind": "runtime_gate",
+      "path": null,
+      "requirement": "Real Puppy graphical boot and guest startup proven with guest-origin evidence",
+      "source_ref": "docs/product-plan.md"
+    },
+    {
+      "id": "native-wine-exe-msi",
+      "kind": "runtime_gate",
+      "path": null,
+      "requirement": "Real Windows EXE/MSI install and launch verified in native Puppy guest, not Ubuntu",
+      "source_ref": "docs/product-plan.md"
+    },
+    {
+      "id": "cold-reboot-persistence",
+      "kind": "runtime_gate",
+      "path": null,
+      "requirement": "Chosen USB capsule storage preserves bytes across cold reboot",
+      "source_ref": "architecture/product-doctrine.md"
+    },
+    {
+      "id": "native-ui-present",
+      "kind": "runtime_gate",
+      "path": null,
+      "requirement": "Branded JWM desktop, BEAN absent, and original Control Center visible in real guest",
+      "source_ref": "docs/gui-vision.md"
+    },
+    {
+      "id": "safety-and-boot-mode",
+      "kind": "runtime_gate",
+      "path": null,
+      "requirement": "BIOS, UEFI, recovery entries and host isolation validated on target hardware",
+      "source_ref": "docs/product-plan.md"
+    }
+  ]
+}

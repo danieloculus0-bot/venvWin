@@ -1,0 +1,11 @@
+/* Original venvWin dark Mint-adjacent palette: premium orange, no neon. */
+/* GTK 3 custom CSS. Puppy JWM configuration intentionally left intact. */
+@define-color theme_bg_color #101216;
+@define-color theme_fg_color #f4f1ea;
+@define-color theme_selected_bg_color #ff8a00;
+@define-color theme_selected_fg_color #101216;
+@define-color theme_base_color #15181c;
+@define-color theme_text_color #f4f1ea;
+@define-color borders #35383e;
+selection, :selected { background-color: #ff8a00; color: #101216; }
+button.suggested-action, .suggested-action { background: #ff8a00; color: #101216; }

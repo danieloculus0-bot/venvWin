@@ -1,0 +1,32 @@
+#!/bin/sh
+# Real Puppy /root/Startup hook. Lightweight and non-blocking.
+# No Wine initialization, no apt, no forced persistence, no host disk probing.
+set -u
+export PYTHONPATH="/opt/venvwin/src${PYTHONPATH:+:$PYTHONPATH}"
+[ -n "${DISPLAY:-}" ] || exit 0
+# One session-local default for UI, CLI and Wine. No automatic persistent save.
+if [ -z "${VENVWIN_HOME:-}" ]; then
+  export VENVWIN_HOME="$HOME/venvWin-Capsules"
+  export VENVWIN_HOME_SOURCE="home-fallback"
+else
+  # A selected directory is not proof of host isolation or reboot persistence.
+  export VENVWIN_HOME_SOURCE="${VENVWIN_HOME_SOURCE:-advanced-user-selected}"
+fi
+STATE="/tmp/venvwin-session"
+mkdir -p "$STATE" 2>/dev/null || exit 0
+if ! mkdir "$STATE/once" 2>/dev/null; then exit 0; fi
+/usr/local/bin/venvwin-theme-apply >"$STATE/theme.log" 2>&1 || true
+/usr/local/bin/venvwin-wine --status >"$STATE/wine-status.log" 2>&1 || true
+if command -v python3 >/dev/null 2>&1 &&
+   python3 -c 'import venvwin.cli' 2>/dev/null; then
+  /usr/local/bin/venvwin init >"$STATE/initialize.log" 2>&1 || true
+  /usr/local/bin/venvwin associate >"$STATE/associate.log" 2>&1 || true
+  if command -v xdg-mime >/dev/null 2>&1; then
+    xdg-mime default venvwin-open-exe.desktop application/x-ms-dos-executable >>"$STATE/associate.log" 2>&1 || true
+    xdg-mime default venvwin-open-exe.desktop application/x-msdownload >>"$STATE/associate.log" 2>&1 || true
+    xdg-mime default venvwin-open-msi.desktop application/x-msi >>"$STATE/associate.log" 2>&1 || true
+  fi
+  /usr/local/bin/venvwin dashboard >"$STATE/dashboard.log" 2>&1 &
+fi
+/usr/local/bin/venvwin-control-center >"$STATE/control-center.log" 2>&1 &
+exit 0

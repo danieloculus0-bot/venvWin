@@ -1,0 +1,108 @@
+name: Native Puppy deep GUI and CLI virtualization probe
+# Same checksum-pinned remaster, actual QEMU guest, no hardware, network or release.
+on:
+  push:
+    branches: [feat/puppy-ui-wine-integration-20261011]
+    paths: [".github/workflows/puppy-deep-guest-once.yml"]
+  workflow_dispatch:
+permissions: {contents: read}
+jobs:
+  guest-evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Host source tests and VNC library
+        run: |
+          python -m pip install -e . pytest pillow vncdotool==1.4.2
+          python -m pytest -q tests/test_puppy_native_contract.py tests/test_puppy_boot_branding.py tests/test_puppy_jwm_branding.py tests/test_puppy_bean_deferred.py tests/test_puppy_jwm_real_theme.py
+          bash -n puppy-native/build-puppy.sh
+          python -m py_compile puppy-native/qemu-desktop-guest-proof.py
+          grep -q 'HOST_LATE_QUICK_SETUP_VISIBLE' puppy-native/qemu-desktop-guest-proof.py
+          sh -n puppy-native/venvwin-diagnostic
+      - name: Host-only QEMU and remaster tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            qemu-system-x86 xorriso squashfs-tools rsync curl librsvg2-bin imagemagick
+      - name: Build checksum-pinned bootable venvWin with original scripts
+        run: |
+          bash puppy-native/build-puppy.sh
+          grep -q 'squashfs-root/usr/local/bin/venvwin-diagnostic' dist/puppy-native/venvwin-layer-inventory.txt
+          grep -q 'squashfs-root/root/.jwm/jwmrc-theme' dist/puppy-native/venvwin-layer-inventory.txt
+          if grep -Ei 'bean-core|venvwin-bean|bean-mini-service|opt/bean' dist/puppy-native/venvwin-layer-inventory.txt; then
+            echo BEAN_DEFAULT_INSTALL_FORBIDDEN
+            exit 1
+          fi
+      - name: Observe actual Puppy first run, dismiss setup, open guest terminal
+        id: guest
+        run: |
+          set -euo pipefail
+          OUT="$PWD/dist/puppy-native"
+          ACCEL=tcg
+          if test -r /dev/kvm && test -w /dev/kvm; then ACCEL=kvm; fi
+          echo "QEMU_EFFECTIVE_ACCEL=$ACCEL"
+          qemu-system-x86_64 -accel "$ACCEL" -m 3072 -smp 2 -boot order=d \
+            -cdrom "$OUT/venvwin-puppy-native-10.0.12-experimental.iso" \
+            -vga std -usb -device usb-tablet \
+            -display vnc=127.0.0.1:0 -net none -no-reboot \
+            -serial "file:$OUT/deep-guest-serial.log" \
+            -monitor "unix:$OUT/deep-guest-monitor.sock,server=on,wait=off" \
+            >"$OUT/deep-guest-qemu-stderr.log" 2>&1 &
+          PID=$!
+          trap 'kill "$PID" 2>/dev/null || true; wait "$PID" 2>/dev/null || true' EXIT
+          sleep 9
+          python3 puppy-native/qemu-monitor-probe.py \
+            --socket "$OUT/deep-guest-monitor.sock" --action enter \
+            >"$OUT/deep-guest-menu-input.log" 2>&1 || true
+          set +e
+          python3 puppy-native/qemu-desktop-guest-proof.py \
+            --output "$OUT" --wait-seconds 520 >"$OUT/deep-guest-vnc.log" 2>&1
+          PROBE_STATUS=$?
+          set -e
+          cat "$OUT/deep-guest-vnc.log"
+          echo "VNC_HELPER_EXIT=$PROBE_STATUS"
+          echo "ACTUAL_GUEST_SERIAL_OUTPUT_START"
+          cat "$OUT/deep-guest-serial.log"
+          echo "ACTUAL_GUEST_SERIAL_OUTPUT_END"
+          # This marker only comes from a terminal launched inside real Puppy.
+          if grep -Fxq VENVWIN_INTERACTIVE_GUEST_TERMINAL_CONFIRMED "$OUT/deep-guest-serial.log"; then
+            echo ACTUAL_PUPPY_INTERACTIVE_TERMINAL_PROVEN
+          else
+            echo 'PUPPY_INTERACTIVE_GUEST_NOT_PROVEN' >&2
+            exit 1
+          fi
+          if grep -Fxq VENVWIN_YDRV_SOURCE_PRESENT "$OUT/deep-guest-serial.log"; then
+            echo ACTUAL_PUPPY_VENVWIN_SOURCE_PRESENT
+          else
+            echo 'PUPPY_YDRV_SOURCE_UNOBSERVED' >&2
+            exit 1
+          fi
+          if grep -Fxq PUPPY_GUEST_BOOT_PROVEN "$OUT/deep-guest-serial.log"; then
+            echo ACTUAL_PUPPY_AUTO_START_PROVEN_SEPARATE_FROM_INTERACTIVE
+          else
+            echo PUPPY_AUTO_START_NOT_YET_PROVEN
+          fi
+          echo ACTUAL_GUEST_SOURCE_VERIFIED_GUI_AND_WINE_FULL_PRODUCT_NOT_YET_PROVEN
+      - name: Retain host and guest receipts and real desktop images (not ISO)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: venvwin-native-deep-qemu-guest-evidence
+          retention-days: 21
+          if-no-files-found: warn
+          path: |
+            dist/puppy-native/deep-guest-serial.log
+            dist/puppy-native/deep-guest-qemu-stderr.log
+            dist/puppy-native/deep-guest-menu-input.log
+            dist/puppy-native/deep-guest-vnc.log
+            dist/puppy-native/live-puppy-*.png
+            dist/puppy-native/upstream-checksum.log
+            dist/puppy-native/venvwin-layer-inventory.txt
+            dist/puppy-native/venvwin-boot-catalog.txt
+            dist/puppy-native/iso-size.txt
+            dist/puppy-native/brand-core/jwmrc-theme.upstream
+            dist/puppy-native/brand-core/jwmrc-theme.venvwin
