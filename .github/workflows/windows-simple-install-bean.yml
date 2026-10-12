@@ -10,6 +10,9 @@ on:
       - "tests/test_bean_install_memory.py"
       - "src/venvwin/**"
   workflow_dispatch:
+concurrency:
+  group: venvwin-bean-simple-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:

@@ -47,6 +47,13 @@ def verified_file(folder, name, expected):
         raise ValueError("evidence content changed: " + name)
     return p
 
+def parse_cli_json(path):
+    raw = path.read_text(encoding="utf-8")
+    start = raw.find("{")
+    if start < 0:
+        raise ValueError("Wine CLI did not return JSON")
+    return json.JSONDecoder().raw_decode(raw[start:])[0]
+
 def fingerprint(scope, files, runtime):
     if scope not in SCOPES or not runtime or not files:
         raise ValueError("unbound test fingerprint")
@@ -76,19 +83,23 @@ def verify_receipt(path):
         blocker = "harness:" + error.read_text()[:100]
     else:
         log = verified_file(folder, "install.json", r["install_sha"])
-        install = json.loads(log.read_text())
+        install = parse_cli_json(log)
         if install.get("action") != "install" or install.get("runner_available") is not True:
             raise ValueError("no real Wine-backed installation receipt")
         if type(install.get("exit_code")) is not int:
             raise ValueError("installer did not return exit code")
         state, blocker = "failed", "installer_exit_nonzero"
+        if r.get("install_stderr_sha"):
+            stderr = verified_file(folder, "install-stderr.txt", r["install_stderr_sha"]).read_text(errors="replace")
+            if "syswow64" in stderr and ("c0000135" in stderr or "ntdll.dll" in stderr):
+                blocker = "wine32_runtime_missing"
         outcome_ref = "sha256:install-log:" + r["install_sha"]
         if install["exit_code"] == 0:
             if not r.get("launch_sha"):
                 state, blocker = "blocked", "installed_executable_not_located"
                 outcome_ref = None
             else:
-                launch = json.loads(verified_file(folder, "launch.json", r["launch_sha"]).read_text())
+                launch = parse_cli_json(verified_file(folder, "launch.json", r["launch_sha"]))
                 if launch.get("exit_code") != 0:
                     blocker = "windows_application_launch_failed"
                     outcome_ref = "sha256:launch-log:" + r["launch_sha"]

@@ -41,7 +41,7 @@ SectionEnd
 '''
 WIX_SOURCE = r'''<?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
- <Product Id="*" Name="venvWin Simple MSI Installer"
+ <Product Id="{AE521B3A-5BF4-4CA7-A4C6-0C57DC4BD1D8}" Name="venvWin Simple MSI Installer"
           Language="1033" Version="1.0.0" Manufacturer="venvWin"
           UpgradeCode="{E7CF7E80-F172-451D-8EA2-80F06425FE1D}">
   <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" Platform="x64"/>
@@ -94,7 +94,8 @@ def write_receipt(out, case, identity, wine, installer):
         "wine_version": wine, "installer_sha": file_hash(installer),
     }
     for field, file in (("install_sha", "install.json"), ("launch_sha", "launch.json"),
-                        ("marker_sha", "marker.txt"), ("error_sha", "error.txt")):
+                        ("marker_sha", "marker.txt"), ("error_sha", "error.txt"),
+                        ("install_stderr_sha", "install-stderr.txt"), ("launch_stderr_sha", "launch-stderr.txt")):
         if (out / file).is_file():
             data[field] = file_hash(out / file)
     target = out / "receipt.json"
@@ -141,13 +142,13 @@ def main():
     build(work)
     wine = call(["wine", "--version"], work, timeout=20).stdout.strip()
     source_files = [repo / p for p in (
-        "puppy-native/windows_install_smoke.py", "puppy-native/bean_install_memory.py",
+        "puppy-native/windows_install_smoke.py",
         "src/venvwin/cli.py", "src/venvwin/runner.py", "src/venvwin/open.py",
         "src/venvwin/install.py", "src/venvwin/intake.py")]
     failed = False
     for case in ("nsis-exe", "wix-msi"):
         installer = work / ("Setup.exe" if case == "nsis-exe" else "SimpleMsi.msi")
-        fp = fingerprint("ubuntu-wine", source_files + [installer, work / "SmokeApp.exe"],
+        fp = fingerprint("ubuntu-wine", source_files + [work / "SmokeApp.c", work / "Setup.nsi", work / "SimpleMsi.wxs"],
                          wine + "|ubuntu-24.04|" + os.environ["BEAN_CORE_PIN"])
         with Memory(args.db) as mem:
             decision = mem.plan("ubuntu-wine", case, fp, args.force)

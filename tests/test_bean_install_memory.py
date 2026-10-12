@@ -43,6 +43,22 @@ class InstallMemoryContracts(unittest.TestCase):
     def test_parser_checks_separate_wine_install_and_launch_receipts(self):
         self.assertEqual(verify_receipt(self.fixture())["state"], "passed")
 
+    def test_wine_prelude_and_wine32_blocker(self):
+        receipt = self.fixture()
+        folder = receipt.parent
+        install = folder / "install.json"
+        install.write_text('wine: diagnostic before JSON\n' + json.dumps({
+            "action":"install", "runner_available":True, "exit_code":1}))
+        (folder / "install-stderr.txt").write_text(
+            r'wine: failed to load C:\windows\syswow64\ntdll.dll error c0000135')
+        data = json.loads(receipt.read_text())
+        data["install_sha"] = file_hash(install)
+        data["install_stderr_sha"] = file_hash(folder / "install-stderr.txt")
+        receipt.write_text(json.dumps(data))
+        actual = verify_receipt(receipt)
+        self.assertEqual(actual["state"], "failed")
+        self.assertEqual(actual["blocker"], "wine32_runtime_missing")
+
     def test_tampered_application_marker_fails(self):
         receipt = self.fixture()
         (receipt.parent / "marker.txt").write_bytes(b"NOT_ACTUALLY_EXECUTED")
