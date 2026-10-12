@@ -60,6 +60,10 @@ class InstallMemoryContracts(unittest.TestCase):
             verify_receipt(self.fixture(scope="puppy-guest"))
 
     def test_real_bean_store_idempotence_and_scope_separation(self):
+        try:
+            from bean.evaluation.evidence_rank import EvidenceRankLedger
+        except ModuleNotFoundError:
+            self.skipTest("Real BEAN Core not installed in general source-only CI")
         receipt = self.fixture()
         with Memory(self.db) as m:
             first = m.record(receipt)
@@ -72,6 +76,10 @@ class InstallMemoryContracts(unittest.TestCase):
             self.assertTrue(EvidenceRankLedger(m.db).verify_chain())
 
     def test_hash_chain_tampering_blocks_reuse(self):
+        try:
+            from bean.evaluation.evidence_rank import EvidenceRankLedger
+        except ModuleNotFoundError:
+            self.skipTest("Real BEAN Core not installed in general source-only CI")
         receipt = self.fixture()
         with Memory(self.db) as m:
             m.record(receipt)
