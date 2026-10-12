@@ -91,6 +91,24 @@ install -m 0644 "$ROOT/puppy-native/venvwin-wine.desktop" "$STAGE/usr/share/appl
 install -m 0644 "$ROOT/puppy-native/venvwin-app.desktop" "$STAGE/root/Desktop/venvwin-app.desktop"
 install -m 0644 "$ROOT/puppy-native/WINE-AND-UI-INTEGRATION.md" "$STAGE/opt/venvwin/WINE-AND-UI-INTEGRATION.md"
 install -m 0644 "$ROOT/puppy-native/RELEASE-STATUS.txt" "$STAGE/opt/venvwin/RELEASE-STATUS.txt"
+# Isolated QEMU integration laboratory: no production auto-installer.
+# The default path remains byte-for-byte unchanged unless explicitly enabled.
+if [[ "${VENVWIN_GUEST_WINE_TEST:-0}" == "1" ]]; then
+  TEST_INPUT="${VENVWIN_GUEST_WINE_TEST_INPUT_DIR:-}"
+  [[ -n "$TEST_INPUT" && -d "$TEST_INPUT" ]] || { echo "GUEST_WINE_LAB_INPUT_MISSING" >&2; exit 1; }
+  for input in Setup.exe SimpleMsi.msi SmokeApp.exe manifest.sha256 nsis-exe.fingerprint wix-msi.fingerprint selected-cases.txt; do
+    [[ -s "$TEST_INPUT/$input" ]] || { echo "GUEST_WINE_LAB_PAYLOAD_MISSING=$input" >&2; exit 1; }
+  done
+  mkdir -p "$STAGE/opt/venvwin/wine-lab"
+  cp "$TEST_INPUT"/{Setup.exe,SimpleMsi.msi,SmokeApp.exe,manifest.sha256,nsis-exe.fingerprint,wix-msi.fingerprint,selected-cases.txt} "$STAGE/opt/venvwin/wine-lab/"
+  (
+    cd "$STAGE/opt/venvwin/wine-lab"
+    sha256sum -c manifest.sha256
+  ) || { echo "GUEST_WINE_LAB_PAYLOAD_HASH_MISMATCH" >&2; exit 1; }
+  : >"$STAGE/opt/venvwin/wine-lab/EXPERIMENT_ONLY"
+  install -m 0755 "$ROOT/puppy-native/venvwin-wine-guest-lab" "$STAGE/root/Startup/venvwin-wine-guest-lab"
+  echo "GUEST_WINE_LAB_STAGED_EXPERIMENT_ONLY_NOT_PRODUCT"
+fi
 rm -f "$SFS"
 mksquashfs "$STAGE" "$SFS" -noappend -all-root -comp xz -b 1048576 \
   >"$OUT/mksquashfs.log" 2>&1

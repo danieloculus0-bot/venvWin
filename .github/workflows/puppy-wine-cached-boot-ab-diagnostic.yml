@@ -1,0 +1,73 @@
+name: Cached Puppy real QEMU startup A-B diagnostic
+# Reuses already-remastered experimental ISO. NO rebuild, Wine install, merger, or ISO release.
+on:
+  push:
+    branches: [test/puppy-guest-wine-proof-20261012]
+    paths: [".github/workflows/puppy-wine-cached-boot-ab-diagnostic.yml"]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  differential-existing-image:
+    strategy:
+      fail-fast: false
+      matrix:
+        network: [none, user]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Inspect unchanged real guest probe source
+        run: |
+          set -euo pipefail
+          python -m py_compile puppy-native/qemu-startup-ab-probe.py puppy-native/qemu-desktop-guest-proof.py
+          grep -Fq "VENVWIN_INTERACTIVE_GUEST_TERMINAL_CONFIRMED" puppy-native/qemu-startup-ab-probe.py
+          grep -Fq "PUPPY_GUEST_BOOT_PROVEN" puppy-native/qemu-startup-ab-probe.py
+          echo SOURCE_VALIDATION_IS_NOT_GUEST_EVIDENCE
+      - name: Minimal QEMU VNC and image tools only
+        run: |
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends qemu-system-x86
+          python -m pip install pillow vncdotool==1.4.2
+      - name: Restore the EXACT existing lab ISO from original failed run's cache
+        id: image
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            dist/puppy-native/venvwin-puppy-native-10.0.12-experimental.iso
+            dist/puppy-native/tested-sources.sha256
+            dist/puppy-native/wine-lab-input
+          key: puppy-wine-lab-experimental-v1-15818cd217ffd06d5f7381bf35a4fed727cffaa862acbf623e2caf1c70c1efeb
+          fail-on-cache-miss: true
+      - name: Verify cached ISO hash WITHOUT assuming the SFS is cached
+        run: |
+          set -euo pipefail
+          test -s dist/puppy-native/venvwin-puppy-native-10.0.12-experimental.iso
+          test -s dist/puppy-native/tested-sources.sha256
+          grep -F 'venvwin-puppy-native-10.0.12-experimental.iso' \
+            dist/puppy-native/tested-sources.sha256 | sha256sum -c -
+          echo EXISTING_EXPERIMENTAL_IMAGE_REUSED_NO_REMOUNT_NO_REMASTER
+      - name: Boot unchanged ISO and observe GUI / serial without trusting screenshots as in-guest proof
+        run: |
+          set -euo pipefail
+          python puppy-native/qemu-startup-ab-probe.py \
+            --iso dist/puppy-native/venvwin-puppy-native-10.0.12-experimental.iso \
+            --out dist/puppy-native/boot-ab-${{ matrix.network }} \
+            --network ${{ matrix.network }} --duration 390
+          cat dist/puppy-native/boot-ab-${{ matrix.network }}/diagnosis.json
+          cat dist/puppy-native/boot-ab-${{ matrix.network }}/manual-vnc-diagnostic.log || true
+          echo HOST_DIFFERENTIAL_DIAGNOSTIC_COMPLETED_NOT_WINDOWS_PROOF
+      - name: Preserve real guest screenshots, serial and VNC investigation, NEVER ISO
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: puppy-cached-iso-network-${{ matrix.network }}-real-screen-and-serial
+          retention-days: 21
+          if-no-files-found: warn
+          path: |
+            dist/puppy-native/boot-ab-${{ matrix.network }}/*.png
+            dist/puppy-native/boot-ab-${{ matrix.network }}/*.json
+            dist/puppy-native/boot-ab-${{ matrix.network }}/*.log

@@ -1,0 +1,208 @@
+name: Real Puppy guest Wine EXE MSI with BEAN memory
+# One bounded isolated experiment. Never release experimental image or merge.
+# The 791 MiB distro is only remastered on an ISO cache miss.
+on:
+  push:
+    branches: [test/puppy-guest-wine-proof-20261012]
+    paths: [".github/workflows/puppy-wine-bean-guest-once.yml"]
+  workflow_dispatch:
+concurrency:
+  group: real-puppy-wine-lab-${{ github.ref }}
+  cancel-in-progress: true
+permissions:
+  contents: read
+jobs:
+  guest-windows-acceptance:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      BEAN_CORE_PIN: 1ff979c702f44d6de60645749aef7b763b183426
+      PYTHONPATH: ${{ github.workspace }}/_bean_core
+    steps:
+      - uses: actions/checkout@v4
+      - name: Recover previous BEAN install journal before any image work
+        uses: actions/cache/restore@v4
+        with:
+          path: .bean-install-memory
+          key: venvwin-bean-simple-v1-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            venvwin-bean-simple-v1-
+      - name: Check out genuine pinned BEAN Core
+        uses: actions/checkout@v4
+        with:
+          repository: danieloculus0-bot/BEAN
+          ref: 1ff979c702f44d6de60645749aef7b763b183426
+          path: _bean_core
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Static source checks, not guest evidence
+        run: |
+          set -euo pipefail
+          test "$(git -C _bean_core rev-parse HEAD)" = "$BEAN_CORE_PIN"
+          python -m pip install -e . pytest pillow vncdotool==1.4.2
+          python -m pytest -q tests/test_bean_install_memory.py tests/test_puppy_native_contract.py tests/test_puppy_ui_wine_contract.py tests/test_puppy_windows_intake.py
+          python -m py_compile puppy-native/prepare_guest_wine_fixtures.py puppy-native/import_guest_wine_evidence.py puppy-native/windows_install_smoke.py puppy-native/bean_install_memory.py puppy-native/qemu-desktop-guest-proof.py
+          sh -n puppy-native/venvwin-wine-guest-lab
+          bash -n puppy-native/build-puppy.sh puppy-native/prove-puppy-wine-qemu.sh
+          python - <<'PY'
+          from bean.evaluation.evidence_rank import EvidenceRankLedger
+          print("PINNED_REAL_BEAN_RANKER_READY_NOT_BOOT_PROOF")
+          PY
+      - name: Small Windows installer builders and QEMU tools, no Wine installed on host
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            gcc-mingw-w64-x86-64 nsis wixl xorriso squashfs-tools rsync curl \
+            qemu-system-x86 librsvg2-bin imagemagick
+      - name: BEAN plans cases using stored failure/success fingerprints
+        id: bean-plan
+        run: |
+          set -euo pipefail
+          python puppy-native/prepare_guest_wine_fixtures.py \
+            --repo "$GITHUB_WORKSPACE" \
+            --stage "$GITHUB_WORKSPACE/dist/puppy-native/wine-lab-input" \
+            --db "$GITHUB_WORKSPACE/.bean-install-memory/install.sqlite"
+          cd dist/puppy-native/wine-lab-input
+          sha256sum -c manifest.sha256
+          echo BEAN_CASES_SELECTED_AFTER_PRIOR_EVIDENCE_REVIEW
+      - name: Restore same exact experimental ISO, avoiding another remaster
+        uses: actions/cache/restore@v4
+        id: iso-cache
+        with:
+          path: |
+            dist/puppy-native/venvwin-puppy-native-10.0.12-experimental.iso
+            dist/puppy-native/tested-sources.sha256
+            dist/puppy-native/wine-lab-input
+          key: puppy-wine-lab-experimental-v1-15818cd217ffd06d5f7381bf35a4fed727cffaa862acbf623e2caf1c70c1efeb
+          fail-on-cache-miss: true
+      - name: Remaster checksum-pinned official Puppy only on cache miss
+        if: steps.iso-cache.outputs.cache-hit != 'true'
+        id: build
+        run: |
+          set -euo pipefail
+          VENVWIN_GUEST_WINE_TEST=1 \
+          VENVWIN_GUEST_WINE_TEST_INPUT_DIR="$GITHUB_WORKSPACE/dist/puppy-native/wine-lab-input" \
+          bash puppy-native/build-puppy.sh
+          grep -q 'squashfs-root/root/Startup/venvwin-wine-guest-lab' dist/puppy-native/venvwin-layer-inventory.txt
+          grep -q 'squashfs-root/opt/venvwin/wine-lab/Setup.exe' dist/puppy-native/venvwin-layer-inventory.txt
+          echo ONE_EXPERIMENTAL_ISO_CACHED_NOT_RELEASED
+      - name: Verify remastered image checksum and inputs
+        run: |
+          set -euo pipefail
+          test -s dist/puppy-native/venvwin-puppy-native-10.0.12-experimental.iso
+          test -s dist/puppy-native/tested-sources.sha256
+          grep -F "venvwin-puppy-native-10.0.12-experimental.iso" dist/puppy-native/tested-sources.sha256 | sha256sum -c -
+          echo CACHED_ISO_HASH_VERIFIED_INDEPENDENT_SFS_NOT_REQUIRED_FROM_IMMUTABLE_CACHE
+          (
+            cd dist/puppy-native/wine-lab-input
+            sha256sum -c manifest.sha256
+          )
+          echo SOURCE_AND_TEST_IMAGE_INTEGRITY_ONLY_NOT_REAL_GUEST_PROOF
+      - name: Inject the single changed Wine guest lab into verified cached Puppy ydrv
+        run: |
+          set -euo pipefail
+          OUT="$GITHUB_WORKSPACE/dist/puppy-native"
+          ISO="$OUT/venvwin-puppy-native-10.0.12-experimental.iso"
+          TMP="$OUT/wine-lab-sfs-replacement"
+          mkdir -p "$TMP"
+          # Reuse pinned 791 MiB ISO byte-verified above, not a fresh Debian build.
+          # Repack ONLY its small Puppy ydrv SFS to carry the changed test lab.
+          xorriso -osirrox on -indev "$ISO" -extract /ydrv_dpupbw64_10.0.12.sfs "$TMP/previous.sfs" > "$TMP/extract.log" 2>&1
+          unsquashfs -d "$TMP/root" "$TMP/previous.sfs" > "$TMP/unsquashfs.log"
+          cmp "$TMP/root/root/Startup/venvwin-wine-guest-lab" puppy-native/venvwin-wine-guest-lab && {
+            echo REFUSE_UNCHANGED_WINE_LAB_RETEST; exit 1;
+          }
+          install -m 0755 puppy-native/venvwin-wine-guest-lab "$TMP/root/root/Startup/venvwin-wine-guest-lab"
+          cmp puppy-native/venvwin-wine-guest-lab "$TMP/root/root/Startup/venvwin-wine-guest-lab"
+          mksquashfs "$TMP/root" "$TMP/patched.sfs" -noappend -all-root -comp xz -b 1048576 > "$TMP/squashfs.log" 2>&1
+          xorriso -indev "$ISO" -outdev "$TMP/patched.iso" -map "$TMP/patched.sfs" /ydrv_dpupbw64_10.0.12.sfs -boot_image any replay -commit > "$TMP/remap.log" 2>&1
+          test -s "$TMP/patched.iso"
+          xorriso -osirrox on -indev "$TMP/patched.iso" -extract /ydrv_dpupbw64_10.0.12.sfs "$TMP/verified.sfs" > "$TMP/verify-extract.log" 2>&1
+          unsquashfs -cat "$TMP/verified.sfs" root/Startup/venvwin-wine-guest-lab > "$TMP/verified-wine-lab"
+          cmp "$TMP/verified-wine-lab" puppy-native/venvwin-wine-guest-lab
+          sha256sum "$ISO" "$TMP/patched.iso" "$TMP/verified.sfs" | tee "$OUT/wine-lab-patch-proof.log"
+          mv "$TMP/patched.iso" "$ISO"
+          echo VERIFIED_CHANGED_GUEST_CODE_EMBEDDED_IN_DISPOSABLE_CACHED_PUPPY_REMIX
+      - name: Save exact test ISO in CI cache only, NEVER as a published artifact
+        if: steps.iso-cache.outputs.cache-hit != 'true' && steps.build.outcome == 'success'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            dist/puppy-native/venvwin-puppy-native-10.0.12-experimental.iso
+            dist/puppy-native/tested-sources.sha256
+            dist/puppy-native/wine-lab-input
+          key: puppy-wine-lab-experimental-v1-${{ hashFiles('puppy-native/build-puppy.sh', 'puppy-native/venvwin-wine-guest-lab', 'puppy-native/windows_install_smoke.py', 'src/venvwin/**', 'puppy-native/art/**', 'dist/puppy-native/wine-lab-input/selected-cases.txt') }}
+      - name: Real disposable QEMU Puppy with previously successful read-only GUI setup assist
+        id: qemu
+        run: |
+          set -euo pipefail
+          OUT="$GITHUB_WORKSPACE/dist/puppy-native"
+          mkdir -p "$OUT"
+          # Same tested ISO and actual Startup hooks. GUI helper only dismisses
+          # first-run setup and runs the preinstalled READ-ONLY diagnostic.
+          # It cannot create any guest acceptance marker by itself.
+          (
+            sleep 20
+            python puppy-native/qemu-desktop-guest-proof.py               --output "$OUT" --wait-seconds 500
+          ) > "$OUT/wine-lab-vnc-assist.log" 2>&1 &
+          ASSIST_PID=$!
+          set +e
+          bash puppy-native/prove-puppy-wine-qemu.sh
+          status=$?
+          set -e
+          if kill -0 "$ASSIST_PID" 2>/dev/null; then
+            kill "$ASSIST_PID" 2>/dev/null || true
+          fi
+          wait "$ASSIST_PID" 2>/dev/null || true
+          echo "QEMU_HARNESS_RETURN=$status"
+          cat "$OUT/wine-lab-vnc-assist.log" || true
+          echo "GUI_ASSIST_IS_NOT_AUTOSTART_OR_WINDOWS_PROOF"
+          # Continue to independent evidence importer even for diagnostic failure.
+          exit 0
+      - name: Independently parse true guest serial and store case-specific BEAN receipts
+        id: evidence
+        run: |
+          set -euo pipefail
+          python puppy-native/import_guest_wine_evidence.py \
+            --serial "$GITHUB_WORKSPACE/dist/puppy-native/wine-lab-guest-serial.log" \
+            --screenshot "$GITHUB_WORKSPACE/dist/puppy-native/wine-lab-guest-desktop.png" \
+            --fixture-dir "$GITHUB_WORKSPACE/dist/puppy-native/wine-lab-input" \
+            --evidence "$GITHUB_WORKSPACE/dist/puppy-native/wine-guest-receipts" \
+            --db "$GITHUB_WORKSPACE/.bean-install-memory/install.sqlite"
+          echo "BOTH_GUEST_INSTALLERS_PASS_BUT_FULL_PUPPY_GATES_STILL_UNPROVEN"
+      - name: Verify BEAN journal after guest attempt
+        if: always()
+        run: |
+          if test -f .bean-install-memory/install.sqlite; then
+            python puppy-native/bean_install_memory.py \
+              --db .bean-install-memory/install.sqlite verify
+          else
+            echo NO_BEAN_GUEST_RECEIPTS_TO_VERIFY
+          fi
+      - name: Save permanent-ish BEAN test memory separately from large ISO
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: .bean-install-memory
+          key: venvwin-bean-simple-v1-${{ github.run_id }}-${{ github.run_attempt }}
+      - name: Retain real guest serial, evidence, photos and BEAN DB only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: puppy-wine-real-guest-bean-evidence-no-iso
+          retention-days: 30
+          if-no-files-found: warn
+          path: |
+            dist/puppy-native/wine-lab-guest-serial.log
+            dist/puppy-native/wine-lab-qemu-stderr.log
+            dist/puppy-native/wine-lab-grub-input.log
+            dist/puppy-native/wine-lab-final-frame.log
+            dist/puppy-native/wine-lab-guest-desktop.png
+            dist/puppy-native/wine-lab-vnc-assist.log
+            dist/puppy-native/live-puppy-*.png
+            dist/puppy-native/wine-guest-receipts/*/*.json
+            dist/puppy-native/wine-guest-receipts/*/*.txt
+            .bean-install-memory/install.sqlite
