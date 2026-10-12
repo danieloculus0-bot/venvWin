@@ -11,6 +11,10 @@ MONITOR="$OUT/wine-lab-hmp.sock"
 rm -f "$SERIAL" "$MONITOR" "$OUT/wine-lab-guest-desktop.png"
 ACCEL=tcg
 if [[ -r /dev/kvm && -w /dev/kvm ]]; then ACCEL=kvm; fi
+if [[ "${VENVWIN_REQUIRE_KVM:-0}" == 1 && "$ACCEL" != kvm ]]; then
+  echo "REFUSE_TCG_FALLBACK_VERIFIED_KVM_REQUIRED" >&2
+  exit 1
+fi
 echo "PUPPY_WOW64_GUEST_ACCEL=$ACCEL"
 qemu-system-x86_64 -accel "$ACCEL" -m 4096 -smp 2 -boot order=d \
   -cdrom "$ISO" -drive "file=$MODULE,media=cdrom,if=ide,index=3,readonly=on" \
