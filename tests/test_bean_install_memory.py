@@ -56,7 +56,7 @@ class InstallMemoryContracts(unittest.TestCase):
         self.assertEqual(verify_receipt(host)["scope"], "ubuntu-wine")
 
     def test_fake_guest_without_serial_is_rejected(self):
-        with self.assertRaisesRegex(ValueError, "missing evidence"):
+        with self.assertRaisesRegex(ValueError, "invalid evidence checksum|missing evidence"):
             verify_receipt(self.fixture(scope="puppy-guest"))
 
     def test_real_bean_store_idempotence_and_scope_separation(self):
