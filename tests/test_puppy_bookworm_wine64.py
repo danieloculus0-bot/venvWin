@@ -14,6 +14,8 @@ def test_exact_official_bookworm_binary_family():
     assert "512b715f32fccf2ebec2b63f23d9d83394d30e27cc5570a8ef92c5d3627ef305" in s
     assert "sha256sum -c -" in s and "mksquashfs" in s
     assert "build-puppy.sh" not in s
+    assert 'export LD_LIBRARY_PATH="$WINE_UNIX_LIBDIR' in s
+    assert "win32u.so winex11.so" in s
 
 def test_actual_guest_sfs_and_windows_execution_gates():
     s = read("puppy-native/venvwin-wine-bookworm-guest-lab")
@@ -22,6 +24,9 @@ def test_actual_guest_sfs_and_windows_execution_gates():
                    "venvwin run", "REAL_WINDOWS_APPLICATION_LAUNCHED",
                    "VENVWIN_GUEST_WINDOWS_APP_PASS="):
         assert marker in s
+    assert "GUEST_BOOKWORM_NATIVE_LINK_CLOSURE_PASS" in s
+    assert "WINE_NATIVE_LINK_DEPENDENCIES_UNRESOLVED" in s
+    assert "GUEST_BOOKWORM_NATIVE_LIBRARY_PATH=" in s
     assert "dpkg --add-architecture" not in s
     assert "apt-get install wine" not in s
 

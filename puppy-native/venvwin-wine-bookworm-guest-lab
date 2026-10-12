@@ -68,18 +68,30 @@ export PATH="/usr/local/bin:$PATH"
 export WINEDEBUG=-all
 export WINEARCH=win64
 export WINEDLLOVERRIDES='winegstreamer='
-# Audit libraries loaded dynamically by Wine after startup. The wine64 ELF
-# loader can have a clean ldd while user32's Unix driver cannot load.
+# This exact path resolved genuine guest Wine8 dynamic-link errors:
+# win32u.so needs ntdll.so; winex11.so needs both ntdll.so and win32u.so.
+# An SFS does not update ld.so.conf merely because it is mounted.
+WINE_UNIX_LIBDIR=/usr/lib/x86_64-linux-gnu/wine/x86_64-unix
+export LD_LIBRARY_PATH="$WINE_UNIX_LIBDIR${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+emit "GUEST_BOOKWORM_NATIVE_LIBRARY_PATH=$WINE_UNIX_LIBDIR"
+# A correct wrapper and a complete Wine SFS must resolve the runtime's
+# linked modules, not merely wine --version. Do not report a pass if DLLs fail.
+: > "$OUT/native-elf-unresolved.txt"
 if command -v ldd >/dev/null 2>&1; then
-  UNIX_WINE=/usr/lib/x86_64-linux-gnu/wine/x86_64-unix
+  UNIX_WINE="$WINE_UNIX_LIBDIR"
   for KIND in /usr/lib/wine/wine64 "$UNIX_WINE/ntdll.so" "$UNIX_WINE/win32u.so" "$UNIX_WINE/winex11.so" "$UNIX_WINE/gdi32.so" "$UNIX_WINE/user32.so"; do
     [ -f "$KIND" ] || { emit "GUEST_BOOKWORM_MODULE_ABSENT=$KIND"; continue; }
     ldd "$KIND" >"$OUT/ldd-$(basename "$KIND").log" 2>&1 || true
     sed -n '/not found/p' "$OUT/ldd-$(basename "$KIND").log" | while IFS= read -r l; do
       emit "GUEST_BOOKWORM_MISSING_SHARED_LIBRARY=$KIND:$l"
+      printf '%s: %s\n' "$KIND" "$l" >> "$OUT/native-elf-unresolved.txt"
     done
   done
 fi
+if [ -s "$OUT/native-elf-unresolved.txt" ]; then
+  fail WINE_NATIVE_LINK_DEPENDENCIES_UNRESOLVED
+fi
+emit GUEST_BOOKWORM_NATIVE_LINK_CLOSURE_PASS
 emit "GUEST_BOOKWORM_PE_USER32_PRESENT=$(test -s /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/user32.dll && echo YES || echo NO)"
 emit "GUEST_BOOKWORM_PE_KERNEL32_PRESENT=$(test -s /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/kernel32.dll && echo YES || echo NO)"
 version=$(timeout 30 wine --version 2>"$OUT/wine-version-stderr.log") || {

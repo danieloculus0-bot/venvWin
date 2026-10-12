@@ -30,9 +30,23 @@ fetch_verified 'wine_8.0~repack-4_all.deb' \
   79672e2f542c450fe7e7a16a930ac8787fcfa804d29c2bf37e3d33297dbe60b0
 test -x "$OUT/stage/usr/lib/wine/wine64" || { echo DEBIAN_WINE64_LOADER_MISSING >&2; exit 1; }
 test -d "$OUT/stage/usr/lib/x86_64-linux-gnu/wine" || { echo DEBIAN_LIBWINE_PAYLOAD_MISSING >&2; exit 1; }
+# Native Linux-side Wine drivers use DT_NEEDED entries for ntdll.so and
+# win32u.so. The external SFS holds these in its private x86_64-unix directory;
+# BookwormPup does not add that directory to ld.so.conf when loading an SFS.
+WINE_UNIX_LIBDIR="$OUT/stage/usr/lib/x86_64-linux-gnu/wine/x86_64-unix"
+for native in ntdll.so win32u.so winex11.so; do
+  [[ -s "$WINE_UNIX_LIBDIR/$native" ]] || {
+    echo "BOOKWORM_NATIVE_WINE_MODULE_MISSING=$native" >&2; exit 1;
+  }
+done
 cat > "$OUT/stage/usr/local/bin/wine" <<'WINE'
 #!/bin/sh
-# Native Bookworm Wine64 from external SFS, not the incompatible WoW64 archive.
+# Bookworm Wine64, with ONLY its own SFS-provided Unix-side native modules.
+WINE_UNIX_LIBDIR=/usr/lib/x86_64-linux-gnu/wine/x86_64-unix
+[ -s "$WINE_UNIX_LIBDIR/ntdll.so" ] && [ -s "$WINE_UNIX_LIBDIR/win32u.so" ] || {
+  echo BOOKWORM_WINE_NATIVE_MODULE_MISSING >&2; exit 69;
+}
+export LD_LIBRARY_PATH="$WINE_UNIX_LIBDIR${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 export WINEARCH=win64
 exec /usr/lib/wine/wine64 "$@"
 WINE
