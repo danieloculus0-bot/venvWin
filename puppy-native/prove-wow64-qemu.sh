@@ -36,8 +36,15 @@ for cycle in $(seq 1 120); do
       --action screen --output "$OUT/wine-lab-qemu-frame-$cycle.ppm" \
       >"$OUT/wine-lab-qemu-frame-$cycle.log" 2>&1 || true
   fi
-  if [[ -s "$SERIAL" ]] && grep -Fxq VENVWIN_WINE_GUEST_LAB_FINISHED "$SERIAL"; then COMPLETE=1; break; fi
-  if [[ -s "$SERIAL" ]] && grep -q '^VENVWIN_WINE_GUEST_BLOCKER=' "$SERIAL"; then COMPLETE=1; break; fi
+  # QEMU's 16550 UART serial file uses CRLF. Grepping Unix-exact lines
+  # against raw bytes misses terminal guest markers and wastes ~20 min of CI.
+  # Normalize ONLY while checking; preserve raw guest bytes for BEAN evidence.
+  if [[ -s "$SERIAL" ]] && tr -d '\r' <"$SERIAL" | grep -Fxq VENVWIN_WINE_GUEST_LAB_FINISHED; then
+    echo "REAL_GUEST_REPORTED_FINISHED_AT_CYCLE=$cycle"; COMPLETE=1; break
+  fi
+  if [[ -s "$SERIAL" ]] && tr -d '\r' <"$SERIAL" | grep -q '^VENVWIN_WINE_GUEST_BLOCKER='; then
+    echo "REAL_GUEST_REPORTED_BLOCKER_AT_CYCLE=$cycle"; COMPLETE=1; break
+  fi
   if ! kill -0 "$PID" 2>/dev/null; then echo QEMU_EXITED_EARLY; break; fi
 done
 python3 "$ROOT/puppy-native/qemu-monitor-probe.py" --socket "$MONITOR" \
