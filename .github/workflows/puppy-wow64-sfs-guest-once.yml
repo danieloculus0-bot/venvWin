@@ -52,6 +52,22 @@ jobs:
           sudo apt-get update -qq
           sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
             gcc-mingw-w64-x86-64 nsis wixl xorriso squashfs-tools rsync curl qemu-system-x86
+      - name: Enable actual /dev/kvm guest acceleration on disposable CI runner
+        run: |
+          set -euo pipefail
+          test -c /dev/kvm || { echo HOST_KVM_DEVICE_MISSING; exit 1; }
+          sudo chmod a+rw /dev/kvm
+          python3 - <<'PY'
+          import fcntl, os
+          fd = os.open('/dev/kvm', os.O_RDWR)
+          try:
+              version = fcntl.ioctl(fd, 0xAE00, 0)
+          finally:
+              os.close(fd)
+          print('HOST_KVM_IOCTL_VERSION=', version)
+          assert version == 12, 'KVM_GET_API_VERSION did not return 12'
+          print('HOST_KVM_VERIFIED_FOR_REAL_PUPPY_GUEST_NOT_WINDOWS_PROOF')
+          PY
       - name: Restore exact previously validated experimental Puppy ISO
         uses: actions/cache/restore@v4
         with:
@@ -117,7 +133,7 @@ jobs:
           ) >"$OUT/wine-lab-vnc-assist.log" 2>&1 &
           ASSIST_PID=$!
           set +e
-          bash puppy-native/prove-wow64-qemu.sh
+          VENVWIN_REQUIRE_KVM=1 bash puppy-native/prove-wow64-qemu.sh
           GUEST_STATUS=$?
           set -e
           kill "$ASSIST_PID" 2>/dev/null || true
