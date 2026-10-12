@@ -20,6 +20,7 @@ emit "VENVWIN_WINE_GUEST_KERNEL=$(uname -r)"
 emit "VENVWIN_WINE_GUEST_LIBC=$(getconf GNU_LIBC_VERSION 2>/dev/null || echo unavailable)"
 test -x /usr/local/bin/venvwin || fail NO_VENVWIN_CLI
 test -f "$LAB/Setup.exe" && test -f "$LAB/SimpleMsi.msi" && test -f "$LAB/SmokeApp.exe" || fail NO_REAL_WINDOWS_INSTALLERS
+(cd "$LAB" && sha256sum -c manifest.sha256) >"$OUT/payload-validation.log" 2>&1 || fail INSTALLER_HASH_MISMATCH
 for count in $(seq 1 24); do
   grep -Fxq 'PUPPY_GUEST_BOOT_PROVEN' /tmp/venvwin-puppy-guest-proof.log 2>/dev/null && break
   sleep 5
@@ -85,20 +86,24 @@ for CASE in nsis-exe wix-msi; do
   if [ "$RESULT" -ne 0 ]; then emit "VENVWIN_WINE_GUEST_LAUNCH_FAILED=$CASE:$RESULT"; continue; fi
   PREFIX="$HOME_DIR/capsules/$CAPSULE/prefix"
   # Actual prefix_path is sourced from capsule metadata because layout is versioned.
-  PREFIX=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["prefix_path"])' "$HOME_DIR/capsules/$CAPSULE/capsule.json" 2>/dev/null) ||
+  PREFIX=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["prefix_path"])' "$HOME_DIR/capsules/$CAPSULE/venvwin.json" 2>/dev/null) ||
     { emit "VENVWIN_WINE_GUEST_PREFIX_UNOBSERVED=$CASE"; continue; }
   MARKER="$PREFIX/drive_c/venvwin-simple-app-ran.txt"
   [ -f "$MARKER" ] && [ "$(cat "$MARKER")" = REAL_WINDOWS_APPLICATION_LAUNCHED ] ||
     { emit "VENVWIN_WINE_GUEST_APPLICATION_MARKER_MISSING=$CASE"; continue; }
   # Emit raw capsule commands/receipts to QEMU serial for independently parsed evidence.
   emit "VENVWIN_WINE_GUEST_APP_MARKER_VERIFIED=$CASE"
-  for KIND in install launch; do
-    FILE="$OUT/$CASE-$KIND.json"
+  for KIND in install launch marker; do
+    if [ "$KIND" = marker ]; then FILE="$MARKER"; else FILE="$OUT/$CASE-$KIND.json"; fi
     emit "VENVWIN_WINE_GUEST_RECEIPT_BEGIN=$CASE:$KIND"
     base64 "$FILE" | tr -d '\n' > /dev/ttyS0 2>/dev/null || true
     printf '\n' >/dev/ttyS0 2>/dev/null || true
     emit "VENVWIN_WINE_GUEST_RECEIPT_END=$CASE:$KIND"
   done
+  FINGERPRINT=$(cat "$LAB/$CASE.fingerprint" 2>/dev/null) || fail MISSING_CASE_FINGERPRINT
+  [ "${#FINGERPRINT}" -eq 64 ] || fail INVALID_CASE_FINGERPRINT_SIZE
+  case "$FINGERPRINT" in *[!0-9a-f]*|'') fail INVALID_CASE_FINGERPRINT;; esac
+  emit "VENVWIN_GUEST_WINDOWS_APP_PASS=$CASE:$FINGERPRINT"
   emit "VENVWIN_WINE_GUEST_CASE_PASS=$CASE"
 done
 emit "VENVWIN_WINE_GUEST_LAB_FINISHED"
