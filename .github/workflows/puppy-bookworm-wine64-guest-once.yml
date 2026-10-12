@@ -48,6 +48,9 @@ jobs:
           # never includes the original filename. Proven first guest run
           # 38298147998 mounted /dev/loop7 but old harness falsely rejected it.
           grep -Fq 'losetup -n -j "$CD/$MODULE"' puppy-native/venvwin-wine-bookworm-guest-lab
+          grep -Fq 'GUEST_BOOKWORM_MISSING_SHARED_LIBRARY=' puppy-native/venvwin-wine-bookworm-guest-lab
+          grep -Fq 'GUEST_BOOKWORM_DLL_LOAD_DIAGNOSTIC=' puppy-native/venvwin-wine-bookworm-guest-lab
+          grep -Fq 'WINEDEBUG=+loaddll,+module,+seh timeout 75 wineboot --init' puppy-native/venvwin-wine-bookworm-guest-lab
           grep -Fq ' /proc/self/mountinfo' puppy-native/venvwin-wine-bookworm-guest-lab
           bash -n puppy-native/build-bookworm-wine64-sfs.sh puppy-native/prove-bookworm-wine64-qemu.sh
           echo SOURCE_CHECK_ONLY_NOT_GUEST_WINE
