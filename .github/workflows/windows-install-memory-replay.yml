@@ -1,0 +1,70 @@
+name: BEAN persistent Windows installer memory replay
+# Read-only replay in a new ephemeral GitHub runner: no Wine, ISO, apt, or app execution.
+on:
+  push:
+    branches: [test/puppy-guest-wine-proof-20261012]
+    paths: [".github/workflows/windows-install-memory-replay.yml"]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-cross-run-memory:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    env:
+      PYTHONPATH: ${{ github.workspace }}/_bean_core
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore earlier real Win64 installer memory, no new application runs
+        uses: actions/cache/restore@v4
+        with:
+          path: .bean-install-memory
+          key: venvwin-bean-simple-v1-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            venvwin-bean-simple-v1-
+      - uses: actions/checkout@v4
+        with:
+          repository: danieloculus0-bot/BEAN
+          ref: 1ff979c702f44d6de60645749aef7b763b183426
+          path: _bean_core
+          persist-credentials: false
+      - name: Verify BEAN persisted history and exact-scope decisions
+        run: |
+          set -euo pipefail
+          test "$(git -C _bean_core rev-parse HEAD)" = 1ff979c702f44d6de60645749aef7b763b183426
+          test -s .bean-install-memory/install.sqlite
+          python3 puppy-native/bean_install_memory.py \
+            --db .bean-install-memory/install.sqlite verify
+          python3 - <<'PY'
+          import sys
+          from pathlib import Path
+          sys.path.insert(0, "puppy-native")
+          from bean_install_memory import Memory
+          with Memory(Path(".bean-install-memory/install.sqlite")) as m:
+              rows = m.db.execute("SELECT * FROM venvwin_install_observations ORDER BY seq").fetchall()
+              assert rows, "Fresh runner has no retained observations"
+              by_case = {r["test_case"]: r for r in rows if r["scope"] == "ubuntu-wine"}
+              assert set(by_case) >= {"nsis-exe", "wix-msi"}, by_case.keys()
+              exe, msi = by_case["nsis-exe"], by_case["wix-msi"]
+              assert exe["state"] == "failed" and exe["blocker"] == "wine32_runtime_missing"
+              assert msi["state"] == "passed"
+              a = m.plan("ubuntu-wine", "nsis-exe", exe["fingerprint"])
+              b = m.plan("ubuntu-wine", "wix-msi", msi["fingerprint"])
+              assert a["decision"] == "blocked_unchanged", a
+              assert b["decision"] == "reuse_scope_only", b
+              for item in (exe, msi):
+                  guest = m.plan("puppy-guest", item["test_case"], item["fingerprint"])
+                  assert guest["decision"] == "run", guest
+              print("BEAN_NEW_RUNNER_PERSISTENT_INSTALL_MEMORY_VERIFIED")
+              print("NSIS_UNCHANGED_FAILURE_RETRY_SUPPRESSED", exe["run_id"])
+              print("MSI_PREVIOUS_GENUINE_HOST_PASS_REUSED", msi["run_id"])
+              print("PUPPY_WINE_STILL_UNVERIFIED")
+          PY
+      - name: Preserve replay receipt, no ISO
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bean-install-memory-cross-run-replay
+          retention-days: 30
+          if-no-files-found: ignore
+          path: .bean-install-memory/install.sqlite
