@@ -1,0 +1,96 @@
+name: WoW64 host ABI and Wine prefix differential, no Puppy ISO
+# Isolated diagnostic: compares Wine behavior with clean and pre-shaped prefixes.
+# Source/host evidence cannot certify guest Wine, no release or branch merge.
+on:
+  push:
+    branches: [experiment/puppy-wow64-sfs-20261012]
+    paths: [".github/workflows/puppy-wow64-prefix-abi-diagnostic.yml"]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  host-prefix-differential:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 17
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install compact host tools (no host Wine)
+        run: |
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            curl xz-utils squashfs-tools xorriso xvfb xauth \
+            libasound2t64 libfaudio0 libfontconfig1 libfreetype6 \
+            libgl1 libglu1-mesa libgnutls30t64 libpulse0 \
+            libx11-6 libxext6 libxrender1 libxrandr2 libxi6
+      - name: Build the same checksum-pinned external module, not Puppy ISO
+        run: |
+          set -euo pipefail
+          bash puppy-native/build-wine-wow64-sfs.sh
+          (cd dist/puppy-wow64 && sha256sum -c module-checksums.sha256)
+      - name: Compare ABI, fresh-prefix and pre-shaped-prefix initialization
+        id: diagnose
+        run: |
+          set -euo pipefail
+          mkdir -p dist/wow64-prefix-diagnostics
+          OUT="$GITHUB_WORKSPACE/dist/wow64-prefix-diagnostics"
+          BIN="$GITHUB_WORKSPACE/dist/puppy-wow64/stage/opt/venvwin/wine/bin"
+          ROOT="$GITHUB_WORKSPACE/dist/puppy-wow64/stage/opt/venvwin/wine"
+          test -x "$BIN/wine" && test -x "$BIN/wineboot"
+          find "$ROOT" -iname kernel32.dll -type f -printf '%P %s bytes\n' \
+            | tee "$OUT/kernel32-inventory.txt"
+          test -s "$OUT/kernel32-inventory.txt"
+          file "$BIN/wine" "$BIN/wineboot" >"$OUT/elf-file.txt"
+          ldd "$BIN/wine" >"$OUT/ldd-wine.txt" 2>&1 || true
+          ldd "$BIN/wineboot" >"$OUT/ldd-wineboot.txt" 2>&1 || true
+          grep 'not found' "$OUT"/ldd-*.txt >"$OUT/missing-elf-libraries.txt" || true
+          echo "WINE_BINARY=$("$BIN/wine" --version)"
+          echo "HOST_ELF_MISSING_COUNT=$(wc -l <"$OUT/missing-elf-libraries.txt")"
+          cat "$OUT/missing-elf-libraries.txt"
+          # Keep each prefix independently timed and isolated. No installer yet.
+          python3 - "$OUT/seeded-prefix" <<'PY'
+          import sys
+          from pathlib import Path
+          sys.path.insert(0, "src")
+          from venvwin.state import ensure_prefix_shape
+          ensure_prefix_shape(Path(sys.argv[1]))
+          PY
+          : >"$OUT/summary.txt"
+          for MODE in empty seeded; do
+            if [ "$MODE" = empty ]; then PREFIX="$OUT/empty-prefix"; else PREFIX="$OUT/seeded-prefix"; fi
+            export PATH="$BIN:$PATH"
+            export WINEPREFIX="$PREFIX"
+            export WINEARCH=win64
+            export WINEDEBUG=-all
+            export WINEDLLOVERRIDES='winegstreamer='
+            START=$(date +%s)
+            set +e
+            xvfb-run -a -s '-screen 0 1280x800x24' \
+              timeout 90 "$BIN/wineboot" --init >"$OUT/$MODE-wineboot.stdout" 2>"$OUT/$MODE-wineboot.stderr"
+            RC=$?
+            set -e
+            SECONDS_ELAPSED=$(($(date +%s)-START))
+            printf 'MODE=%s RETURN=%s SECONDS=%s USER=%s\n' "$MODE" "$RC" "$SECONDS_ELAPSED" "$(id -un)" | tee -a "$OUT/summary.txt"
+            test -s "$PREFIX/system.reg" && echo "$MODE:system.reg:present" | tee -a "$OUT/summary.txt" || true
+            timeout 10 "$BIN/wineserver" -k >/dev/null 2>&1 || true
+          done
+          echo "HOST_DIAGNOSTIC_ONLY_NO_PUPPY_EXECUTION"
+          cat "$OUT/summary.txt"
+          if grep -q '^MODE=empty RETURN=0 ' "$OUT/summary.txt"; then
+            echo HOST_FRESH_PREFIX_BOOT_PASS
+          else
+            echo HOST_FRESH_PREFIX_BOOT_FAIL
+            exit 1
+          fi
+      - name: Preserve host-only diagnosis, never runtime binary or ISO
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wine11-wow64-host-prefix-differential-only
+          retention-days: 20
+          path: |
+            dist/puppy-wow64/upstream-wine-sha256.log
+            dist/puppy-wow64/module-checksums.sha256
+            dist/wow64-prefix-diagnostics/*.txt
+            dist/wow64-prefix-diagnostics/*.stdout
+            dist/wow64-prefix-diagnostics/*.stderr
+          if-no-files-found: warn
