@@ -76,7 +76,8 @@ jobs:
             dist/puppy-native/venvwin-puppy-native-10.0.12-experimental.iso
             dist/puppy-native/tested-sources.sha256
             dist/puppy-native/wine-lab-input
-          key: puppy-wine-lab-experimental-v1-${{ hashFiles('puppy-native/build-puppy.sh', 'puppy-native/venvwin-wine-guest-lab', 'puppy-native/windows_install_smoke.py', 'src/venvwin/**', 'puppy-native/art/**', 'dist/puppy-native/wine-lab-input/selected-cases.txt') }}
+          key: puppy-wine-lab-experimental-v1-15818cd217ffd06d5f7381bf35a4fed727cffaa862acbf623e2caf1c70c1efeb
+          fail-on-cache-miss: true
       - name: Remaster checksum-pinned official Puppy only on cache miss
         if: steps.iso-cache.outputs.cache-hit != 'true'
         id: build
