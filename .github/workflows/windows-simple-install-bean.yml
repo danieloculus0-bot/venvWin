@@ -1,0 +1,101 @@
+name: Simple Windows installers with persistent BEAN memory
+# Only test branch: no ISO remaster, Debian build, release or merge.
+on:
+  push:
+    branches: [test/puppy-guest-wine-proof-20261012]
+    paths:
+      - ".github/workflows/windows-simple-install-bean.yml"
+      - "puppy-native/windows_install_smoke.py"
+      - "puppy-native/bean_install_memory.py"
+      - "tests/test_bean_install_memory.py"
+      - "src/venvwin/**"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  simple-windows-exe-msi-host-wine:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      BEAN_CORE_PIN: 1ff979c702f44d6de60645749aef7b763b183426
+      PYTHONPATH: ${{ github.workspace }}/_bean_core
+      WINEDEBUG: "-all"
+      WINEARCH: win64
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore BEAN test memory (cache may expire)
+        uses: actions/cache/restore@v4
+        with:
+          path: .bean-install-memory
+          key: venvwin-bean-simple-v1-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            venvwin-bean-simple-v1-
+      - name: Check out exact pinned real BEAN Core
+        uses: actions/checkout@v4
+        with:
+          repository: danieloculus0-bot/BEAN
+          ref: 1ff979c702f44d6de60645749aef7b763b183426
+          path: _bean_core
+          persist-credentials: false
+      - name: Verify authentic BEAN source, not a mock
+        run: |
+          set -euo pipefail
+          test "$(git -C _bean_core rev-parse HEAD)" = "$BEAN_CORE_PIN"
+          python3 - <<'PY'
+          from bean.evaluation.evidence_rank import Evidence, EvidenceRankLedger
+          print("REAL_PINNED_BEAN_RANKER")
+          PY
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install Wine and real Windows package builders
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            wine wine64 gcc-mingw-w64-x86-64 nsis wixl xvfb xauth file
+          python -m pip install -e .
+          wine --version
+      - name: Test persistent BEAN memory and reject fake guest evidence
+        run: |
+          set -euo pipefail
+          python -m unittest discover -s tests -p test_bean_install_memory.py -v
+          python -m py_compile puppy-native/bean_install_memory.py puppy-native/windows_install_smoke.py
+          echo CONTRACT_TESTS_NOT_REAL_GUEST_OR_INSTALL_PROOF
+      - name: Real repeatable Windows EXE and MSI installs (Ubuntu Wine only)
+        run: |
+          set -euo pipefail
+          xvfb-run -a python puppy-native/windows_install_smoke.py \
+            --repo "$GITHUB_WORKSPACE" \
+            --work "$RUNNER_TEMP/venvwin-simple-installer-work" \
+            --evidence "$RUNNER_TEMP/venvwin-simple-installer-evidence" \
+            --db "$GITHUB_WORKSPACE/.bean-install-memory/install.sqlite" \
+            | tee "$RUNNER_TEMP/venvwin-simple-installer-output.log"
+          echo REAL_HOST_WINE_PROVEN_IF_ABOVE_PASSED_NOT_PUPPY_GUEST
+      - name: Verify BEAN hash chains independently of install outcome
+        if: always()
+        run: |
+          if test -f .bean-install-memory/install.sqlite; then
+            python puppy-native/bean_install_memory.py \
+              --db .bean-install-memory/install.sqlite verify
+          else
+            echo NO_INSTALL_MEMORY_YET
+          fi
+      - name: Preserve latest SQLite memory for later runs
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: .bean-install-memory
+          key: venvwin-bean-simple-v1-${{ github.run_id }}-${{ github.run_attempt }}
+      - name: Preserve evidence, never release an ISO or Wine prefix
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: venvwin-simple-install-bean-memory-evidence
+          retention-days: 30
+          if-no-files-found: warn
+          path: |
+            .bean-install-memory/install.sqlite
+            ${{ runner.temp }}/venvwin-simple-installer-evidence/*/*.json
+            ${{ runner.temp }}/venvwin-simple-installer-evidence/*/*.txt
+            ${{ runner.temp }}/venvwin-simple-installer-output.log
