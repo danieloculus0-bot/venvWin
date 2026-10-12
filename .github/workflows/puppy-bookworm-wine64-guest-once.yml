@@ -1,0 +1,192 @@
+name: Real Puppy Debian Bookworm Wine64 SFS and Windows EXE MSI evidence
+# Experimental branch only: never publish, merge, or build Debian OS.
+on:
+  pull_request:
+    branches: [test/puppy-guest-wine-proof-20261012]
+    paths: [".github/workflows/puppy-bookworm-wine64-guest-once.yml"]
+  workflow_dispatch:
+concurrency:
+  group: venvwin-bookworm-wine64-guest-${{ github.ref }}
+  cancel-in-progress: false
+permissions:
+  contents: read
+jobs:
+  real-bookworm-wine64-module:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    env:
+      BEAN_CORE_PIN: 1ff979c702f44d6de60645749aef7b763b183426
+      PYTHONPATH: ${{ github.workspace }}/_bean_core
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore hash-chained BEAN evidence memory
+        uses: actions/cache/restore@v4
+        with:
+          path: .bean-install-memory
+          key: venvwin-bean-simple-v1-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            venvwin-bean-simple-v1-
+      - name: Check out pinned BEAN Core
+        uses: actions/checkout@v4
+        with:
+          repository: danieloculus0-bot/BEAN
+          ref: 1ff979c702f44d6de60645749aef7b763b183426
+          path: _bean_core
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Source checks before any OS or Wine downloads
+        run: |
+          set -euo pipefail
+          test "$(git -C _bean_core rev-parse HEAD)" = "$BEAN_CORE_PIN"
+          python -m pip install -e . pytest pillow vncdotool==1.4.2
+          python -m pytest -q tests/test_puppy_bookworm_wine64.py tests/test_bean_install_memory.py tests/test_puppy_native_contract.py tests/test_puppy_windows_intake.py
+          python -m py_compile puppy-native/prepare_bookworm_guest_fixtures.py puppy-native/import_guest_wine_evidence.py
+          sh -n puppy-native/venvwin-wine-bookworm-guest-lab
+          bash -n puppy-native/build-bookworm-wine64-sfs.sh puppy-native/prove-bookworm-wine64-qemu.sh
+          echo SOURCE_CHECK_ONLY_NOT_GUEST_WINE
+      - name: Host SFS and real Win64 test-installer compilers only
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            gcc-mingw-w64-x86-64 nsis wixl xorriso squashfs-tools rsync curl qemu-system-x86
+      - name: Enable actual /dev/kvm guest acceleration on disposable CI runner
+        run: |
+          set -euo pipefail
+          test -c /dev/kvm || { echo HOST_KVM_DEVICE_MISSING; exit 1; }
+          sudo chmod a+rw /dev/kvm
+          python3 - <<'PY'
+          import fcntl, os
+          fd = os.open('/dev/kvm', os.O_RDWR)
+          try:
+              version = fcntl.ioctl(fd, 0xAE00, 0)
+          finally:
+              os.close(fd)
+          print('HOST_KVM_IOCTL_VERSION=', version)
+          assert version == 12, 'KVM_GET_API_VERSION did not return 12'
+          print('HOST_KVM_VERIFIED_FOR_REAL_PUPPY_GUEST_NOT_WINDOWS_PROOF')
+          PY
+      - name: Restore exact previously validated experimental Puppy ISO
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            dist/puppy-native/venvwin-puppy-native-10.0.12-experimental.iso
+            dist/puppy-native/tested-sources.sha256
+            dist/puppy-native/wine-lab-input
+          key: puppy-wine-lab-experimental-v1-15818cd217ffd06d5f7381bf35a4fed727cffaa862acbf623e2caf1c70c1efeb
+          fail-on-cache-miss: true
+      - name: Validate existing Puppy image bytes before remap
+        run: |
+          set -euo pipefail
+          grep -F 'venvwin-puppy-native-10.0.12-experimental.iso' \
+            dist/puppy-native/tested-sources.sha256 | sha256sum -c -
+          echo EXISTING_PUPPY_IMAGE_HASH_VERIFIED_NOT_GUEST_PROOF
+      - name: BEAN select new runtime-specific EXE and MSI evidence cohorts
+        run: |
+          set -euo pipefail
+          python puppy-native/prepare_bookworm_guest_fixtures.py \
+            --repo "$GITHUB_WORKSPACE" \
+            --stage "$GITHUB_WORKSPACE/dist/puppy-native/wine-lab-input" \
+            --db "$GITHUB_WORKSPACE/.bean-install-memory/install.sqlite"
+          (cd dist/puppy-native/wine-lab-input && sha256sum -c manifest.sha256)
+      - name: Validate official Debian Bookworm Wine64 and build external SFS
+        run: |
+          set -euo pipefail
+          bash puppy-native/build-bookworm-wine64-sfs.sh
+          (cd dist/puppy-bookworm-wine && sha256sum -c module-hashes.sha256)
+          echo VERIFIED_EXTERNAL_WINE_SFS_ASSET_NOT_IN_GUEST_YET
+      - name: Remap only small ydrv with live startup probe and compiled fixtures
+        run: |
+          set -euo pipefail
+          OUT="$GITHUB_WORKSPACE/dist/puppy-native"
+          ISO="$OUT/venvwin-puppy-native-10.0.12-experimental.iso"
+          TMP="$OUT/bookworm-ydrv-patch"
+          mkdir -p "$TMP"
+          xorriso -osirrox on -indev "$ISO" -extract /ydrv_dpupbw64_10.0.12.sfs "$TMP/original.sfs" >"$TMP/extract.log" 2>&1
+          unsquashfs -d "$TMP/root" "$TMP/original.sfs" >"$TMP/unpack.log"
+          test -f "$TMP/root/opt/venvwin/wine-lab/EXPERIMENT_ONLY"
+          install -m 0755 puppy-native/venvwin-wine-bookworm-guest-lab "$TMP/root/root/Startup/venvwin-wine-guest-lab"
+          cp dist/puppy-native/wine-lab-input/{Setup.exe,SimpleMsi.msi,SmokeApp.exe,manifest.sha256,nsis-exe.fingerprint,wix-msi.fingerprint,selected-cases.txt} \
+            "$TMP/root/opt/venvwin/wine-lab/"
+          (cd "$TMP/root/opt/venvwin/wine-lab" && sha256sum -c manifest.sha256)
+          mksquashfs "$TMP/root" "$TMP/patched.sfs" -noappend -all-root -comp xz -b 1048576 >"$TMP/squashfs.log" 2>&1
+          xorriso -indev "$ISO" -outdev "$TMP/patched.iso" \
+            -map "$TMP/patched.sfs" /ydrv_dpupbw64_10.0.12.sfs -boot_image any replay -commit >"$TMP/remap.log" 2>&1
+          xorriso -osirrox on -indev "$TMP/patched.iso" \
+            -extract /ydrv_dpupbw64_10.0.12.sfs "$TMP/verified.sfs" >"$TMP/verify-extract.log" 2>&1
+          unsquashfs -cat "$TMP/verified.sfs" root/Startup/venvwin-wine-guest-lab >"$TMP/verified-guest-lab"
+          cmp puppy-native/venvwin-wine-bookworm-guest-lab "$TMP/verified-guest-lab"
+          unsquashfs -cat "$TMP/verified.sfs" opt/venvwin/wine-lab/selected-cases.txt >"$TMP/verified-selected.txt"
+          cmp dist/puppy-native/wine-lab-input/selected-cases.txt "$TMP/verified-selected.txt"
+          sha256sum "$ISO" "$TMP/patched.iso" "$TMP/verified.sfs" >"$OUT/bookworm-ydrv-patch-sha256.txt"
+          mv "$TMP/patched.iso" "$ISO"
+          echo VERIFIED_NEW_LAB_EMBEDDED_IN_NONRELEASE_PUPPY_ISO
+      - name: Boot real Puppy in QEMU with external read-only module
+        run: |
+          set -euo pipefail
+          OUT="$GITHUB_WORKSPACE/dist/puppy-native"
+          (
+            sleep 20
+            python puppy-native/qemu-desktop-guest-proof.py --output "$OUT" --wait-seconds 520
+          ) >"$OUT/wine-lab-vnc-assist.log" 2>&1 &
+          ASSIST_PID=$!
+          set +e
+          VENVWIN_REQUIRE_KVM=1 bash puppy-native/prove-bookworm-wine64-qemu.sh
+          GUEST_STATUS=$?
+          set -e
+          kill "$ASSIST_PID" 2>/dev/null || true
+          wait "$ASSIST_PID" 2>/dev/null || true
+          echo "QEMU_GUEST_HARNESS_EXIT=$GUEST_STATUS"
+          cat "$OUT/wine-lab-vnc-assist.log" || true
+          echo RAW_GUEST_SERIAL_IS_REQUIRED_FOR_ANY_SUCCESS_CLAIM
+      - name: Independently verify BEAN guest-origin EXE and MSI install launch receipts
+        run: |
+          set -euo pipefail
+          python puppy-native/import_guest_wine_evidence.py \
+            --serial "$GITHUB_WORKSPACE/dist/puppy-native/wine-lab-guest-serial.log" \
+            --screenshot "$GITHUB_WORKSPACE/dist/puppy-native/wine-lab-guest-desktop.png" \
+            --fixture-dir "$GITHUB_WORKSPACE/dist/puppy-native/wine-lab-input" \
+            --evidence "$GITHUB_WORKSPACE/dist/puppy-native/bookworm-guest-receipts" \
+            --db "$GITHUB_WORKSPACE/.bean-install-memory/install.sqlite"
+          tr -d '\r' < dist/puppy-native/wine-lab-guest-serial.log | grep -Fxq VENVWIN_WINE_GUEST_EXTERNAL_SFS_MOUNTED
+          tr -d '\r' < dist/puppy-native/wine-lab-guest-serial.log | grep -Fxq VENVWIN_WINE_GUEST_CASE_PASS=nsis-exe
+          tr -d '\r' < dist/puppy-native/wine-lab-guest-serial.log | grep -Fxq VENVWIN_WINE_GUEST_CASE_PASS=wix-msi
+          echo PUPPY_BOOKWORM_WINE64_EXE_MSI_PROVEN_SIX_GATE_PRODUCT_NOT_RELEASED
+      - name: Verify BEAN journal despite any guest failure
+        if: always()
+        run: |
+          if test -f .bean-install-memory/install.sqlite; then
+            python puppy-native/bean_install_memory.py --db .bean-install-memory/install.sqlite verify
+          else
+            echo NO_BEAN_DATABASE_TO_VERIFY
+          fi
+      - name: Preserve hash-chained BEAN memory without publishing ISO
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: .bean-install-memory
+          key: venvwin-bean-simple-v1-${{ github.run_id }}-${{ github.run_attempt }}
+      - name: Upload bounded diagnostic evidence only, never the ISO or unverified runtime
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: puppy-bookworm-wine64-guest-evidence-no-iso
+          retention-days: 30
+          if-no-files-found: warn
+          path: |
+            dist/puppy-bookworm-wine/debian-pinned-packages.log
+            dist/puppy-bookworm-wine/module-hashes.sha256
+            dist/puppy-bookworm-wine/module-provenance-verified.txt
+            dist/puppy-bookworm-wine/module-file-list.txt
+            dist/puppy-native/bookworm-ydrv-patch-sha256.txt
+            dist/puppy-native/wine-lab-guest-serial.log
+            dist/puppy-native/wine-lab-qemu-stderr.log
+            dist/puppy-native/wine-lab-vnc-assist.log
+            dist/puppy-native/wine-lab-grub-input.log
+            dist/puppy-native/wine-lab-guest-desktop.png
+            dist/puppy-native/live-puppy-*.png
+            dist/puppy-native/bookworm-guest-receipts/*/*.json
+            dist/puppy-native/bookworm-guest-receipts/*/*.txt
+            .bean-install-memory/install.sqlite
