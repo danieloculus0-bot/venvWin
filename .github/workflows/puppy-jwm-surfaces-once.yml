@@ -1,0 +1,43 @@
+name: Inspect real Puppy JWM panel and startup configuration
+# Read-only upstream 10.0.12 source inspection, no modifications or ISO release.
+on:
+  push:
+    branches: [feat/puppy-ui-wine-integration-20261011]
+    paths: [".github/workflows/puppy-jwm-surfaces-once.yml"]
+  workflow_dispatch:
+permissions: {contents: read}
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Host tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends xorriso squashfs-tools
+      - name: Extract PINNED official Puppy theme and startup source
+        run: |
+          set -euo pipefail
+          mkdir -p dist/jwm-surfaces
+          cd dist/jwm-surfaces
+          curl -fL --retry 3 --max-time 1200 \
+            -o puppy.iso https://distro.ibiblio.org/puppylinux/puppy-bookwormpup/BookwormPup64/10.0.12/BookwormPup64_10.0.12.iso
+          echo 'ae65f6e6d70a96f48bdbb291c2426f8a2fd77a73692e149e81a5eecb6fe7509f  puppy.iso' | sha256sum -c -
+          xorriso -osirrox on -indev puppy.iso -extract /puppy_dpupbw64_10.0.12.sfs main.sfs >extract.log 2>&1
+          for path in root/.jwmrc-tray root/.jwmrc root/.jwm/jwmrc-theme root/.jwm/jwmrc-personal etc/xdg/templates/_root_.jwmrc root/Startup/README.txt; do
+            mkdir -p "original/$(dirname "$path")"
+            unsquashfs -cat main.sfs "$path" >"original/$path" 2>>extract.log || rm -f "original/$path"
+          done
+          ls -lR original >original-files.txt
+          echo UPSTREAM_NATIVE_PUPPY_JWM_THEME_FILES_INSPECTED
+      - name: Save configuration TEXT only, never upstream binary ISO
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: actual-puppy-10-0-12-jwm-tray-and-startup
+          retention-days: 14
+          path: |
+            dist/jwm-surfaces/original/**
+            dist/jwm-surfaces/original-files.txt
+            dist/jwm-surfaces/extract.log
