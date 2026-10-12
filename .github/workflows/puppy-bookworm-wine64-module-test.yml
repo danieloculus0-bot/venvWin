@@ -1,0 +1,47 @@
+name: Debian Bookworm native Wine64 SFS source integrity, no Puppy ISO
+on:
+  push:
+    branches: [experiment/puppy-bookworm-wine64-fallback-20261012]
+    paths: [".github/workflows/puppy-bookworm-wine64-module-test.yml"]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  wine64-sfs:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check module builder and authoritative package pin source
+        run: |
+          set -euo pipefail
+          bash -n puppy-native/build-bookworm-wine64-sfs.sh
+          grep -Fq '512b715f32fccf2ebec2b63f23d9d83394d30e27cc5570a8ef92c5d3627ef305' \
+            puppy-native/build-bookworm-wine64-sfs.sh
+          grep -Fq '4ff56d97fb84c41dd450775f03ae42208f092e822f9baa742dcde951773ecb42' \
+            puppy-native/build-bookworm-wine64-sfs.sh
+          echo SOURCE_VALIDATED_NOT_INSTALL_PROOF
+      - name: Native SquashFS and Debian package extraction tools
+        run: |
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            ca-certificates curl dpkg squashfs-tools xorriso
+      - name: Fetch exact Debian packages and build separate Wine64 module
+        run: |
+          set -euo pipefail
+          bash puppy-native/build-bookworm-wine64-sfs.sh
+          cd dist/puppy-bookworm-wine
+          sha256sum -c module-hashes.sha256
+          echo EXACT_PINNED_DEBIAN_WINE64_MODULE_BUILT_NOT_GUEST_PROOF
+      - name: Upload only checksum/ABI/source diagnostics, no binary distribution
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: puppy-bookworm-wine64-sfs-build-receipts
+          retention-days: 21
+          if-no-files-found: warn
+          path: |
+            dist/puppy-bookworm-wine/debian-pinned-packages.log
+            dist/puppy-bookworm-wine/module-hashes.sha256
+            dist/puppy-bookworm-wine/module-provenance-verified.txt
+            dist/puppy-bookworm-wine/module-file-list.txt
