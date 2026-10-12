@@ -44,6 +44,11 @@ jobs:
           python -m pytest -q tests/test_puppy_bookworm_wine64.py tests/test_bean_install_memory.py tests/test_puppy_native_contract.py tests/test_puppy_windows_intake.py
           python -m py_compile puppy-native/prepare_bookworm_guest_fixtures.py puppy-native/import_guest_wine_evidence.py
           sh -n puppy-native/venvwin-wine-bookworm-guest-lab
+          # Puppy sfs_load.overlay mounts a loop DEVICE; /proc/self/mountinfo
+          # never includes the original filename. Proven first guest run
+          # 38298147998 mounted /dev/loop7 but old harness falsely rejected it.
+          grep -Fq 'losetup -n -j "$CD/$MODULE"' puppy-native/venvwin-wine-bookworm-guest-lab
+          grep -Fq ' /proc/self/mountinfo' puppy-native/venvwin-wine-bookworm-guest-lab
           bash -n puppy-native/build-bookworm-wine64-sfs.sh puppy-native/prove-bookworm-wine64-qemu.sh
           echo SOURCE_CHECK_ONLY_NOT_GUEST_WINE
       - name: Host SFS and real Win64 test-installer compilers only
