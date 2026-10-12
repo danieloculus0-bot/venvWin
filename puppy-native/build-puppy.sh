@@ -96,11 +96,11 @@ install -m 0644 "$ROOT/puppy-native/RELEASE-STATUS.txt" "$STAGE/opt/venvwin/RELE
 if [[ "${VENVWIN_GUEST_WINE_TEST:-0}" == "1" ]]; then
   TEST_INPUT="${VENVWIN_GUEST_WINE_TEST_INPUT_DIR:-}"
   [[ -n "$TEST_INPUT" && -d "$TEST_INPUT" ]] || { echo "GUEST_WINE_LAB_INPUT_MISSING" >&2; exit 1; }
-  for input in Setup.exe SimpleMsi.msi SmokeApp.exe manifest.sha256 nsis-exe.fingerprint wix-msi.fingerprint; do
+  for input in Setup.exe SimpleMsi.msi SmokeApp.exe manifest.sha256 nsis-exe.fingerprint wix-msi.fingerprint selected-cases.txt; do
     [[ -s "$TEST_INPUT/$input" ]] || { echo "GUEST_WINE_LAB_PAYLOAD_MISSING=$input" >&2; exit 1; }
   done
   mkdir -p "$STAGE/opt/venvwin/wine-lab"
-  cp "$TEST_INPUT"/{Setup.exe,SimpleMsi.msi,SmokeApp.exe,manifest.sha256,nsis-exe.fingerprint,wix-msi.fingerprint} "$STAGE/opt/venvwin/wine-lab/"
+  cp "$TEST_INPUT"/{Setup.exe,SimpleMsi.msi,SmokeApp.exe,manifest.sha256,nsis-exe.fingerprint,wix-msi.fingerprint,selected-cases.txt} "$STAGE/opt/venvwin/wine-lab/"
   (
     cd "$STAGE/opt/venvwin/wine-lab"
     sha256sum -c manifest.sha256

@@ -58,6 +58,10 @@ emit "VENVWIN_WINE_GUEST_VERSION=$(wine --version 2>&1)"
 emit "VENVWIN_WINE_GUEST_RUNTIME_INSTALLED"
 # Isolate two Windows installation tests, each in a separate real Wine capsule.
 for CASE in nsis-exe wix-msi; do
+  if ! grep -Fxq "$CASE" "$LAB/selected-cases.txt"; then
+    emit "VENVWIN_WINE_GUEST_CASE_SKIPPED_BEAN_MEMORY=$CASE"
+    continue
+  fi
   case "$CASE" in
     nsis-exe) SETUP="$LAB/Setup.exe"; CAPSULE=setup;;
     wix-msi) SETUP="$LAB/SimpleMsi.msi"; CAPSULE=simplemsi;;

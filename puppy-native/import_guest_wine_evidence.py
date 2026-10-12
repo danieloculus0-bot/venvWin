@@ -56,7 +56,10 @@ def main():
     boot = "PUPPY_GUEST_BOOT_PROVEN" in lines
     screenshot = real_png(args.screenshot)
     any_failed = False
-    for case in CASES:
+    selected = (args.fixture_dir / "selected-cases.txt").read_text().splitlines()
+    if not selected or len(selected) != len(set(selected)) or any(c not in CASES for c in selected):
+        raise ValueError("invalid or empty BEAN-selected real guest cases")
+    for case in selected:
         out = args.evidence / case
         out.mkdir(parents=True, exist_ok=True)
         fingerprint = (args.fixture_dir / f"{case}.fingerprint").read_text().strip()
