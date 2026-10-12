@@ -33,6 +33,12 @@ jobs:
             test -s "original/$path"
             echo "ACTUAL_PUPPY_FILE=$path" >>original-files.txt
           done
+          # Read-only startup/wallpaper investigation: Quick Setup may reset
+          # ROX background using this upstream config, even after our PuppyPin.
+          for config in root/.config/wallpaper/bg_img root/.config/wallpaper/backgroundmode root/.jwm/jwmrc-wallpaper root/Choices/ROX-Filer/PuppyPin usr/sbin/set_bg usr/sbin/fixPuppyPin; do
+            mkdir -p "original/$(dirname "$config")"
+            unsquashfs -no-wildcards -cat main.sfs "$config" >"original/$config" 2>>extract.log || echo "UNAVAILABLE_UPSTREAM=$config" >>original-files.txt
+          done
           mkdir -p original/etc/xdg/templates
           unsquashfs -cat main.sfs etc/xdg/templates/_root_.jwmrc >original/etc/xdg/templates/_root_.jwmrc
           ls -lR original >>original-files.txt
