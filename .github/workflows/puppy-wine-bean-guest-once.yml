@@ -41,9 +41,9 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git -C _bean_core rev-parse HEAD)" = "$BEAN_CORE_PIN"
-          python -m pip install -e . pytest pillow
+          python -m pip install -e . pytest pillow vncdotool==1.4.2
           python -m pytest -q tests/test_bean_install_memory.py tests/test_puppy_native_contract.py tests/test_puppy_ui_wine_contract.py tests/test_puppy_windows_intake.py
-          python -m py_compile puppy-native/prepare_guest_wine_fixtures.py puppy-native/import_guest_wine_evidence.py puppy-native/windows_install_smoke.py puppy-native/bean_install_memory.py
+          python -m py_compile puppy-native/prepare_guest_wine_fixtures.py puppy-native/import_guest_wine_evidence.py puppy-native/windows_install_smoke.py puppy-native/bean_install_memory.py puppy-native/qemu-desktop-guest-proof.py
           sh -n puppy-native/venvwin-wine-guest-lab
           bash -n puppy-native/build-puppy.sh puppy-native/prove-puppy-wine-qemu.sh
           python - <<'PY'
@@ -93,7 +93,8 @@ jobs:
           set -euo pipefail
           test -s dist/puppy-native/venvwin-puppy-native-10.0.12-experimental.iso
           test -s dist/puppy-native/tested-sources.sha256
-          sha256sum -c dist/puppy-native/tested-sources.sha256
+          grep -F "venvwin-puppy-native-10.0.12-experimental.iso" dist/puppy-native/tested-sources.sha256 | sha256sum -c -
+          echo CACHED_ISO_HASH_VERIFIED_INDEPENDENT_SFS_NOT_REQUIRED_FROM_IMMUTABLE_CACHE
           (
             cd dist/puppy-native/wine-lab-input
             sha256sum -c manifest.sha256
@@ -108,16 +109,32 @@ jobs:
             dist/puppy-native/tested-sources.sha256
             dist/puppy-native/wine-lab-input
           key: puppy-wine-lab-experimental-v1-${{ hashFiles('puppy-native/build-puppy.sh', 'puppy-native/venvwin-wine-guest-lab', 'puppy-native/windows_install_smoke.py', 'src/venvwin/**', 'puppy-native/art/**', 'dist/puppy-native/wine-lab-input/selected-cases.txt') }}
-      - name: Real disposable networked QEMU Puppy boots and tries Wine32 + Windows installers
+      - name: Real disposable QEMU Puppy with previously successful read-only GUI setup assist
         id: qemu
         run: |
+          set -euo pipefail
+          OUT="$GITHUB_WORKSPACE/dist/puppy-native"
+          mkdir -p "$OUT"
+          # Same tested ISO and actual Startup hooks. GUI helper only dismisses
+          # first-run setup and runs the preinstalled READ-ONLY diagnostic.
+          # It cannot create any guest acceptance marker by itself.
+          (
+            sleep 20
+            python puppy-native/qemu-desktop-guest-proof.py               --output "$OUT" --wait-seconds 500
+          ) > "$OUT/wine-lab-vnc-assist.log" 2>&1 &
+          ASSIST_PID=$!
           set +e
           bash puppy-native/prove-puppy-wine-qemu.sh
           status=$?
           set -e
+          if kill -0 "$ASSIST_PID" 2>/dev/null; then
+            kill "$ASSIST_PID" 2>/dev/null || true
+          fi
+          wait "$ASSIST_PID" 2>/dev/null || true
           echo "QEMU_HARNESS_RETURN=$status"
-          echo "QEMU_RETURN_ALONE_IS_NEVER_GUEST_SUCCESS"
-          # Continue to evidence importer even for a diagnostic failure.
+          cat "$OUT/wine-lab-vnc-assist.log" || true
+          echo "GUI_ASSIST_IS_NOT_AUTOSTART_OR_WINDOWS_PROOF"
+          # Continue to independent evidence importer even for diagnostic failure.
           exit 0
       - name: Independently parse true guest serial and store case-specific BEAN receipts
         id: evidence
@@ -158,6 +175,8 @@ jobs:
             dist/puppy-native/wine-lab-grub-input.log
             dist/puppy-native/wine-lab-final-frame.log
             dist/puppy-native/wine-lab-guest-desktop.png
+            dist/puppy-native/wine-lab-vnc-assist.log
+            dist/puppy-native/live-puppy-*.png
             dist/puppy-native/wine-guest-receipts/*/*.json
             dist/puppy-native/wine-guest-receipts/*/*.txt
             .bean-install-memory/install.sqlite
