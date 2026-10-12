@@ -1,0 +1,149 @@
+#!/bin/sh
+# Disposable guest-only test. This is NOT part of venvWin production auto-start.
+set -u
+LAB=/opt/venvwin/wine-lab
+[ -f "$LAB/EXPERIMENT_ONLY" ] || exit 0
+OUT=/tmp/venvwin-wow64-lab
+mkdir -p "$OUT"
+exec >>"$OUT/guest.log" 2>&1
+emit() {
+  printf '%s\n' "$*"
+  if [ -c /dev/ttyS0 ]; then printf '%s\n' "$*" >/dev/ttyS0 2>/dev/null || true; fi
+}
+fail() { emit "VENVWIN_WINE_GUEST_BLOCKER=$1"; exit 1; }
+emit VENVWIN_WINE_GUEST_LAB_STARTED
+emit "VENVWIN_WINE_GUEST_KERNEL=$(uname -r)"
+emit "VENVWIN_WINE_GUEST_LIBC=$(getconf GNU_LIBC_VERSION 2>/dev/null || echo missing)"
+emit 'VENVWIN_WINE_RUNTIME_METHOD=EXTERNAL_READ_ONLY_SFS_NO_I386_APT'
+for n in $(seq 1 45); do
+  grep -Fxq PUPPY_GUEST_BOOT_PROVEN /tmp/venvwin-puppy-guest-proof.log 2>/dev/null && break
+  sleep 4
+done
+grep -Fxq PUPPY_GUEST_BOOT_PROVEN /tmp/venvwin-puppy-guest-proof.log 2>/dev/null || fail NO_AUTOMATIC_PUPPY_GUEST_BOOT_WITNESS
+emit VENVWIN_WINE_GUEST_BOOT_INDEPENDENTLY_PROVEN
+command -v mount >/dev/null 2>&1 || fail NO_MOUNT
+for required in Setup.exe SimpleMsi.msi SmokeApp.exe manifest.sha256 selected-cases.txt; do
+  test -s "$LAB/$required" || fail MISSING_REAL_WINDOWS_FIXTURE
+done
+(cd "$LAB" && sha256sum -c manifest.sha256) >"$OUT/fixtures.sha256.log" 2>&1 || fail INSTALLER_HASH_MISMATCH
+CD=/mnt/venvwin-wow64-media
+ROOT=/mnt/venvwin-wow64-sfs
+MODULE=venvwin-wine-wow64-11.19.sfs
+mkdir -p "$CD" "$ROOT"
+FOUND=0
+for drive in /dev/sr1 /dev/sr0 /dev/sr2; do
+  [ -b "$drive" ] || continue
+  if mount -t iso9660 -o ro "$drive" "$CD" >"$OUT/media-mount.log" 2>&1; then
+    if [ -s "$CD/$MODULE" ]; then
+      emit "VENVWIN_WINE_MODULE_MEDIA_DEVICE=$drive"
+      FOUND=1
+      break
+    fi
+    umount "$CD" || fail MODULE_MEDIA_UNMOUNT
+  fi
+done
+[ "$FOUND" -eq 1 ] || fail MODULE_MEDIA_NOT_VISIBLE
+mount -t squashfs -o ro,loop "$CD/$MODULE" "$ROOT" >"$OUT/sfs-mount.log" 2>&1 || {
+  tail -n 8 "$OUT/sfs-mount.log" | while IFS= read -r l; do emit "GUEST_WOW64_MOUNT_DIAGNOSTIC=$l"; done
+  fail MODULE_SQUASHFS_MOUNT
+}
+grep -Fq "$ROOT" /proc/self/mountinfo || fail NO_REAL_SQUASHFS_MOUNTINFO
+emit VENVWIN_WINE_GUEST_EXTERNAL_SFS_MOUNTED
+WINE="$ROOT/opt/venvwin/wine"
+test -x "$WINE/bin/wine" || fail NO_WINE_IN_VERIFIED_SFS
+export PATH="$WINE/bin:$PATH"
+export WINEDEBUG=-all
+export WINEARCH=win64
+export WINEDLLOVERRIDES='winegstreamer='
+if command -v ldd >/dev/null 2>&1; then
+  ldd "$WINE/bin/wine" >"$OUT/wine-ldd.log" 2>&1 || true
+  sed -n '/not found/p' "$OUT/wine-ldd.log" | while IFS= read -r l; do emit "GUEST_WOW64_LINK_DIAGNOSTIC=$l"; done
+fi
+version=$(timeout 30 wine --version 2>"$OUT/wine-version-stderr.log") || {
+  tail -n 8 "$OUT/wine-version-stderr.log" | while IFS= read -r l; do emit "GUEST_WOW64_RUNTIME_DIAGNOSTIC=$l"; done
+  fail WOW64_WINE_VERSION_EXECUTION
+}
+emit "VENVWIN_WINE_GUEST_VERSION=$version"
+emit VENVWIN_WINE_GUEST_RUNTIME_INSTALLED
+ALL_PASS=1
+for CASE in nsis-exe wix-msi; do
+  grep -Fxq "$CASE" "$LAB/selected-cases.txt" || { emit "VENVWIN_WINE_GUEST_CASE_SKIPPED_BEAN_MEMORY=$CASE"; continue; }
+  case "$CASE" in
+    nsis-exe) SETUP="$LAB/Setup.exe"; CAPSULE=setup;;
+    wix-msi) SETUP="$LAB/SimpleMsi.msi"; CAPSULE=simplemsi;;
+  esac
+  HOME_DIR="$OUT/$CASE-capsule-store"
+  mkdir -p "$HOME_DIR"
+  export VENVWIN_HOME="$HOME_DIR"
+  /usr/local/bin/venvwin init >"$OUT/$CASE-init.log" 2>&1 || fail "$CASE-CAPSULE_INIT"
+  # Measure prefix bootstrap independently of the Windows installer. The prior
+  # real TCG guest spent 180 seconds in Wine on each installer without an app
+  # receipt. This separates slow/broken Wine initialization from NSIS/MSI.
+  /usr/local/bin/venvwin open "$SETUP" --dry-run >"$OUT/$CASE-plan.json" 2>"$OUT/$CASE-plan-stderr.log" ||
+    fail "$CASE-CAPSULE_PLAN"
+  PREFIX=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["prefix_path"])' \
+     "$HOME_DIR/capsules/$CAPSULE/venvwin.json" 2>/dev/null) ||
+    fail "$CASE-PREFIX_METADATA"
+  [ -d "$PREFIX" ] || fail "$CASE-PREFIX_DIRECTORY_MISSING"
+  export WINEPREFIX="$PREFIX"
+  STARTED_AT=$(date +%s)
+  emit "VENVWIN_WINE_GUEST_PREFIX_INIT_START=$CASE:$STARTED_AT"
+  # Avoid a blind increase to the EXE/MSI timeouts: explicitly call wineboot
+  # and independently verify the Windows registry/prefix after exit.
+  timeout 420 wine wineboot --init >"$OUT/$CASE-wineboot.log" 2>&1
+  INIT_RESULT=$?
+  FINISHED_AT=$(date +%s)
+  emit "VENVWIN_WINE_GUEST_PREFIX_INIT_ELAPSED=$CASE:$((FINISHED_AT - STARTED_AT))"
+  if [ "$INIT_RESULT" -ne 0 ]; then
+    emit "VENVWIN_WINE_GUEST_PREFIX_INIT_FAILED=$CASE:$INIT_RESULT"
+    tail -n 14 "$OUT/$CASE-wineboot.log" | while IFS= read -r l; do emit "GUEST_WOW64_PREFIX_DIAGNOSTIC=$CASE:$l"; done
+    ps -eo pid,ppid,stat,etime,pcpu,comm 2>/dev/null | grep -E '(wine|wineserver|services|explorer|rpcss)' | head -n 18 |
+      while IFS= read -r l; do emit "GUEST_WOW64_PROCESS_DIAGNOSTIC=$CASE:$l"; done
+    fail "$CASE-WINEPREFIX_INIT_$INIT_RESULT"
+  fi
+  [ -s "$PREFIX/system.reg" ] && [ -s "$PREFIX/user.reg" ] ||
+    fail "$CASE-WINEPREFIX_REGISTRY_MISSING"
+  emit "VENVWIN_WINE_GUEST_PREFIX_INIT_PASS=$CASE"
+  emit "VENVWIN_WINE_GUEST_INSTALL_START=$CASE"
+  INSTALL_STARTED_AT=$(date +%s)
+  timeout 180 /usr/local/bin/venvwin open "$SETUP" >"$OUT/$CASE-install.json" 2>"$OUT/$CASE-install-stderr.log"
+  INSTALL_FINISHED_AT=$(date +%s)
+  emit "VENVWIN_WINE_GUEST_INSTALL_ELAPSED=$CASE:$((INSTALL_FINISHED_AT - INSTALL_STARTED_AT))"
+  STATUS=$?
+  if [ "$STATUS" -ne 0 ]; then
+    tail -n 8 "$OUT/$CASE-install-stderr.log" | while IFS= read -r l; do emit "GUEST_WOW64_INSTALL_DIAGNOSTIC=$CASE:$l"; done
+    emit "VENVWIN_WINE_GUEST_INSTALL_FAILED=$CASE:$STATUS"
+    ALL_PASS=0
+    continue
+  fi
+  PREFIX=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["prefix_path"])' \
+     "$HOME_DIR/capsules/$CAPSULE/venvwin.json" 2>/dev/null) || { emit "VENVWIN_WINE_GUEST_PREFIX_UNOBSERVED=$CASE"; ALL_PASS=0; continue; }
+  TARGET=$(find "$PREFIX/drive_c" -type f -iname SmokeApp.exe 2>/dev/null | head -n 1)
+  [ -n "$TARGET" ] && [ -f "$TARGET" ] || { emit "VENVWIN_WINE_GUEST_APP_MISSING=$CASE"; ALL_PASS=0; continue; }
+  ORIG=$(sha256sum "$LAB/SmokeApp.exe" | cut -d' ' -f1)
+  ACTUAL=$(sha256sum "$TARGET" | cut -d' ' -f1)
+  [ "$ORIG" = "$ACTUAL" ] || { emit "VENVWIN_WINE_GUEST_APP_HASH_MISMATCH=$CASE"; ALL_PASS=0; continue; }
+  emit "VENVWIN_WINE_GUEST_APP_INSTALLED=$CASE"
+  timeout 120 /usr/local/bin/venvwin run "$CAPSULE" "$TARGET" >"$OUT/$CASE-launch.json" 2>"$OUT/$CASE-launch-stderr.log"
+  STATUS=$?
+  if [ "$STATUS" -ne 0 ]; then emit "VENVWIN_WINE_GUEST_LAUNCH_FAILED=$CASE:$STATUS"; ALL_PASS=0; continue; fi
+  MARKER="$PREFIX/drive_c/venvwin-simple-app-ran.txt"
+  [ -f "$MARKER" ] && [ "$(cat "$MARKER")" = REAL_WINDOWS_APPLICATION_LAUNCHED ] || {
+    emit "VENVWIN_WINE_GUEST_APPLICATION_MARKER_MISSING=$CASE"; ALL_PASS=0; continue;
+  }
+  emit "VENVWIN_WINE_GUEST_APP_MARKER_VERIFIED=$CASE"
+  for KIND in install launch marker; do
+    if [ "$KIND" = marker ]; then FILE="$MARKER"; else FILE="$OUT/$CASE-$KIND.json"; fi
+    emit "VENVWIN_WINE_GUEST_RECEIPT_BEGIN=$CASE:$KIND"
+    base64 "$FILE" | tr -d '\n' >/dev/ttyS0 2>/dev/null || true
+    printf '\n' >/dev/ttyS0 2>/dev/null || true
+    emit "VENVWIN_WINE_GUEST_RECEIPT_END=$CASE:$KIND"
+  done
+  FINGERPRINT=$(cat "$LAB/$CASE.fingerprint" 2>/dev/null) || fail MISSING_CASE_FINGERPRINT
+  [ "${#FINGERPRINT}" -eq 64 ] || fail INVALID_CASE_FINGERPRINT
+  case "$FINGERPRINT" in *[!0-9a-f]*|'') fail INVALID_CASE_FINGERPRINT;; esac
+  emit "VENVWIN_GUEST_WINDOWS_APP_PASS=$CASE:$FINGERPRINT"
+  emit "VENVWIN_WINE_GUEST_CASE_PASS=$CASE"
+done
+emit VENVWIN_WINE_GUEST_LAB_FINISHED
+[ "$ALL_PASS" -eq 1 ] || exit 1
