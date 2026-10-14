@@ -129,6 +129,26 @@ jobs:
             -report_el_torito plain >"$OUT/test-boot-catalog.txt" 2>&1
           grep -qi 'El Torito' "$OUT/test-boot-catalog.txt"
           sha256sum "$OUT/isolated-test-apptrim.iso" "$OUT/opt-main.sfs" > "$OUT/experimental-hashes.txt"
+          # Confirm the real APT/dpkg database, browser, firmware and hardware
+          # modules are byte-identical between upstream and trimmed ISO.
+          for module in \
+            bdrv_dpupbw64_10.0.12.sfs \
+            adrv_dpupbw64_10.0.12.sfs \
+            fdrv_dpupbw64_10.0.12.sfs \
+            zdrv_dpupbw64_10.0.12.sfs; do
+            xorriso -osirrox on -indev "$OUT/isolated-test-apptrim.iso" \
+              -extract "/$module" "$OUT/verify-$module" \
+              >>"$OUT/retained-layers.log" 2>&1
+            xorriso -osirrox on -indev "$OUT/BookwormPup64_10.0.12.iso" \
+              -extract "/$module" "$OUT/original-$module" \
+              >>"$OUT/retained-layers.log" 2>&1
+            cmp "$OUT/original-$module" "$OUT/verify-$module" || {
+              echo "PROTECTED_PUPPY_LAYER_MODIFIED=$module"; exit 3;
+            }
+            sha256sum "$OUT/original-$module" "$OUT/verify-$module" >> "$OUT/retained-layers-sha256.txt"
+            rm -f "$OUT/original-$module" "$OUT/verify-$module"
+            echo "PROTECTED_PUPPY_LAYER_BYTE_IDENTICAL=$module"
+          done
           echo ISOLATED_TRIMMED_BOOT_STRUCTURE_CREATED_NOT_PUPPY_OR_WINE_GUEST_VERIFIED
       - name: Upload measured application-trim evidence (NEVER ISO or SFS)
         if: always()
@@ -149,3 +169,5 @@ jobs:
             dist/slacko-app-trim/recompress.log
             dist/slacko-app-trim/default-handler-review.txt
             dist/slacko-app-trim/test-iso-build.log
+            dist/slacko-app-trim/retained-layers.log
+            dist/slacko-app-trim/retained-layers-sha256.txt
