@@ -1,0 +1,203 @@
+name: Real BookwormPup64 10.0.8 and archived Wine 9.19 32/64 guest proof
+# Isolated experimental compatibility verification. No Windows partition, Debian OS build, merge, or ISO publishing.
+on:
+  push:
+    branches: [test/bookwormpup-1008-wine919-compat-20261013]
+    paths: [.github/workflows/puppy-1008-wine919-guest.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: venvwin-1008-original-wine919-real-guest
+  cancel-in-progress: false
+jobs:
+  real-wine919-in-puppy:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 48
+    steps:
+      - uses: actions/checkout@v4
+      - name: Confirm native guest probe is valid shell
+        run: |
+          set -euo pipefail
+          sh -n puppy-native/probe-1008-wine919-guest
+          echo ORIGINAL_WINE_COMPATIBILITY_PROBE_SOURCE_READY_NOT_GUEST_PROOF
+      - name: Prepare only host-side inspection, PE cross compilers and KVM
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            qemu-system-x86 xorriso squashfs-tools gcc-mingw-w64-i686 \
+            gcc-mingw-w64-x86-64 curl file rsync binutils
+          if ! test -c /dev/kvm; then
+            echo BLOCKER_KVM_MISSING_NO_UNCHANGED_QEMU_TCG_LOOP
+            exit 2
+          fi
+          sudo chmod a+rw /dev/kvm
+          python3 - <<'PY'
+          import os, fcntl
+          fd=os.open('/dev/kvm',os.O_RDWR)
+          try: version=fcntl.ioctl(fd,0xae00,0)
+          finally: os.close(fd)
+          assert version==12, f'KVM_INVALID_API={version}'
+          print('REAL_KVM_API_CONFIRMED_NOT_PUPPY_BOOT_PROOF')
+          PY
+      - name: Download unmodified official Puppy 10.0.8 with upstream SHA256
+        run: |
+          set -euo pipefail
+          OUT="$GITHUB_WORKSPACE/dist/puppy-1008-wine919"
+          mkdir -p "$OUT"
+          ISO="$OUT/BookwormPup64_10.0.8.iso"
+          curl --fail --location --retry 3 --connect-timeout 30 --max-time 1200 \
+            -o "$ISO.partial" \
+            https://distro.ibiblio.org/puppylinux/puppy-bookwormpup/BookwormPup64/10.0.8/BookwormPup64_10.0.8.iso
+          mv "$ISO.partial" "$ISO"
+          echo 'be95e717bd2320d5b22ce96eb44be1d9c1243e0444154598d577418892a01b23  BookwormPup64_10.0.8.iso' \
+            > "$OUT/upstream-puppy-sha256.txt"
+          (cd "$OUT" && sha256sum -c upstream-puppy-sha256.txt)
+          file "$ISO"
+          file -b "$ISO" | grep -qi 'iso 9660'
+          echo AUTHENTIC_UPSTREAM_PUPPY_1008_IMAGE_NOT_BOOT_PROOF
+      - name: Download fixed archived 2024 Wine 9.19 x86-64 AppImage, NO recompilation
+        run: |
+          set -euo pipefail
+          OUT="$GITHUB_WORKSPACE/dist/puppy-1008-wine919"
+          WINE="$OUT/wine-devel_9.19-x86_64.AppImage"
+          curl --fail --location --retry 3 --connect-timeout 30 --max-time 1000 \
+            -o "$WINE.partial" \
+            'https://github.com/FaithLife-Community/wine-appimages/releases/download/9.19-devel/wine-devel_9.19-x86_64.AppImage'
+          mv "$WINE.partial" "$WINE"
+          test "$(stat -c %s "$WINE")" -eq 211538264
+          file "$WINE" | tee "$OUT/wine-appimage-file-type.txt"
+          file -b "$WINE" | grep -Eq 'ELF 64-bit'
+          sha256sum "$WINE" > "$OUT/wine919-measured-sha256.txt"
+          echo ARCHIVED_WINE919_BINARY_MEASURED_NOT_PUPPY_COMPATIBILITY_PROOF
+      - name: Extract original Wine AppImage on host, preserve runtime without modifying binaries
+        run: |
+          set -euo pipefail
+          OUT="$GITHUB_WORKSPACE/dist/puppy-1008-wine919"
+          mkdir -p "$OUT/extract"
+          cp "$OUT/wine-devel_9.19-x86_64.AppImage" "$OUT/extract/Wine.AppImage"
+          chmod 0755 "$OUT/extract/Wine.AppImage"
+          (cd "$OUT/extract" && ./Wine.AppImage --appimage-extract >"$OUT/wine-appimage-extract.log" 2>&1)
+          test -x "$OUT/extract/squashfs-root/AppRun"
+          test -x "$OUT/extract/squashfs-root/usr/bin/wine"
+          file "$OUT/extract/squashfs-root/usr/bin/wine" | tee "$OUT/wine-native-elf-type.txt"
+          echo ORIGINAL_APPIMAGE_RUNTIME_EXTRACTED_NOT_REBUILT
+      - name: Create test-only module with UNMODIFIED Wine files and independently compiled Windows executables
+        run: |
+          set -euo pipefail
+          OUT="$GITHUB_WORKSPACE/dist/puppy-1008-wine919"
+          ISO="$OUT/BookwormPup64_10.0.8.iso"
+          STAGE="$OUT/guest-stage"
+          xorriso -indev "$ISO" -find / -type f -exec echo -- > "$OUT/upstream-iso-inventory.txt" 2>"$OUT/inventory-error.log"
+          grep -Fq 'puppy_dpupbw64_10.0.8.sfs' "$OUT/upstream-iso-inventory.txt"
+          if grep -q 'ydrv_dpupbw64_10.0.8.sfs' "$OUT/upstream-iso-inventory.txt"; then
+            echo EXISTING_UPSTREAM_YDRV_REFUSE_OVERWRITE
+            exit 2
+          fi
+          mkdir -p "$STAGE/opt/venvwin/wine919-runtime" "$STAGE/opt/venvwin/wine919-lab" "$STAGE/root/Startup"
+          cp -a "$OUT/extract/squashfs-root/." "$STAGE/opt/venvwin/wine919-runtime/"
+          install -m 0755 puppy-native/probe-1008-wine919-guest "$STAGE/root/Startup/venvwin-real-wine919-proof"
+          cat > "$OUT/smoke.c" <<'C'
+          #include <stdio.h>
+          int main(void) {
+          #ifdef _WIN64
+            puts("VENVWIN_REAL_GUEST_WINDOWS64_EXECUTED");
+          #else
+            puts("VENVWIN_REAL_GUEST_WINDOWS32_EXECUTED");
+          #endif
+            return 0;
+          }
+          C
+          x86_64-w64-mingw32-gcc -Os "$OUT/smoke.c" -o "$STAGE/opt/venvwin/wine919-lab/smoke64.exe"
+          i686-w64-mingw32-gcc -Os "$OUT/smoke.c" -o "$STAGE/opt/venvwin/wine919-lab/smoke32.exe"
+          (cd "$STAGE/opt/venvwin/wine919-lab" && sha256sum smoke32.exe smoke64.exe > manifest.sha256)
+          file "$STAGE/opt/venvwin/wine919-lab/"*.exe > "$OUT/windows-fixture-architectures.txt"
+          grep -q 'PE32+' "$OUT/windows-fixture-architectures.txt"
+          grep -q 'PE32 executable' "$OUT/windows-fixture-architectures.txt"
+          mksquashfs "$STAGE" "$OUT/ydrv_dpupbw64_10.0.8.sfs" \
+            -noappend -all-root -comp xz -b 1048576 >"$OUT/ydrv-build.log" 2>&1
+          unsquashfs -cat "$OUT/ydrv_dpupbw64_10.0.8.sfs" root/Startup/venvwin-real-wine919-proof \
+            >"$OUT/ydrv-roundtrip-guest-probe"
+          cmp puppy-native/probe-1008-wine919-guest "$OUT/ydrv-roundtrip-guest-probe"
+          xorriso -indev "$ISO" -outdev "$OUT/experimental-puppy1008-wine919-guest.iso" \
+            -map "$OUT/ydrv_dpupbw64_10.0.8.sfs" /ydrv_dpupbw64_10.0.8.sfs \
+            -boot_image any replay -commit >"$OUT/iso-remap.log" 2>&1
+          xorriso -indev "$OUT/experimental-puppy1008-wine919-guest.iso" \
+            -report_el_torito plain > "$OUT/boot-records.txt" 2>&1
+          grep -qi 'El Torito' "$OUT/boot-records.txt"
+          sha256sum "$ISO" "$OUT/experimental-puppy1008-wine919-guest.iso" \
+            "$OUT/ydrv_dpupbw64_10.0.8.sfs" > "$OUT/measured-iso-and-ydrv-sha256.txt"
+          echo TEST_ONLY_MODULE_AND_BOOT_RECORDS_VERIFIED_NOT_GUEST_OR_WINE_PROOF
+      - name: Execute original Puppy in real KVM, require actual guest Wine version, prefix and Win32/64 receipts
+        run: |
+          set -euo pipefail
+          OUT="$GITHUB_WORKSPACE/dist/puppy-1008-wine919"
+          SERIAL="$OUT/qemu-guest-serial.log"
+          MONITOR="$OUT/monitor.sock"
+          rm -f "$SERIAL" "$MONITOR"
+          qemu-system-x86_64 -accel kvm -m 4096 -smp 2 \
+            -boot order=d -cdrom "$OUT/experimental-puppy1008-wine919-guest.iso" \
+            -vga std -display vnc=127.0.0.1:0 \
+            -serial "file:$SERIAL" -monitor "unix:$MONITOR,server=on,wait=off" \
+            -no-reboot -net none >"$OUT/qemu-stderr.log" 2>&1 &
+          PID=$!
+          cleanup() { kill "$PID" 2>/dev/null || true; wait "$PID" 2>/dev/null || true; }
+          trap cleanup EXIT
+          sleep 10
+          python3 - "$MONITOR" <<'PY'
+          import socket,sys
+          try:
+            with socket.socket(socket.AF_UNIX) as s:
+              s.settimeout(4); s.connect(sys.argv[1]); s.recv(2048)
+              s.sendall(b'sendkey ret\n')
+          except Exception as exc:
+            print('QEMU_BOOT_MENU_KEY_DIAGNOSTIC',exc)
+          PY
+          PASS=0
+          for i in $(seq 1 36); do
+            sleep 15
+            if test -f "$SERIAL" &&
+              grep -Fxq VENVWIN_WINE919_REAL_GUEST_STARTUP "$SERIAL" &&
+              grep -Fxq VENVWIN_WINE919_LIVE_UNION_CONFIRMED "$SERIAL" &&
+              grep -Fxq VENVWIN_WINE919_GUEST_PREFIX_PASS "$SERIAL" &&
+              grep -Fxq VENVWIN_WINE919_REAL_WINDOWS64_PASS "$SERIAL" &&
+              grep -Fxq VENVWIN_WINE919_REAL_WINDOWS32_PASS "$SERIAL" &&
+              grep -Fxq VENVWIN_WINE919_CORE_GUEST_EXECUTION_PASS "$SERIAL"; then
+                PASS=1; break
+            fi
+            if test -f "$SERIAL" && grep -Fq VENVWIN_WINE919_GUEST_FAIL "$SERIAL"; then
+              echo GUEST_REPORTED_REAL_FAILURE
+              break
+            fi
+            kill -0 "$PID" 2>/dev/null || break
+          done
+          python3 - "$MONITOR" "$OUT/guest-last-frame.ppm" <<'PY'
+          import socket,sys
+          try:
+            with socket.socket(socket.AF_UNIX) as s:
+              s.settimeout(5);s.connect(sys.argv[1]);s.recv(2048)
+              s.sendall(('screendump '+sys.argv[2]+'\n').encode())
+          except Exception as exc:
+            print('QEMU_FRAME_DIAGNOSTIC_ONLY',exc)
+          PY
+          if test -f "$SERIAL"; then tail -n 120 "$SERIAL"; fi
+          if test "$PASS" -eq 1; then
+            printf 'guest_proof=PASS\nwine919=PASS\nwindows32=PASS\nwindows64=PASS\nexe_installer=NOT_TESTED\nmsi_installer=NOT_TESTED\npersistence=NOT_TESTED\n' > "$OUT/guest-verdict.txt"
+            echo REAL_PUPPY_WINE919_32_64_EXECUTION_GUEST_VERIFIED_NOT_RELEASE_READY
+          else
+            printf 'guest_proof=NOT_PROVEN\n' > "$OUT/guest-verdict.txt"
+            echo REAL_PUPPY_WINE919_WINDOWS_EXECUTION_NOT_PROVEN
+            exit 1
+          fi
+      - name: Upload bounded evidence only; NEVER upload ISO, Wine binary, or runtime
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: puppy-1008-wine919-actual-guest-diagnostics-NO-ISO
+          retention-days: 21
+          if-no-files-found: warn
+          path: |
+            dist/puppy-1008-wine919/*.txt
+            dist/puppy-1008-wine919/*.log
+            dist/puppy-1008-wine919/guest-last-frame.ppm
