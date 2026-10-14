@@ -96,6 +96,24 @@ EOF
     config="$HOME_DIR/.config/wallpaper"
     mkdir -p "$config"
     printf '%s\n' "$WALLPAPER" > "$config/bg_img"
+    # Puppy wallpaper chooser also reads this file on some versions.
+    # Remove stale stock-image selections, not unrelated user artwork.
+    for stale in "$config/bg_img_old" "$config/bg_img.previous"; do
+      if [ -f "$stale" ] && grep -Eq '(default|puppy|bookworm).*\.(png|jpe?g|svg)
+    echo 'VENVWIN_ROX_REAL_PINBOARD_RELOADED_VIA_RPC'
+    echo 'VENVWIN_PUPPY_WALLPAPER_CONFIG_UPDATED'
+  else
+    echo 'VENVWIN_ROX_RPC_BACKDROP_FAILED' >&2
+    exit 71
+  fi
+else
+  echo 'VENVWIN_ROX_EXECUTABLE_MISSING' >&2
+  exit 72
+fi
+ "$stale"; then
+        rm -f "$stale"
+      fi
+    done
     echo 'VENVWIN_ROX_REAL_PINBOARD_RELOADED_VIA_RPC'
     echo 'VENVWIN_PUPPY_WALLPAPER_CONFIG_UPDATED'
   else
