@@ -86,6 +86,15 @@ PROTECTED_BINARIES = [
     "usr/bin/smplayer",
     "usr/bin/aplay",
     "usr/bin/pipewire",
+    "usr/bin/synaptic",
+    "usr/bin/dpkg",
+    "usr/bin/dpkg-query",
+    "usr/bin/apt",
+    "usr/bin/apt-get",
+    "usr/bin/apt-cache",
+    "usr/bin/gtk-launch",
+    "usr/local/petget/pkg_chooser.sh",
+    "usr/local/bin/sfs_load",
 ]
 PROTECTED_MENU = [
     "usr/share/applications/abiword.desktop",
@@ -94,6 +103,9 @@ PROTECTED_MENU = [
     "usr/share/applications/mpv.desktop",
     "usr/share/applications/smplayer.desktop",
     "usr/share/applications/mtpaint.desktop",
+    "usr/share/applications/synaptic.desktop",
+    "usr/share/applications/Puppy-package-manager.desktop",
+    "usr/share/applications/SFS-Load.desktop",
 ]
 # All removal targets are exact file paths / app-specific directories only.
 PROTECTED_PREFIXES = (
@@ -104,6 +116,10 @@ PROTECTED_PREFIXES = (
     "usr/share/applications/gnumeric", "usr/share/applications/frisbee",
     "usr/share/applications/mpv", "usr/share/applications/smplayer.desktop",
     "usr/share/applications/mtpaint", "usr/share/applications/firefox",
+    "usr/share/applications/synaptic", "usr/share/applications/Puppy-package-manager",
+    "usr/share/applications/SFS-Load", "var/lib/dpkg/", "var/lib/apt/",
+    "var/cache/apt/", "usr/local/petget/", "usr/sbin/petget",
+    "usr/share/applications/gdebi", "usr/share/applications/petget",
     "root/", "opt/FirefoxESR", "usr/share/locale/",
 )
 
