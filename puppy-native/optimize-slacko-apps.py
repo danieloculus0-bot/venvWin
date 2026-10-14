@@ -128,9 +128,8 @@ def main() -> int:
     root = args.root.absolute()
     if root == Path("/") or root == Path.home() or "dist/" not in str(root):
         raise SystemExit("STOP_UNSAFE_OPTIMIZER_ROOT_NOT_TEMP_DIST")
-    if not (root / "etc/puppyversion").exists():
-        # Original Puppy system includes /etc/puppyversion.
-        raise SystemExit("STOP_NOT_IDENTIFIED_AS_PUPPY_MAIN_SFS")
+    if not (root / "usr/share/applications/gnumeric.desktop").exists():
+        raise SystemExit("STOP_NOT_IDENTIFIED_AS_EXPECTED_PUPPY_MAIN_SFS")
     protected_before = safe_manifest(root)
     planned = stat_targets(root)
     if not planned:
@@ -153,7 +152,7 @@ def main() -> int:
         "candidates": planned,
         "raw_file_bytes_candidate": sum(x["raw_size_bytes"] for x in planned),
         "protected_files_verified_unmodified": len(protected_before),
-        "library_or_wine_components_removed": 0,
+        "system_or_wine_library_components_removed": 0,
         "compressed_savings_bytes": "MEASURE_SEPARATELY_AFTER_SFS_RECOMPRESSION",
         "guest_puppy_boot": "NOT_TESTED_BY_THIS_SCRIPT",
         "guest_wine_32_and_64": "NOT_TESTED_BY_THIS_SCRIPT",
