@@ -15,6 +15,8 @@ PROTECTED = [
     "usr/bin/jwm", "usr/local/bin/rox", "usr/local/bin/frisbee",
     "usr/bin/connman-gtk", "usr/bin/mpv", "usr/bin/smplayer",
     "usr/bin/aplay", "usr/bin/pipewire",
+    "usr/bin/simplescreenrecorder",
+    "usr/share/applications/simplescreenrecorder.desktop",
     "usr/share/applications/abiword.desktop",
     "usr/share/applications/gnumeric.desktop",
     "usr/share/applications/frisbee.desktop",
@@ -38,7 +40,7 @@ def fixture(tmp_path: Path) -> Path:
     targets = [
         "usr/bin/mhwaveedit", "usr/share/applications/mhwaveedit.desktop",
         "usr/share/applications/defaultaudioeditor.desktop",
-        "usr/bin/easytag", "usr/bin/qwinff", "usr/bin/simplescreenrecorder",
+        "usr/bin/easytag", "usr/bin/qwinff",
         "usr/bin/celluloid", "usr/bin/simsu", "usr/share/applications/simsu.desktop",
         "usr/bin/deadbeef", "usr/share/applications/deadbeef.desktop",
         "usr/share/applications/smplayer_enqueue.desktop",
@@ -49,9 +51,9 @@ def fixture(tmp_path: Path) -> Path:
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text("remove: " + rel)
     wrappers = {
-        "usr/local/bin/defaultaudioplayer": '#!/bin/sh\\nexec deadbeef "$@"\\n',
-        "usr/local/bin/defaultcdplayer": '#!/bin/sh\\nexec deadbeef /dev/sr0/all.cda "$@"\\n',
-        "usr/local/bin/defaultaudioeditor": '#!/bin/sh\\nexec mhwaveedit "$@"\\n',
+        "usr/local/bin/defaultaudioplayer": '#!/bin/sh\nexec deadbeef "$@"\n',
+        "usr/local/bin/defaultcdplayer": '#!/bin/sh\nexec deadbeef /dev/sr0/all.cda "$@"\n',
+        "usr/local/bin/defaultaudioeditor": '#!/bin/sh\nexec mhwaveedit "$@"\n',
     }
     for rel, payload in wrappers.items():
         path = root / rel
@@ -91,9 +93,12 @@ def test_actual_trim_only_removes_standalone_extras(tmp_path: Path):
                 "usr/bin/celluloid", "usr/bin/simsu", "usr/bin/qwinff"):
         assert not (root / rel).exists()
     report = json.loads(report_path.read_text())
-    assert "mpv" in (root / "usr/local/bin/defaultaudioplayer").read_text()
+    assert (root / "usr/local/bin/defaultaudioplayer").read_text().startswith("#!/bin/sh\nexec mpv")
+    assert (root / "usr/local/bin/defaultcdplayer").read_text().startswith("#!/bin/sh\nexec mpv")
     assert "mpv cdda://" in (root / "usr/local/bin/defaultcdplayer").read_text()
     assert "Install one via Synaptic" in (root / "usr/local/bin/defaultaudioeditor").read_text()
+    assert (root / "usr/bin/simplescreenrecorder").exists()
+    assert (root / "usr/share/applications/simplescreenrecorder.desktop").exists()
     assert report["status"] == "TEST_COPY_MUTATED"
     assert report["system_or_wine_library_components_removed"] == 0
     assert report["guest_puppy_boot"] == "NOT_TESTED_BY_THIS_SCRIPT"
@@ -132,7 +137,7 @@ def test_protect_package_management_and_db_metadata():
 def test_refuse_unknown_audio_handler(tmp_path: Path):
     root=fixture(tmp_path)
     handler=root/"usr/local/bin/defaultaudioplayer"
-    handler.write_text("#!/bin/sh\\nrm -rf /\\n",encoding="utf-8")
+    handler.write_text("#!/bin/sh\nrm -rf /\n",encoding="utf-8")
     r=invoke(root, tmp_path/"unknown.json", apply=True)
     assert r.returncode != 0
     assert "STOP_UNKNOWN_DEFAULT_HANDLER" in (r.stderr+r.stdout)
