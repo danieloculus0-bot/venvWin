@@ -44,8 +44,16 @@ mkdir -p "$STAGE/opt/venvwin/src" "$STAGE/root/Startup" "$STAGE/root/Desktop" "$
 rsvg-convert -w 800 -h 600 "$ROOT/puppy-native/art/venvwin-boot.svg" \
   -o "$OUT/venvwin-boot.png"
 convert "$OUT/venvwin-boot.png" -quality 91 "$OUT/venvwin-boot.jpg"
-rsvg-convert -w 1920 -h 1080 "$ROOT/puppy-native/art/venvwin-wallpaper.svg" \
-  -o "$OUT/venvwin-wallpaper.png"
+# Approved 2026-10-14 venvWin Amber Arc wallpaper, not the superseded SVG.
+# Store a small optimized WebP source in the repo as transport-safe base64.
+# The original full-quality PNG source is separately preserved in the art kit.
+WALLPAPER_SOURCE="$ROOT/puppy-native/art/venvwin-amber-arc.webp.b64"
+WALLPAPER_WEBP="$OUT/venvwin-amber-arc.webp"
+WALLPAPER_SHA256="6f66eb67f8b0a05a8811c10038282abd26f6cd2f3afc43064e5262efdd1a24e0"
+test -s "$WALLPAPER_SOURCE" || { echo "VENVWIN_APPROVED_WALLPAPER_NOT_IN_REPO" >&2; exit 44; }
+base64 -d "$WALLPAPER_SOURCE" > "$WALLPAPER_WEBP"
+printf '%s  %s\n' "$WALLPAPER_SHA256" "$WALLPAPER_WEBP" | sha256sum -c -
+convert "$WALLPAPER_WEBP" "$OUT/venvwin-wallpaper.png"
 file "$OUT/venvwin-boot.png" "$OUT/venvwin-boot.jpg" "$OUT/venvwin-wallpaper.png"
 install -m 0644 "$OUT/venvwin-wallpaper.png" "$STAGE/usr/share/backgrounds/venvwin-wallpaper.png"
 install -m 0644 "$ROOT/puppy-native/art/PuppyPin" "$STAGE/root/Choices/ROX-Filer/PuppyPin"
@@ -85,6 +93,7 @@ install -m 0755 "$ROOT/puppy-native/venvwin-session" "$STAGE/root/Startup/venvwi
 install -m 0755 "$ROOT/puppy-native/venvwin-control-center" "$STAGE/usr/local/bin/venvwin-control-center"
 install -m 0755 "$ROOT/puppy-native/venvwin-wine" "$STAGE/usr/local/bin/venvwin-wine"
 install -m 0755 "$ROOT/puppy-native/venvwin-theme-apply" "$STAGE/usr/local/bin/venvwin-theme-apply"
+install -m 0755 "$ROOT/puppy-native/venvwin-wallpaper-apply" "$STAGE/usr/local/bin/venvwin-wallpaper-apply"
 install -m 0644 "$ROOT/puppy-native/venvwin-gtk.css" "$STAGE/usr/share/venvwin/theme/gtk.css"
 install -m 0644 "$ROOT/puppy-native/venvwin-app.desktop" "$STAGE/usr/share/applications/venvwin-app.desktop"
 install -m 0644 "$ROOT/puppy-native/venvwin-wine.desktop" "$STAGE/usr/share/applications/venvwin-wine.desktop"
@@ -98,7 +107,8 @@ test -s "$SFS"
 unsquashfs -l "$SFS" > "$OUT/venvwin-layer-inventory.txt"
 grep -q 'squashfs-root/root/Startup/venvwin-guest-probe' "$OUT/venvwin-layer-inventory.txt"
 for path in 'root/Startup/venvwin-session' 'usr/local/bin/venvwin-wine' \
-            'usr/local/bin/venvwin-control-center' 'usr/share/venvwin/theme/gtk.css'; do
+            'usr/local/bin/venvwin-control-center' 'usr/share/venvwin/theme/gtk.css' \
+            'usr/local/bin/venvwin-wallpaper-apply'; do
   grep -q "squashfs-root/$path" "$OUT/venvwin-layer-inventory.txt"
 done
 for art in "root/Choices/ROX-Filer/PuppyPin" "usr/share/backgrounds/venvwin-wallpaper.png" \
