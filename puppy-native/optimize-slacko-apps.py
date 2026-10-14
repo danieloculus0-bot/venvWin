@@ -26,6 +26,13 @@ REMOVAL_TARGETS = {
         "usr/share/mhwaveedit",
         "usr/share/doc/mhwaveedit",
         "usr/share/man/man1/mhwaveedit.1.gz",
+        "usr/share/applications/defaultaudioeditor.desktop",
+    ],
+    "audio_metadata_editor": [
+        "usr/bin/easytag",
+        "usr/share/applications/easytag.desktop",
+        "usr/share/easytag",
+        "usr/share/doc/easytag",
     ],
     "duplicate_audio_player": [
         "opt/deadbeef",
@@ -34,6 +41,32 @@ REMOVAL_TARGETS = {
         "usr/share/deadbeef",
         "usr/share/doc/deadbeef",
         "usr/share/man/man1/deadbeef.1.gz",
+    ],
+    "redundant_video_player": [
+        "usr/bin/celluloid",
+        "usr/share/applications/celluloid.desktop",
+        "usr/share/applications/io.github.celluloid_player.Celluloid.desktop",
+        "usr/share/celluloid",
+    ],
+    "audio_video_converter_gui": [
+        "usr/bin/qwinff",
+        "usr/share/applications/qwinff.desktop",
+        "usr/share/qwinff",
+    ],
+    "video_screen_recorder": [
+        "usr/bin/simplescreenrecorder",
+        "usr/share/applications/simplescreenrecorder.desktop",
+        "usr/share/simplescreenrecorder",
+    ],
+    "games": [
+        "usr/bin/hexalate", "usr/share/applications/hexalate.desktop",
+        "usr/bin/iqpuzzle", "usr/share/applications/iqpuzzle.desktop",
+        "usr/bin/picpuz", "usr/share/applications/picpuz.desktop",
+        "usr/bin/rubix", "usr/share/applications/rubix.desktop",
+        "usr/bin/simsu", "usr/share/applications/simsu.desktop",
+        "usr/local/bin/solitaire", "usr/share/applications/solitaire.desktop",
+        "usr/share/hexalate", "usr/share/iqpuzzle", "usr/share/picpuz",
+        "usr/share/rubix", "usr/share/simsu",
     ],
     "redundant_menu_entry": [
         "usr/share/applications/smplayer_enqueue.desktop",
