@@ -53,11 +53,6 @@ REMOVAL_TARGETS = {
         "usr/share/applications/qwinff.desktop",
         "usr/share/qwinff",
     ],
-    "video_screen_recorder": [
-        "usr/bin/simplescreenrecorder",
-        "usr/share/applications/simplescreenrecorder.desktop",
-        "usr/share/simplescreenrecorder",
-    ],
     "games": [
         "usr/bin/hexalate", "usr/share/applications/hexalate.desktop",
         "usr/bin/iqpuzzle", "usr/share/applications/iqpuzzle.desktop",
@@ -86,7 +81,8 @@ PROTECTED_BINARIES = [
     "usr/bin/smplayer",
     "usr/bin/aplay",
     "usr/bin/pipewire",
-    "usr/bin/synaptic",
+    "usr/bin/simplescreenrecorder",
+    "usr/sbin/synaptic",
     "usr/bin/dpkg",
     "usr/bin/dpkg-query",
     "usr/bin/apt",
@@ -103,6 +99,7 @@ PROTECTED_MENU = [
     "usr/share/applications/mpv.desktop",
     "usr/share/applications/smplayer.desktop",
     "usr/share/applications/mtpaint.desktop",
+    "usr/share/applications/simplescreenrecorder.desktop",
     "usr/share/applications/synaptic.desktop",
     "usr/share/applications/Puppy-package-manager.desktop",
     "usr/share/applications/SFS-Load.desktop",
@@ -116,7 +113,7 @@ PROTECTED_PREFIXES = (
     "usr/share/applications/gnumeric", "usr/share/applications/frisbee",
     "usr/share/applications/mpv", "usr/share/applications/smplayer.desktop",
     "usr/share/applications/mtpaint", "usr/share/applications/firefox",
-    "usr/share/applications/synaptic", "usr/share/applications/Puppy-package-manager",
+    "usr/share/applications/simplescreenrecorder", "usr/share/applications/synaptic", "usr/share/applications/Puppy-package-manager",
     "usr/share/applications/SFS-Load", "var/lib/dpkg/", "var/lib/apt/",
     "var/cache/apt/", "usr/local/petget/", "usr/sbin/petget",
     "usr/share/applications/gdebi", "usr/share/applications/petget",
@@ -170,15 +167,15 @@ def stat_targets(root: Path) -> list[dict]:
 DEFAULT_APP_WRAPPERS = {
     "usr/local/bin/defaultaudioplayer": (
         "deadbeef",
-        "#!/bin/sh\\nexec mpv --no-video \"$@\"\\n",
+        "#!/bin/sh\nexec mpv --no-video \"$@\"\n",
     ),
     "usr/local/bin/defaultcdplayer": (
         "deadbeef",
-        "#!/bin/sh\\nexec mpv cdda:// \"$@\"\\n",
+        "#!/bin/sh\nexec mpv cdda:// \"$@\"\n",
     ),
     "usr/local/bin/defaultaudioeditor": (
         "mhwaveedit",
-        "#!/bin/sh\\necho 'Audio editor not bundled. Install one via Synaptic.' >&2\\nexit 69\\n",
+        "#!/bin/sh\necho 'Audio editor not bundled. Install one via Synaptic.' >&2\nexit 69\n",
     ),
 }
 
