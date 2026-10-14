@@ -10,6 +10,7 @@ on:
       - puppy-native/build-puppy.sh
       - puppy-native/art/venvwin-amber-arc.webp.b64
       - puppy-native/check-wallpaper-screenshot.py
+      - tests/test_puppy_wallpaper.py
   workflow_dispatch:
 permissions:
   contents: read
