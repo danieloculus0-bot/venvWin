@@ -79,8 +79,9 @@ jobs:
             -comp xz -b 1048576 -processors 4 \
             >"$OUT/recompress.log" 2>&1
           unsquashfs -s "$OUT/opt-main.sfs" >"$OUT/optimized-sfs-format.txt"
+          unsquashfs -ll "$OUT/opt-main.sfs" > "$OUT/optimized-inventory.txt"
           for name in abiword gnumeric ssconvert jwm smplayer mpv; do
-            unsquashfs -ll "$OUT/opt-main.sfs" | grep -q "squashfs-root/usr/bin/$name" || {
+            grep -Fq "squashfs-root/usr/bin/$name" "$OUT/optimized-inventory.txt" || {
               echo "OPTIMIZED_SFS_PROTECTED_APP_MISSING=$name"; exit 2;
             }
           done
