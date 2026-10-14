@@ -75,7 +75,20 @@ def main() -> int:
                     time.sleep(8)
                 else:
                     print("VNC_HOST_NO_WELCOME_DIALOG_AFTER_QUICK_SETUP",flush=True)
+                # venvWin opens its real YAD Control Center on first boot.
+                # Close that application window for an unobstructed wallpaper
+                # screenshot; do not alter pixels or fake close state.
+                clear=out/"qemu-real-desktop-control-center-check.png"
+                vnc.captureScreen(str(clear))
+                if has_orange_header(clear,530,195):
+                    print("VNC_HOST_VENVWIN_CONTROL_CENTER_VISIBLE",flush=True)
+                    vnc.mouseMove(1001,195)
+                    vnc.mousePress(1)
+                    time.sleep(5)
                 vnc.captureScreen(str(out/"qemu-real-desktop-after-setup.png"))
+                if (has_orange_header(out/"qemu-real-desktop-after-setup.png",530,195)):
+                    print("VNC_HOST_CONTROL_CENTER_STILL_VISIBLE_REFUSE_WALLPAPER_PROOF",flush=True)
+                    return 11
                 if (has_orange_header(out/"qemu-real-desktop-after-setup.png",530,116)
                     or has_orange_header(out/"qemu-real-desktop-after-setup.png",530,159)):
                     print("VNC_HOST_ORIGINAL_PUPPY_SETUP_STILL_OPEN",flush=True)
