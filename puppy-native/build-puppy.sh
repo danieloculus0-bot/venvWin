@@ -57,6 +57,7 @@ convert "$WALLPAPER_WEBP" "$OUT/venvwin-wallpaper.png"
 file "$OUT/venvwin-boot.png" "$OUT/venvwin-boot.jpg" "$OUT/venvwin-wallpaper.png"
 install -m 0644 "$OUT/venvwin-wallpaper.png" "$STAGE/usr/share/backgrounds/venvwin-wallpaper.png"
 install -m 0644 "$ROOT/puppy-native/art/PuppyPin" "$STAGE/root/Choices/ROX-Filer/PuppyPin"
+install -m 0644 "$ROOT/puppy-native/art/PuppyPin" "$STAGE/opt/venvwin/venvwin-default-PuppyPin"
 # Recover authentic JWM config from the checksum-verified upstream Puppy SFS.
 mkdir -p "$OUT/brand-core" "$STAGE/etc/xdg/templates"
 xorriso -osirrox on -indev "$BASE" \
