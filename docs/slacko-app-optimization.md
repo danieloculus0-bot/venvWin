@@ -2,6 +2,14 @@
 
 **Scope:** BookwormPup64 x86-64 only; preserve the genuine Puppy kernel, firmware, bootloader, SFS/OverlayFS boot and persistence behavior. Preserve separate 64-bit Wine runner and any 32-bit libraries necessary for WoW64. No NTFS-host filesystem experiment.
 
+## Strict trimming boundary — user's final decision
+
+**ONLY THE BLOAT.** Preserve functional Puppy programs and small useful utilities, even if they are not essential to the core Windows-first experience. Do not remove an app because its category sounds nonessential or because it is rarely used.
+
+Safe targets are narrowly defined: redundant players after choosing one working replacement; audio/video editors explicitly declined by the user; standalone packaged games; and obsolete or duplicate menu entries. Preserve functional recording, troubleshooting, diagnostics, PDF, file/archive, storage, backup, network, terminal, code/text editor, security, printing/scanning, media playback, office, browser and software-management utilities. Do not prune a tool merely because one person's workflow does not need it.
+
+If removal breaks any default handler, dependency, file association, package database, boot behavior, Wine, or everyday utility, undo it. In ambiguous cases **keep the app**. Compressed megabytes saved are secondary to functionality. No forced browser/package-manager/network downgrades.
+
 ## Approved app selection (2026-10-13)
 
 | Class | Decision | Implementation rule |
@@ -11,9 +19,9 @@
 | Browser | **ONE** GUI browser; prefer Firefox ESR for robustness, Chromium if lighter *in real measurement* | Keep browser plus CA certificates/TLS, network stack, download integration; no browserless default. |
 | Network | **KEEP** GUI Wi-Fi, Ethernet, IP/DHCP, DNS, VPN/client configuration where supported | Protect Network Wizard/Frisbee-style controls, DHCP, resolvers, wireless firmware; never cut network libraries. |
 | Email/chat | Optional / removable duplicates | Keep networking GUI and protocols, so mail isn't required as a baked-in client. |
-| Audio/video | **REMOVE audio/video editors**, keep basic playback, volume/mixer and codecs required by Wine | Never remove PipeWire/ALSA, ffmpeg or codecs based only on matching a name; audit reverse dependencies. |
+| Audio/video | **REMOVE standalone audio/video editing suites**, keep playback, conversion or recording utilities where useful, volume/mixer and codecs needed by Wine | Do not confuse a useful recorder with an editor. Never remove PipeWire/ALSA or shared ffmpeg codecs to save space. |
 | Image | **KEEP** tiny mtPaint if included and basic image viewer | Working Puppy tradition, minimal size. |
-| Games/demos | REMOVE when verifiably standalone | No shared UI or system-library deletion. |
+| Games/demos | REMOVE standalone bundled games | No shared UI, menu framework or system-library deletion. |
 | Developer SDK | Keep separate devx/kernel-source SFS, not bundled in main ISO | Original Puppy modular loading intact. |
 | Printer/scanner | Keep practical client functionality unless later opted out | Do not remove system print APIs Wine apps might call. |
 | Desktop | **KEEP** JWM, ROX-Filer, actual bottom panel, file associations | No fake GUI/taskbar. |
@@ -29,4 +37,4 @@
 6. Separate **known installed** / **missing** / **measured** / **candidate** / **reliably verified in guest**. Reproduce all sizes; do not guess compression savings from file sizes.
 7. Keep Windows-first seamless UX requirements from `docs/windows-first-desktop-requirements.md`.
 
-**Current status:** policy locked. Shipped-package inventory and runtime tests required before safe pruning or application additions. Zero app compatibility claims from this document.
+**Current status:** original ISO app inventory and experimental test-SFS slimming performed. This is **not** a released, boot-and-Wine-verified build. Preserve original upstream image and do not merge without guest proof.
