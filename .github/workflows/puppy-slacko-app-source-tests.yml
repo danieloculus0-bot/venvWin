@@ -1,0 +1,23 @@
+name: Guarded Slacko app optimization source tests
+on:
+  push:
+    branches: [feat/puppy-slacko-app-optimization-20261013]
+    paths:
+      - .github/workflows/puppy-slacko-app-source-tests.yml
+      - tests/test_slacko_app_optimization.py
+      - puppy-native/optimize-slacko-apps.py
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  safety-fixture:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run real source mutation regression on synthetic Puppy root
+        run: |
+          set -euo pipefail
+          python3 -m pip install -q pytest
+          python3 -m pytest -q tests/test_slacko_app_optimization.py
+          echo APP_TRIM_SOURCE_SAFETY_PASS_NOT_WINE_GUEST_COMPATIBILITY_PROOF
