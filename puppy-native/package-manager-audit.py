@@ -72,7 +72,7 @@ def main() -> int:
                           "var/lib/dpkg/status"],
                           text=True, stdout=subprocess.PIPE,
                           stderr=subprocess.PIPE,check=True)
-        for entry in z.stdout.split("\\n\\n"):
+        for entry in z.stdout.split("\n\n"):
             values={}
             for line in entry.splitlines():
                 if line.startswith("Package: "): values["name"]=line[9:].strip()
