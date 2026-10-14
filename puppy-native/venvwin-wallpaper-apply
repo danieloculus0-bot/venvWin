@@ -78,11 +78,21 @@ fi
 # Reinitialize *the actual Puppy ROX pinboard*, not a rendered substitute.
 # -p accepts the PuppyPin path used in the original Puppy startup scripts.
 if command -v rox >/dev/null 2>&1; then
-  rox -p "$DEFAULT_PINBOARD" >/dev/null 2>&1 || {
-    echo 'VENVWIN_ROX_RELOAD_FAILED' >&2
-    exit 71
-  }
-  echo 'VENVWIN_ROX_REAL_PINBOARD_RELOADED'
+  # ROX -p normally stays resident as the actual desktop pinboard.
+  # Never synchronously wait for it; that blocked later post-setup retries.
+  rox -p "$DEFAULT_PINBOARD" >/dev/null 2>&1 &
+  rox_pid=$!
+  sleep 1
+  if kill -0 "$rox_pid" 2>/dev/null; then
+    echo 'VENVWIN_ROX_REAL_PINBOARD_RELOADED_PROCESS_RUNNING'
+  else
+    if wait "$rox_pid"; then
+      echo 'VENVWIN_ROX_REAL_PINBOARD_RELOADED'
+    else
+      echo 'VENVWIN_ROX_RELOAD_FAILED' >&2
+      exit 71
+    fi
+  fi
 else
   echo 'VENVWIN_ROX_EXECUTABLE_MISSING' >&2
   exit 72
