@@ -1,0 +1,22 @@
+#!/bin/sh
+# Apply venvWin GTK accents conservatively; preserve existing Puppy/user themes.
+set -eu
+source_file=/usr/share/venvwin/theme/gtk.css
+dest="$HOME/.config/gtk-3.0/gtk.css"
+[ -f "$source_file" ] || { echo VENVWIN_THEME_SOURCE_MISSING; exit 66; }
+mkdir -p "$HOME/.config/gtk-3.0"
+if [ -e "$dest" ]; then
+  if cmp -s "$source_file" "$dest"; then
+    echo VENVWIN_THEME_ALREADY_APPLIED
+  else
+    echo 'VENVWIN_THEME_EXISTING_SETTINGS_PRESERVED (no destructive overwrite)'
+  fi
+else
+  cp "$source_file" "$dest"
+  echo VENVWIN_THEME_GTK_ORANGE_APPLIED
+fi
+if grep -q '<RootMenu label="venvWin"' /etc/xdg/templates/_root_.jwmrc 2>/dev/null; then
+  echo VENVWIN_JWM_BRANDED_TEMPLATE_PRESENT_GUEST_APPEARANCE_UNVERIFIED
+else
+  echo VENVWIN_JWM_BRANDED_TEMPLATE_NOT_OBSERVED
+fi
