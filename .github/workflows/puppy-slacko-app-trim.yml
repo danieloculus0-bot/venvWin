@@ -1,0 +1,126 @@
+name: Measured Slacko-style app trim on isolated original Puppy copy
+on:
+  push:
+    branches: [feat/puppy-slacko-app-optimization-20261013]
+    paths:
+      - .github/workflows/puppy-slacko-app-trim.yml
+      - puppy-native/optimize-slacko-apps.py
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  make-isolated-app-trim:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check trimmer syntax and install extraction tools
+        run: |
+          set -euo pipefail
+          python3 -m py_compile puppy-native/optimize-slacko-apps.py
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends squashfs-tools xorriso
+      - name: Verify original upstream ISO checksum BEFORE extracting
+        run: |
+          set -euo pipefail
+          mkdir -p dist/slacko-app-trim
+          curl --fail --location --retry 3 --max-time 1100 \
+            -o dist/slacko-app-trim/BookwormPup64_10.0.12.iso \
+            https://distro.ibiblio.org/puppylinux/puppy-bookwormpup/BookwormPup64/10.0.12/BookwormPup64_10.0.12.iso
+          printf '%s  %s\n' 'ae65f6e6d70a96f48bdbb291c2426f8a2fd77a73692e149e81a5eecb6fe7509f' \
+            dist/slacko-app-trim/BookwormPup64_10.0.12.iso | sha256sum -c -
+          echo UPSTREAM_ISO_CHECKSUM_VERIFIED_NOT_COMPATIBILITY_PROOF
+      - name: Extract only main squashfs from unchanged ISO
+        run: |
+          set -euo pipefail
+          OUT="$GITHUB_WORKSPACE/dist/slacko-app-trim"
+          mkdir -p "$OUT/extracted-iso"
+          xorriso -osirrox on \
+            -indev "$OUT/BookwormPup64_10.0.12.iso" \
+            -extract /puppy_dpupbw64_10.0.12.sfs "$OUT/extracted-iso/original-main.sfs" \
+            >"$OUT/original-sfs-extraction.log" 2>&1
+          test -s "$OUT/extracted-iso/original-main.sfs"
+          unsquashfs -s "$OUT/extracted-iso/original-main.sfs" > "$OUT/original-sfs-format.txt"
+          echo VERIFIED_MAIN_SFS_PRESENCE_NOT_GUEST_BOOT
+      - name: Unpack temporary SquashFS preserving device node ownership
+        run: |
+          set -euo pipefail
+          OUT="$GITHUB_WORKSPACE/dist/slacko-app-trim"
+          sudo unsquashfs -d "$OUT/work-root" "$OUT/extracted-iso/original-main.sfs" \
+            > "$OUT/unsquashfs.log" 2>&1
+          test -e "$OUT/work-root/etc/puppyversion"
+          test -e "$OUT/work-root/usr/bin/abiword"
+          test -e "$OUT/work-root/usr/bin/gnumeric"
+          echo ORIGINAL_SYSTEM_UNPACKED_TEST_COPY_ONLY
+      - name: Safely prune only exact app-specific targets in test copy and measure
+        run: |
+          set -euo pipefail
+          OUT="$GITHUB_WORKSPACE/dist/slacko-app-trim"
+          sudo python3 puppy-native/optimize-slacko-apps.py "$OUT/work-root" \
+            --report "$OUT/plan.json"
+          sudo python3 puppy-native/optimize-slacko-apps.py "$OUT/work-root" \
+            --report "$OUT/trim-application-plan.json" --apply
+          for p in \
+            usr/bin/gnumeric usr/bin/abiword usr/bin/ssconvert \
+            usr/bin/jwm usr/local/bin/rox usr/local/bin/frisbee \
+            usr/bin/connman-gtk usr/bin/mpv usr/bin/smplayer \
+            usr/bin/aplay usr/bin/pipewire; do
+            test -e "$OUT/work-root/$p" || test -L "$OUT/work-root/$p" || exit 2
+          done
+          test ! -e "$OUT/work-root/usr/bin/mhwaveedit"
+          test ! -e "$OUT/work-root/opt/deadbeef"
+          test -s "$OUT/trim-application-plan.json"
+          echo FIRST_PASS_REMOVAL_COMPLETE_OFFICE_NETWORK_AND_SYSTEM_PROTECTED
+      - name: Recompress test system and inspect measured difference (NO release)
+        run: |
+          set -euo pipefail
+          OUT="$GITHUB_WORKSPACE/dist/slacko-app-trim"
+          sudo mksquashfs "$OUT/work-root" "$OUT/opt-main.sfs" -noappend \
+            -comp xz -b 1048576 -processors 4 \
+            >"$OUT/recompress.log" 2>&1
+          unsquashfs -s "$OUT/opt-main.sfs" >"$OUT/optimized-sfs-format.txt"
+          for name in abiword gnumeric ssconvert jwm smplayer mpv; do
+            unsquashfs -ll "$OUT/opt-main.sfs" | grep -q "squashfs-root/usr/bin/$name" || {
+              echo "OPTIMIZED_SFS_PROTECTED_APP_MISSING=$name"; exit 2;
+            }
+          done
+          ORIG=$(stat -c %s "$OUT/extracted-iso/original-main.sfs")
+          NEW=$(stat -c %s "$OUT/opt-main.sfs")
+          python3 - "$ORIG" "$NEW" "$OUT/app-trim-size.txt" <<'PY'
+          import sys
+          old,new=int(sys.argv[1]),int(sys.argv[2])
+          with open(sys.argv[3],"w") as f:
+            f.write(f"original_main_sfs_bytes={old}\ntrimmed_main_sfs_bytes={new}\ncompressed_delta_bytes={old-new}\n")
+          print(f"MEASURED_MAIN_SFS_BEFORE={old}")
+          print(f"MEASURED_MAIN_SFS_AFTER={new}")
+          print(f"MEASURED_COMPRESSED_SFS_BYTES_SAVED={old-new}")
+          if new >= old:
+            raise SystemExit("NOT_A_SMALLER_SFS_DO_NOT_PROMOTE")
+          PY
+          xorriso -indev "$OUT/BookwormPup64_10.0.12.iso" \
+            -outdev "$OUT/isolated-test-apptrim.iso" \
+            -map "$OUT/opt-main.sfs" /puppy_dpupbw64_10.0.12.sfs \
+            -boot_image any replay -commit >"$OUT/test-iso-build.log" 2>&1
+          xorriso -indev "$OUT/isolated-test-apptrim.iso" \
+            -report_el_torito plain >"$OUT/test-boot-catalog.txt" 2>&1
+          grep -qi 'El Torito' "$OUT/test-boot-catalog.txt"
+          sha256sum "$OUT/isolated-test-apptrim.iso" "$OUT/opt-main.sfs" > "$OUT/experimental-hashes.txt"
+          echo ISOLATED_TRIMMED_BOOT_STRUCTURE_CREATED_NOT_PUPPY_OR_WINE_GUEST_VERIFIED
+      - name: Upload measured application-trim evidence (NEVER ISO or SFS)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: puppy1012-measured-app-trim-evidence-no-iso
+          retention-days: 21
+          if-no-files-found: warn
+          path: |
+            dist/slacko-app-trim/plan.json
+            dist/slacko-app-trim/trim-application-plan.json
+            dist/slacko-app-trim/app-trim-size.txt
+            dist/slacko-app-trim/original-sfs-format.txt
+            dist/slacko-app-trim/optimized-sfs-format.txt
+            dist/slacko-app-trim/test-boot-catalog.txt
+            dist/slacko-app-trim/experimental-hashes.txt
+            dist/slacko-app-trim/unsquashfs.log
+            dist/slacko-app-trim/recompress.log
+            dist/slacko-app-trim/test-iso-build.log
