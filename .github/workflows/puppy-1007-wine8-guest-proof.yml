@@ -1,0 +1,101 @@
+name: Isolated BookwormPup64 10.0.7 plus original Wine 8 guest proof
+# Trigger once on creation of this dedicated isolated workflow only.
+# NEVER merge, upload a remastered ISO, or run the superseded Debian build.
+on:
+  push:
+    branches: [test/bookwormpup-1007-wine80-proven-baseline-20261013]
+    paths: [.github/workflows/puppy-1007-wine8-guest-proof.yml]
+  workflow_dispatch:
+concurrency:
+  group: venvwin-isolated-historical-wine8-1007
+  cancel-in-progress: false
+permissions:
+  contents: read
+jobs:
+  historical-puppy-guest:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 48
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check provenance probe and guest scripts, never monolithic Debian build
+        run: |
+          set -euo pipefail
+          bash -n puppy-native/probe-1007-source.sh puppy-native/prove-1007-qemu.sh
+          sh -n puppy-native/probe-1007-wine-guest
+          echo 'HISTORICAL_BASELINE_SOURCES_SYNTAX_VALID_NOT_GUEST_PROOF'
+      - name: Locate and independently checksum-verify exact historical ISO and Wine SFS
+        run: |
+          bash puppy-native/probe-1007-source.sh
+      - name: Host tools for isolated experimental ISO and Windows smoke EXEs
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            xorriso squashfs-tools qemu-system-x86 gcc-mingw-w64-x86-64 \
+            gcc-mingw-w64-i686
+          test -c /dev/kvm
+          sudo chmod a+rw /dev/kvm
+      - name: Integrate original Wine SFS as independent Puppy layer with guest probe
+        run: |
+          set -euo pipefail
+          OUT="$GITHUB_WORKSPACE/dist/puppy-1007-baseline"
+          ISO="$OUT/BookwormPup64_10.0.7.iso"
+          WINE="$OUT/wine-8.0_all_bookwormpup64.sfs"
+          test -s "$ISO"
+          test -s "$WINE"
+          (cd "$OUT" && sha256sum -c upstream.sha256)
+          printf '%s  %s\n' 184d623cd08451902b846c24d9c3a8d8 "$WINE" | md5sum -c -
+          unsquashfs -l "$WINE" > "$OUT/community-wine8-inventory.txt"
+          grep -Eq '/usr/(bin|lib)/wine|/usr/bin/wine' "$OUT/community-wine8-inventory.txt"
+          xorriso -indev "$ISO" -find / -type f -exec echo -- 2>"$OUT/upstream-inventory-errors.log" > "$OUT/upstream-inventory.txt"
+          if grep -Eq '(adrv|ydrv)_dpupbw64_10[.]0[.]7[.]sfs' "$OUT/upstream-inventory.txt"; then
+            echo 'UPSTREAM_ADRV_OR_YDRV_PRESENT_REFUSE_OVERWRITE'
+            exit 1
+          fi
+          STAGE="$OUT/guest-probe-stage"
+          mkdir -p "$STAGE/root/Startup" "$STAGE/opt/venvwin/1007-lab"
+          install -m 0755 puppy-native/probe-1007-wine-guest "$STAGE/root/Startup/venvwin-1007-wine-proof"
+          cat > "$OUT/smoke.c" <<'C'
+          #include <stdio.h>
+          int main(void) {
+          #ifdef _WIN64
+              puts("VENVWIN_WINDOWS64_GUEST_PROOF");
+          #else
+              puts("VENVWIN_WINDOWS32_GUEST_PROOF");
+          #endif
+              return 0;
+          }
+          C
+          x86_64-w64-mingw32-gcc -Os -o "$STAGE/opt/venvwin/1007-lab/smoke64.exe" "$OUT/smoke.c"
+          i686-w64-mingw32-gcc -Os -o "$STAGE/opt/venvwin/1007-lab/smoke32.exe" "$OUT/smoke.c"
+          (cd "$STAGE/opt/venvwin/1007-lab" && sha256sum smoke64.exe smoke32.exe > manifest.sha256)
+          mksquashfs "$STAGE" "$OUT/ydrv_dpupbw64_10.0.7.sfs" \
+            -noappend -all-root -comp xz >"$OUT/probe-sfs-build.log" 2>&1
+          unsquashfs -cat "$OUT/ydrv_dpupbw64_10.0.7.sfs" root/Startup/venvwin-1007-wine-proof > "$OUT/extracted-probe"
+          cmp puppy-native/probe-1007-wine-guest "$OUT/extracted-probe"
+          xorriso -indev "$ISO" \
+            -outdev "$OUT/venvwin-bookwormpup-1007-wine80-isolated-lab.iso" \
+            -map "$WINE" /adrv_dpupbw64_10.0.7.sfs \
+            -map "$OUT/ydrv_dpupbw64_10.0.7.sfs" /ydrv_dpupbw64_10.0.7.sfs \
+            -boot_image any replay -commit > "$OUT/xorriso-remap.log" 2>&1
+          xorriso -indev "$OUT/venvwin-bookwormpup-1007-wine80-isolated-lab.iso" \
+            -report_el_torito plain > "$OUT/boot-catalog.txt" 2>&1
+          grep -qi 'El Torito' "$OUT/boot-catalog.txt"
+          sha256sum "$ISO" "$WINE" "$OUT/venvwin-bookwormpup-1007-wine80-isolated-lab.iso" > "$OUT/experiment-hashes.txt"
+          echo 'ISOLATED_ISO_MODULES_VERIFIED_NOT_GUEST_PROOF'
+      - name: Real KVM Puppy startup, overlay, Wine8, Win64 and Win32 smoke
+        run: |
+          bash puppy-native/prove-1007-qemu.sh
+      - name: Preserve diagnostics only, NEVER the unproven ISO or binary runtime
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: puppy-1007-wine80-guest-diagnostics-NO-ISO
+          retention-days: 21
+          if-no-files-found: warn
+          path: |
+            dist/puppy-1007-baseline/*.log
+            dist/puppy-1007-baseline/*.txt
+            dist/puppy-1007-baseline/*.sha256
+            dist/puppy-1007-baseline/real-guest-frame-*.ppm
+            dist/puppy-1007-baseline/real-guest-final.ppm
