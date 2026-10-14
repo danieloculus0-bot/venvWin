@@ -1,0 +1,45 @@
+#!/bin/sh
+# Actual guest-origin smoke probe launched by the Puppy graphical Startup folder.
+# Do not treat source checks, screenshots, or QEMU launching as guest proof.
+set -u
+LOG=/tmp/venvwin-1007-guest.log
+emit() {
+  printf '%s\n' "$1" >> "$LOG"
+  if [ -c /dev/ttyS0 ]; then printf '%s\n' "$1" > /dev/ttyS0 || true; fi
+}
+fail() { emit "PUPPY1007_GUEST_FAILURE=$1"; exit 1; }
+emit PUPPY1007_REAL_GUEST_STARTUP
+emit "PUPPY1007_KERNEL=$(uname -r)"
+[ -n "${DISPLAY:-}" ] || fail NO_GRAPHICAL_DISPLAY
+emit "PUPPY1007_DISPLAY=$DISPLAY"
+grep -qE '[[:space:]]overlay[[:space:]]|[[:space:]]aufs[[:space:]]' /proc/mounts ||
+  fail NO_OVERLAY_MOUNT
+emit PUPPY1007_OVERLAY_MOUNT_OBSERVED
+command -v wine >/dev/null 2>&1 || fail WINE_NOT_FOUND_IN_GUEST
+WINE_VERSION="$(wine --version 2>&1)" || fail WINE_VERSION_FAILED
+emit "PUPPY1007_WINE_VERSION=$WINE_VERSION"
+case "$WINE_VERSION" in *wine-8.0*) ;; *) fail WRONG_WINE_VERSION ;; esac
+LAB=/opt/venvwin/1007-lab
+[ -r "$LAB/manifest.sha256" ] || fail MISSING_FIXTURE_MANIFEST
+(cd "$LAB" && sha256sum -c manifest.sha256) >/tmp/venvwin-fixture-hashes.log 2>&1 ||
+  fail FIXTURE_HASH_MISMATCH
+emit PUPPY1007_GUEST_FIXTURES_VERIFIED
+export WINEPREFIX=/tmp/venvwin-1007-wine-prefix
+export WINEDEBUG=-all
+export WINEARCH=win64
+mkdir -p "$WINEPREFIX"
+timeout 150 wineboot --init >/tmp/venvwin-1007-wineboot.log 2>&1 ||
+  fail WINEBOOT_PREFIX_INIT_FAILED
+[ -s "$WINEPREFIX/system.reg" ] || fail NO_WINE_REGISTRY
+emit PUPPY1007_WINEBOOT_PREFIX_PASS
+timeout 90 wine "$LAB/smoke64.exe" >/tmp/venvwin-1007-smoke64.log 2>&1 ||
+  fail WINDOWS_64_EXE_EXIT_FAILED
+grep -Fxq 'VENVWIN_WINDOWS64_GUEST_PROOF' /tmp/venvwin-1007-smoke64.log ||
+  fail WINDOWS_64_EXE_OUTPUT_MISSING
+emit PUPPY1007_WINDOWS64_EXE_PASS
+timeout 90 wine "$LAB/smoke32.exe" >/tmp/venvwin-1007-smoke32.log 2>&1 ||
+  fail WINDOWS_32_EXE_EXIT_FAILED
+grep -Fxq 'VENVWIN_WINDOWS32_GUEST_PROOF' /tmp/venvwin-1007-smoke32.log ||
+  fail WINDOWS_32_EXE_OUTPUT_MISSING
+emit PUPPY1007_WINDOWS32_EXE_PASS
+emit PUPPY1007_REAL_GUEST_32_AND_64_PASS
