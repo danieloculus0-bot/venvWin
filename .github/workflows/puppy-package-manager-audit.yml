@@ -1,0 +1,61 @@
+name: Audit original Puppy package manager GUIs and package databases
+on:
+  push:
+    branches: [feat/puppy-slacko-app-optimization-20261013]
+    paths:
+      - .github/workflows/puppy-package-manager-audit.yml
+      - puppy-native/package-manager-audit.py
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect-original-package-stack:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 24
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check audit source syntax and install read-only original-image inspection tools
+        run: |
+          set -euo pipefail
+          python3 -m py_compile puppy-native/package-manager-audit.py
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends squashfs-tools xorriso
+      - name: Acquire immutable official BookwormPup64 original image
+        run: |
+          set -euo pipefail
+          mkdir -p dist/puppy-package-audit/iso
+          curl --fail --location --retry 3 --max-time 1100 \
+            -o dist/puppy-package-audit/BookwormPup64_10.0.12.iso \
+            https://distro.ibiblio.org/puppylinux/puppy-bookwormpup/BookwormPup64/10.0.12/BookwormPup64_10.0.12.iso
+          printf '%s  %s\n' 'ae65f6e6d70a96f48bdbb291c2426f8a2fd77a73692e149e81a5eecb6fe7509f' \
+            dist/puppy-package-audit/BookwormPup64_10.0.12.iso | sha256sum -c -
+          xorriso -osirrox on -indev dist/puppy-package-audit/BookwormPup64_10.0.12.iso \
+            -extract / dist/puppy-package-audit/iso >dist/puppy-package-audit/extraction.log 2>&1
+          echo UPSTREAM_PUPPY_PACKAGE_IMAGE_AUTHENTIC_NOT_RUNTIME_TEST
+      - name: Enumerate package GUIs databases and original split SFS layers
+        run: |
+          set -euo pipefail
+          python3 puppy-native/package-manager-audit.py dist/puppy-package-audit/iso \
+            --output dist/puppy-package-audit/package-stack.json | \
+            tee dist/puppy-package-audit/package-stack-summary.txt
+          python3 - <<'PY'
+          import json
+          d=json.load(open('dist/puppy-package-audit/package-stack.json'))
+          must_exist=['apt_binary','dpkg_binary','synaptic_gui','puppy_pet_gui','sfs_gui']
+          for name in must_exist:
+            paths=d['required_software'][name]
+            if not any(v for v in paths.values()):
+              raise SystemExit('REQUIRED_PACKAGE_MANAGER_NOT_IN_ANY_UPSTREAM_SFS:'+name)
+          print('PACKAGE_MANAGER_EXECUTABLES_AND_MENU_PRESENT_IN_UPSTREAM_SFS_NOT_GUI_TEST')
+          PY
+      - name: Upload text-only package-system inventory
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: puppy1012-package-manager-and-db-original-inventory
+          retention-days: 21
+          if-no-files-found: warn
+          path: |
+            dist/puppy-package-audit/package-stack.json
+            dist/puppy-package-audit/package-stack-summary.txt
+            dist/puppy-package-audit/extraction.log
