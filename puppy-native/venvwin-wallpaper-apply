@@ -4,7 +4,7 @@
 # Edit just the backdrop tag, never user's desktop icons/coordinates.
 set -eu
 
-WALLPAPER="/usr/share/backgrounds/venvwin-wallpaper.png"
+WALLPAPER="${VENVWIN_WALLPAPER_PATH:-/usr/share/backgrounds/venvwin-wallpaper.png}"
 [ -s "$WALLPAPER" ] || {
   echo 'VENVWIN_WALLPAPER_MISSING_NO_FAKE_SUCCESS' >&2
   exit 66
@@ -17,7 +17,7 @@ WALLPAPER="/usr/share/backgrounds/venvwin-wallpaper.png"
 HOME_DIR="${HOME:-/root}"
 DEFAULT_PINBOARD="$HOME_DIR/Choices/ROX-Filer/PuppyPin"
 ALT_PINBOARD="$HOME_DIR/.config/rox.sourceforge.net/ROX-Filer/PuppyPin"
-SEED="/opt/venvwin/venvwin-default-PuppyPin"
+SEED="${VENVWIN_DEFAULT_PINBOARD_SEED:-/opt/venvwin/venvwin-default-PuppyPin}"
 
 # This is not an arbitrary wallpaper setter: the image is pinned by our build.
 # Preserve all icons and config, replacing only the backdrop. Unknown XML fails.
