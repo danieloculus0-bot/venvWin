@@ -12,10 +12,10 @@ for tool in curl dpkg-deb sha256sum mksquashfs unsquashfs xorriso; do
   command -v "$tool" >/dev/null || { echo "REQUIRED_HOST_TOOL_MISSING=$tool" >&2; exit 1; }
 done
 fetch_verified() {
-  local pkg="$1" sha="$2" path="$OUT/debs/$1"
+  local pkg="$1" sha="$2" base="${3:-$BASE}" path="$OUT/debs/$1"
   if [[ ! -s "$path" ]]; then
     curl --fail --location --retry 3 --connect-timeout 30 --max-time 800 \
-      -o "$path.partial" "$BASE/$pkg"
+      -o "$path.partial" "$base/$pkg"
     mv "$path.partial" "$path"
   fi
   printf '%s  %s\n' "$sha" "$path" | sha256sum -c - | tee -a "$OUT/debian-pinned-packages.log"
@@ -28,6 +28,14 @@ fetch_verified 'libwine_8.0~repack-4_amd64.deb' \
   512b715f32fccf2ebec2b63f23d9d83394d30e27cc5570a8ef92c5d3627ef305
 fetch_verified 'wine_8.0~repack-4_all.deb' \
   79672e2f542c450fe7e7a16a930ac8787fcfa804d29c2bf37e3d33297dbe60b0
+# Bookworm's Win64 zlib DLL is a Windows PE dependency, not Linux zlib1g.
+# Verified independently in GitHub Actions run 38301149738.
+fetch_verified 'libz-mingw-w64_1.2.13+dfsg-1_all.deb' \
+  b9e73ca486bc2aa66da86b5724220d2dd7c8299636b1df74c3414757a2170615 \
+  'https://deb.debian.org/debian/pool/main/libz/libz-mingw-w64'
+WIN64_DLL="$OUT/stage/usr/x86_64-w64-mingw32/lib/zlib1.dll"
+test -s "$WIN64_DLL" || { echo BOOKWORM_WINDOWS_ZLIB1_DLL_MISSING >&2; exit 1; }
+install -Dm0644 "$WIN64_DLL" "$OUT/stage/usr/lib/x86_64-linux-gnu/wine/x86_64-windows/zlib1.dll"
 test -x "$OUT/stage/usr/lib/wine/wine64" || { echo DEBIAN_WINE64_LOADER_MISSING >&2; exit 1; }
 test -d "$OUT/stage/usr/lib/x86_64-linux-gnu/wine" || { echo DEBIAN_LIBWINE_PAYLOAD_MISSING >&2; exit 1; }
 # Native Linux-side Wine drivers use DT_NEEDED entries for ntdll.so and
@@ -64,6 +72,7 @@ compatibility=Win64 only, not proof of 32-bit Windows support
 input_deb_sha256_wine64=4ff56d97fb84c41dd450775f03ae42208f092e822f9baa742dcde951773ecb42
 input_deb_sha256_libwine=512b715f32fccf2ebec2b63f23d9d83394d30e27cc5570a8ef92c5d3627ef305
 input_deb_sha256_wine=79672e2f542c450fe7e7a16a930ac8787fcfa804d29c2bf37e3d33297dbe60b0
+input_deb_sha256_windows_zlib=b9e73ca486bc2aa66da86b5724220d2dd7c8299636b1df74c3414757a2170615
 status=unverified_in_real_puppy_until_guest_receipts
 META
 # No stale files in module stage; one complete checksum-pinned dependency family.
@@ -75,6 +84,7 @@ cmp "$OUT/stage/usr/share/venvwin-wine-provenance.txt" "$OUT/module-provenance-v
 unsquashfs -l "$OUT/$MODULE" > "$OUT/module-file-list.txt"
 grep -Fq 'squashfs-root/usr/lib/wine/wine64' "$OUT/module-file-list.txt"
 grep -Fq 'squashfs-root/usr/local/bin/wine' "$OUT/module-file-list.txt"
+grep -Fq 'squashfs-root/usr/lib/x86_64-linux-gnu/wine/x86_64-windows/zlib1.dll' "$OUT/module-file-list.txt"
 xorriso -as mkisofs -quiet -r -J -V VENVWIN_BKWINE64 \
   -o "$OUT/bookworm-wine64-module-media.iso" "$OUT/$MODULE" > "$OUT/module-iso.log" 2>&1
 sha256sum "$OUT/$MODULE" "$OUT/bookworm-wine64-module-media.iso" \
