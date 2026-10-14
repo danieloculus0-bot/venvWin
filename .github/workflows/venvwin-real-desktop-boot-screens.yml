@@ -24,6 +24,10 @@ jobs:
           sh -n puppy-native/venvwin-wine
           sh -n puppy-native/venvwin-theme-apply
           python3 -m py_compile puppy-native/brand-boot-menu.py puppy-native/brand-jwm-template.py puppy-native/brand-jwm-theme.py puppy-native/capture-real-boot-screens.py puppy-native/qemu-monitor-probe.py
+          python3 -m py_compile puppy-native/check-wallpaper-screenshot.py
+          sh -n puppy-native/venvwin-wallpaper-apply
+          python3 -m pytest -q tests/test_puppy_wallpaper.py
+          test -s puppy-native/art/venvwin-amber-arc.webp.b64
           test -s puppy-native/art/venvwin-boot.svg
           test -s puppy-native/art/venvwin-wallpaper.svg
           test -s puppy-native/art/PuppyPin
@@ -113,7 +117,16 @@ jobs:
           test -s "$OUT/qemu-real-desktop-first.png"
           test -s "$OUT/qemu-real-desktop-after-setup.png"
           test -s "$OUT/qemu-real-start-menu.png"
-          printf 'status=ACTUAL_BRANDED_PUPPY_DESKTOP_PROVEN\napp_exec=NOT_TESTED\nwine=NOT_TESTED\nmsi=NOT_TESTED\n' >"$OUT/boot-desktop-verdict.txt"
+          # The screenshot—not an installed bitmap file—must match approved
+          # Amber Arc branding, AFTER Puppy's delayed first-run setup and menu.
+          python3 puppy-native/check-wallpaper-screenshot.py \
+            --wallpaper "$OUT/venvwin-wallpaper.png" \
+            --capture "$OUT/qemu-real-desktop-after-setup.png"
+          python3 puppy-native/check-wallpaper-screenshot.py \
+            --wallpaper "$OUT/venvwin-wallpaper.png" \
+            --capture "$OUT/qemu-real-start-menu.png"
+          echo GENUINE_PUPPY_WALLPAPER_REASSERTION_SCREENSHOT_PASS
+          printf 'status=ACTUAL_BRANDED_PUPPY_DESKTOP_PROVEN\nwallpaper=APPROVED_AMBER_ARC_VISIBLE\napp_exec=NOT_TESTED\nwine=NOT_TESTED\nmsi=NOT_TESTED\n' >"$OUT/boot-desktop-verdict.txt"
           echo ACTUAL_BRANDED_PUPPY_DESKTOP_GUEST_ORIGIN_AND_SCREENSHOTS_PASS
       - name: Upload bounded original guest screenshots and proof only (NO ISO)
         if: always()
