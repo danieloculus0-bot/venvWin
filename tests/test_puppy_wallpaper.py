@@ -6,7 +6,12 @@ import os
 from pathlib import Path
 import subprocess
 
-from PIL import Image
+import pytest
+
+try:
+    from PIL import Image
+except ImportError:
+    Image = None  # Optional host-side screenshot test dependency
 
 ROOT=Path(__file__).resolve().parents[1]
 APPLY=ROOT/"puppy-native"/"venvwin-wallpaper-apply"
@@ -21,6 +26,7 @@ def verifier():
     return m
 
 
+@pytest.mark.skipif(Image is None, reason='Pillow is optional outside the QEMU screenshot CI')
 def test_wallpaper_verifier_accepts_actual_approved_image(tmp_path: Path):
     image=Image.new("RGB",(1280,800),(10,18,24))
     wall=tmp_path/"approved.png"
@@ -30,6 +36,7 @@ def test_wallpaper_verifier_accepts_actual_approved_image(tmp_path: Path):
     assert verifier().compare_capture(wall,shot)==[0.0,0.0,0.0]
 
 
+@pytest.mark.skipif(Image is None, reason='Pillow is optional outside the QEMU screenshot CI')
 def test_wallpaper_verifier_detects_wrong_image(tmp_path: Path):
     approved=Image.new("RGB",(1280,800),(240,118,28))
     wrong=Image.new("RGB",(1280,800),(16,19,24))
