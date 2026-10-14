@@ -1,0 +1,89 @@
+#!/bin/sh
+# Reassert the approved venvWin wallpaper on the REAL ROX pinboard.
+# Puppy Quick Setup can overwrite the backdrop after our initial overlay.
+# Edit just the backdrop tag, never user's desktop icons/coordinates.
+set -eu
+
+WALLPAPER="/usr/share/backgrounds/venvwin-wallpaper.png"
+[ -s "$WALLPAPER" ] || {
+  echo 'VENVWIN_WALLPAPER_MISSING_NO_FAKE_SUCCESS' >&2
+  exit 66
+}
+[ -n "${DISPLAY:-}" ] || {
+  echo 'VENVWIN_WALLPAPER_NO_X_SESSION' >&2
+  exit 69
+}
+
+HOME_DIR="${HOME:-/root}"
+DEFAULT_PINBOARD="$HOME_DIR/Choices/ROX-Filer/PuppyPin"
+ALT_PINBOARD="$HOME_DIR/.config/rox.sourceforge.net/ROX-Filer/PuppyPin"
+SEED="/opt/venvwin/venvwin-default-PuppyPin"
+
+# This is not an arbitrary wallpaper setter: the image is pinned by our build.
+# Preserve all icons and config, replacing only the backdrop. Unknown XML fails.
+update_pinboard() {
+  file="$1"
+  [ -f "$file" ] || return 0
+  python3 - "$file" "$WALLPAPER" <<'PY'
+import os
+import pathlib
+import re
+import sys
+import tempfile
+
+path=pathlib.Path(sys.argv[1])
+wallpaper=sys.argv[2]
+original=path.read_bytes()
+text=original.decode("utf-8")
+if "<pinboard>" not in text or "</pinboard>" not in text:
+    raise SystemExit("VENVWIN_UNKNOWN_ROX_PINBOARD_REFUSE_OVERWRITE")
+replacement='<backdrop style="Stretched">'+wallpaper+'</backdrop>'
+pattern=r"<backdrop(?:\s[^>]*)?>[^<]*</backdrop>"
+if re.search(pattern,text,flags=re.I):
+    rewritten,changed=re.subn(pattern,replacement,text,count=1,flags=re.I)
+else:
+    rewritten=text.replace("<pinboard>","<pinboard>\n  "+replacement,1)
+    changed=1
+if not changed:
+    raise SystemExit("VENVWIN_ROX_BACKDROP_EDIT_FAILED")
+if rewritten!=text:
+    fd,tmp=tempfile.mkstemp(prefix=".venvwin-pin-",dir=str(path.parent))
+    try:
+        with os.fdopen(fd,"wb") as handle:
+            handle.write(rewritten.encode("utf-8"))
+        os.chmod(tmp,path.stat().st_mode & 0o777)
+        os.replace(tmp,str(path))
+    finally:
+        if os.path.exists(tmp): os.unlink(tmp)
+    print("VENVWIN_ROX_BACKDROP_SET",path)
+else:
+    print("VENVWIN_ROX_BACKDROP_ALREADY_CORRECT",path)
+PY
+}
+
+if [ ! -f "$DEFAULT_PINBOARD" ]; then
+  if [ -f "$SEED" ]; then
+    mkdir -p "$(dirname "$DEFAULT_PINBOARD")"
+    cp "$SEED" "$DEFAULT_PINBOARD"
+  else
+    echo 'VENVWIN_NO_ROX_PINBOARD_OR_SEED' >&2
+    exit 70
+  fi
+fi
+update_pinboard "$DEFAULT_PINBOARD"
+if [ "$ALT_PINBOARD" != "$DEFAULT_PINBOARD" ] && [ -f "$ALT_PINBOARD" ]; then
+  update_pinboard "$ALT_PINBOARD"
+fi
+
+# Reinitialize *the actual Puppy ROX pinboard*, not a rendered substitute.
+# -p accepts the PuppyPin path used in the original Puppy startup scripts.
+if command -v rox >/dev/null 2>&1; then
+  rox -p "$DEFAULT_PINBOARD" >/dev/null 2>&1 || {
+    echo 'VENVWIN_ROX_RELOAD_FAILED' >&2
+    exit 71
+  }
+  echo 'VENVWIN_ROX_REAL_PINBOARD_RELOADED'
+else
+  echo 'VENVWIN_ROX_EXECUTABLE_MISSING' >&2
+  exit 72
+fi
