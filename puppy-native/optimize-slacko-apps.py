@@ -167,6 +167,43 @@ def stat_targets(root: Path) -> list[dict]:
                             "raw_size_bytes": raw_bytes, "file_count": count})
     return planned
 
+DEFAULT_APP_WRAPPERS = {
+    "usr/local/bin/defaultaudioplayer": (
+        "deadbeef",
+        "#!/bin/sh\\nexec mpv --no-video \"$@\"\\n",
+    ),
+    "usr/local/bin/defaultcdplayer": (
+        "deadbeef",
+        "#!/bin/sh\\nexec mpv cdda:// \"$@\"\\n",
+    ),
+    "usr/local/bin/defaultaudioeditor": (
+        "mhwaveedit",
+        "#!/bin/sh\\necho 'Audio editor not bundled. Install one via Synaptic.' >&2\\nexit 69\\n",
+    ),
+}
+
+def retarget_default_handlers(root: Path) -> list[dict[str,str]]:
+    """Avoid dead Puppy default handlers when standalone optional editors go.
+
+    Original wrapper must be a tiny known shell script that actually invokes
+    the removed app. Refuse surprising content. CD playback requires
+    independent runtime verification of mpv's CDDA support.
+    """
+    changed = []
+    for rel, (old_command, new_script) in DEFAULT_APP_WRAPPERS.items():
+        path = root / rel
+        if not path.exists() or path.is_symlink():
+            continue
+        old_text = path.read_text(encoding="utf-8")
+        if len(old_text) > 8192 or not old_text.startswith("#!/bin/sh") or (
+            "exec " + old_command
+        ) not in old_text:
+            raise SystemExit("STOP_UNKNOWN_DEFAULT_HANDLER:" + rel)
+        path.write_text(new_script, encoding="utf-8")
+        changed.append({"path":rel,"previous_command":old_command,
+                        "new_command":"mpv" if old_command=="deadbeef" else "honest-no-editor"})
+    return changed
+
 def main() -> int:
     p = argparse.ArgumentParser()
     p.add_argument("root", type=Path, help="TEMPORARY root extracted from official puppy_dpupbw64_10.0.12.sfs")
@@ -183,6 +220,7 @@ def main() -> int:
     planned = stat_targets(root)
     if not planned:
         raise SystemExit("STOP_NO_KNOWN_SAFE_REDUNDANT_APPLICATIONS")
+    remapped_defaults = []
     if args.apply:
         for entry in planned:
             path = root / entry["relative_path"]
@@ -190,6 +228,7 @@ def main() -> int:
                 shutil.rmtree(path)
             else:
                 path.unlink()
+        remapped_defaults = retarget_default_handlers(root)
     protected_after = safe_manifest(root)
     if protected_before != protected_after:
         raise SystemExit("STOP_PROTECTED_COMPONENT_CHANGED_RESTORE_ORIGINAL_SFS")
@@ -200,6 +239,8 @@ def main() -> int:
         "removed": planned if args.apply else [],
         "candidates": planned,
         "raw_file_bytes_candidate": sum(x["raw_size_bytes"] for x in planned),
+        "repaired_default_app_handlers": remapped_defaults,
+        "package_database_integrity": "NOT_PROVEN_NEEDS_POST_TRIM_DPKG_PET_AUDIT",
         "protected_files_verified_unmodified": len(protected_before),
         "system_or_wine_library_components_removed": 0,
         "compressed_savings_bytes": "MEASURE_SEPARATELY_AFTER_SFS_RECOMPRESSION",
