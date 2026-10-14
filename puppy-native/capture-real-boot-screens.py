@@ -45,14 +45,30 @@ def main() -> int:
                 print("VNC_HOST_OBSERVED_ACTUAL_DESKTOP",flush=True)
                 time.sleep(25)  # allow Puppy Quick Setup to appear
                 vnc.captureScreen(str(out/"qemu-real-desktop-settled.png"))
-                # Dismiss Quick Setup only if present; preserve screenshot of its state.
-                vnc.keyPress("alt-f4")
-                time.sleep(6)
+                # Actual BookwormPup64 welcome dialog in the screenshot is
+                # positioned at x269..1017, y149..645 on 1280x800. Use
+                # mouse only: vncdotool.keyPress("alt-f4") crashes on this
+                # runner with TypeError, and faking screenshots is forbidden.
+                with Image.open(out/"qemu-real-desktop-settled.png") as img:
+                    rgb=img.convert("RGB")
+                    if rgb.size == (1280,800):
+                        orange=rgb.getpixel((530,159))
+                        white=rgb.getpixel((530,245))
+                        welcome=(orange[0]>175 and 70<orange[1]<200 and
+                                 orange[2]<70 and min(white)>160)
+                    else:
+                        welcome=False
+                print("VNC_HOST_PUPPY_WELCOME_OBSERVED="+str(welcome),flush=True)
+                if welcome:
+                    vnc.mouseMove(1004,160)
+                    vnc.mousePress(1)
+                    time.sleep(9)
                 vnc.captureScreen(str(out/"qemu-real-desktop-after-setup.png"))
-                # Use actual menu key as a real desktop interaction, not a drawn taskbar.
-                vnc.keyPress("escape")
-                vnc.keyPress("alt-f1")
-                time.sleep(4)
+                # The original JWM menu button really is at the bottom left.
+                if desktop_visible(out/"qemu-real-desktop-after-setup.png"):
+                    vnc.mouseMove(43,785)
+                    vnc.mousePress(1)
+                    time.sleep(5)
                 vnc.captureScreen(str(out/"qemu-real-start-menu.png"))
                 print("VNC_HOST_CAPTURED_REAL_BOOT_DESKTOP_AND_MENU",flush=True)
                 return 0
