@@ -83,26 +83,31 @@ jobs:
             echo REAL_GUEST_DESKTOP_SCREENSHOT_GATE_FAIL
             exit 1
           fi
+          # QEMU's serial capture uses CRLF. Preserve original guest bytes,
+          # normalize only for exact-line checks; never invent guest messages.
+          SERIAL_LF="$OUT/real-boot-guest-serial-lf.log"
+          tr -d '\r' < "$SERIAL" > "$SERIAL_LF"
           # JWM Startup can run after a delayed native Puppy Welcome dialog.
           # Give the real guest time to initialize; never manufacture markers.
           for attempt in $(seq 1 16); do
-            if grep -Fxq PUPPY_GUEST_BOOT_PROVEN "$SERIAL" 2>/dev/null; then
+            tr -d '\r' < "$SERIAL" > "$SERIAL_LF"
+            if grep -Fxq PUPPY_GUEST_BOOT_PROVEN "$SERIAL_LF" 2>/dev/null; then
               echo "REAL_GUEST_STARTUP_AUTOSTART_ARRIVED_AT_POLL=$attempt"
               break
             fi
             echo "WAITING_FOR_GUEST_AUTOSTART_RECEIPT=$attempt"
             sleep 10
           done
-          grep -Fxq PUPPY_GUEST_STARTUP_EXECUTED "$SERIAL" || {
+          grep -Fxq PUPPY_GUEST_STARTUP_EXECUTED "$SERIAL_LF" || {
             echo REAL_GUEST_AUTOSTART_NOT_CONFIRMED; exit 1;
           }
-          grep -Fxq PUPPY_GUI_AND_OVERLAY_PRESENT "$SERIAL" || {
+          grep -Fxq PUPPY_GUI_AND_OVERLAY_PRESENT "$SERIAL_LF" || {
             echo REAL_GUEST_DESKTOP_FILESYSTEM_NOT_CONFIRMED; exit 1;
           }
-          grep -Fxq PUPPY_VENVWIN_CAPSULE_CLI_PASS "$SERIAL" || {
+          grep -Fxq PUPPY_VENVWIN_CAPSULE_CLI_PASS "$SERIAL_LF" || {
             echo REAL_GUEST_VENVWIN_PYTHON_FAILED; exit 1;
           }
-          grep -Fxq PUPPY_GUEST_BOOT_PROVEN "$SERIAL" || {
+          grep -Fxq PUPPY_GUEST_BOOT_PROVEN "$SERIAL_LF" || {
             echo REAL_GUEST_BOOT_RECEIPT_MISSING; exit 1;
           }
           test -s "$OUT/qemu-real-desktop-first.png"
@@ -126,6 +131,7 @@ jobs:
             dist/puppy-native/qemu-real-desktop-after-setup.png
             dist/puppy-native/qemu-real-start-menu.png
             dist/puppy-native/real-boot-guest-serial.log
+            dist/puppy-native/real-boot-guest-serial-lf.log
             dist/puppy-native/real-boot-qemu-stderr.log
             dist/puppy-native/boot-menu-enter.log
             dist/puppy-native/splash-capture.log
