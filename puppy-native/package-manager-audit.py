@@ -59,6 +59,26 @@ def main() -> int:
     def found(paths):
         return {path:[layer for layer,items in allpaths.items() if path in items]
                 for path in paths}
+    # Check original dpkg package records for app binaries we intend to strip.
+    # The package DB belongs to the bdrv, which must remain unmodified.
+    tracked_trim_apps = ("deadbeef", "mhwaveedit", "easytag", "qwinff",
+        "simplescreenrecorder", "celluloid", "hexalate", "iqpuzzle",
+        "picpuz", "rubix", "simsu")
+    tracked_status = {}
+    db_layers=[layer for layer in layers
+               if "var/lib/dpkg/status" in allpaths[layer.name]]
+    if db_layers:
+        z=subprocess.run(["unsquashfs","-cat",str(db_layers[0]),
+                          "var/lib/dpkg/status"],
+                          text=True, stdout=subprocess.PIPE,
+                          stderr=subprocess.PIPE,check=True)
+        for entry in z.stdout.split("\\n\\n"):
+            values={}
+            for line in entry.splitlines():
+                if line.startswith("Package: "): values["name"]=line[9:].strip()
+                elif line.startswith("Status: "): values["status"]=line[8:].strip()
+            if values.get("name") in tracked_trim_apps:
+                tracked_status[values["name"]]=values.get("status","UNKNOWN")
     required={name:found(paths) for name,paths in REQUIRED_TOOLS.items()}
     metadata={name:found([path]) if not path.endswith("/") else {
             path:[layer for layer,items in allpaths.items()
@@ -70,6 +90,8 @@ def main() -> int:
         "evidence_level":"file-presence-NOT-GUI-install-or-persistent-database-proof",
         "required_software":required,
         "package_db_and_optional_tools":metadata,
+        "installed_dpkg_status_for_proposed_trim_apps":tracked_status,
+        "dpkg_owners_of_removed_files":"NOT_CHECKED_REQUIRES_INFO_LISTS",
         "Wine_impact":"NO_BASE_SFS_MODIFICATION_THIS_AUDIT",
         "gui_installation_test":"NOT_TESTED",
         "dependency_resolution_test":"NOT_TESTED",
@@ -84,6 +106,7 @@ def main() -> int:
         print(f"PACKAGE_STACK {name} FOUND={hits}/{len(paths)}")
         for path,locations in paths.items():
             print("  ",path,locations or "NOT_IN_ORIGINAL_SFS")
+    print("DPKG_REGISTERED_TRIM_CANDIDATES",tracked_status)
     for name,paths in metadata.items():
         print(f"PACKAGE_DB {name} "+repr(paths))
     print("PACKAGE_STACK_SOURCE_INVENTORY_ONLY_NOT_INSTALL_TEST")
