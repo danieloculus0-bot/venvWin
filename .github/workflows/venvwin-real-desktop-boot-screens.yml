@@ -26,6 +26,7 @@ jobs:
           python3 -m py_compile puppy-native/brand-boot-menu.py puppy-native/brand-jwm-template.py puppy-native/brand-jwm-theme.py puppy-native/capture-real-boot-screens.py puppy-native/qemu-monitor-probe.py
           python3 -m py_compile puppy-native/check-wallpaper-screenshot.py
           sh -n puppy-native/venvwin-wallpaper-apply
+          python3 -m pip install -q 'pytest>=8,<10' 'pillow>=10,<12'
           python3 -m pytest -q tests/test_puppy_wallpaper.py
           test -s puppy-native/art/venvwin-amber-arc.webp.b64
           test -s puppy-native/art/venvwin-boot.svg
