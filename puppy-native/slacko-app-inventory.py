@@ -16,7 +16,7 @@ CATEGORIES = {
     "office_word": (r"(^|/)(abiword|abiword-.*|libabiword.*)(\.desktop)?$", r"abiword"),
     "office_spreadsheet": (r"(^|/)(gnumeric|gnumeric-.*|ssconvert|libspreadsheet.*)(\.desktop)?$", r"gnumeric|ssconvert"),
     "browser_firefox": (r"(^|/)(firefox|firefox-esr|firefox\.desktop|firefox-esr\.desktop)$", r"firefox"),
-    "browser_chromium": (r"(^|/)(chromium|chromium-browser|chromium\.desktop|chrome)(\.desktop)?$", r"chromium|google-chrome"),
+    "browser_chromium": (r"^(usr/bin/(chromium|chromium-browser|google-chrome)|usr/share/applications/(chromium|chromium-browser|google-chrome)\.desktop|opt/chromium/chrome)$", r"chromium|google-chrome"),
     "browser_seamonkey": (r"(^|/)(seamonkey|seamonkey-bin)(\.desktop)?$", r"seamonkey"),
     "mail": (r"(^|/)(sylpheed|claws-mail|thunderbird|mutt|geary)(\.desktop)?$", r"mail"),
     "network_gui": (r"(^|/)(frisbee|network-wizard|network-connection|pwireless|connman-gtk|nm-connection-editor|simple_network_setup|network_tray)(\.desktop)?$", r"frisbee|network|connman"),
