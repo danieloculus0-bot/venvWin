@@ -45,25 +45,42 @@ def main() -> int:
                 print("VNC_HOST_OBSERVED_ACTUAL_DESKTOP",flush=True)
                 time.sleep(25)  # allow Puppy Quick Setup to appear
                 vnc.captureScreen(str(out/"qemu-real-desktop-settled.png"))
-                # Actual BookwormPup64 welcome dialog in the screenshot is
-                # positioned at x269..1017, y149..645 on 1280x800. Use
-                # mouse only: vncdotool.keyPress("alt-f4") crashes on this
-                # runner with TypeError, and faking screenshots is forbidden.
-                with Image.open(out/"qemu-real-desktop-settled.png") as img:
-                    rgb=img.convert("RGB")
-                    if rgb.size == (1280,800):
-                        orange=rgb.getpixel((530,159))
-                        white=rgb.getpixel((530,245))
-                        welcome=(orange[0]>175 and 70<orange[1]<200 and
-                                 orange[2]<70 and min(white)>160)
-                    else:
-                        welcome=False
-                print("VNC_HOST_PUPPY_WELCOME_OBSERVED="+str(welcome),flush=True)
-                if welcome:
+                def has_orange_header(path: Path, x: int, y: int) -> bool:
+                    with Image.open(path) as im:
+                        rgb=im.convert("RGB")
+                        if rgb.size != (1280,800): return False
+                        r,g,b=rgb.getpixel((x,y))
+                        return r>200 and 90<g<185 and b<55
+
+                # Stock BookwormPup64 normally opens Quick Setup after the
+                # real desktop becomes visible. Click its actual close button
+                # only when its observed orange titlebar is present.
+                if has_orange_header(out/"qemu-real-desktop-settled.png",530,116):
+                    print("VNC_HOST_ORIGINAL_PUPPY_QUICK_SETUP_VISIBLE",flush=True)
+                    vnc.mouseMove(1042,116)
+                    vnc.mousePress(1)
+                    time.sleep(8)
+                else:
+                    print("VNC_HOST_NO_QUICK_SETUP_AT_SETTLED_DESKTOP",flush=True)
+                interim=out/"qemu-real-desktop-after-quick-setup.png"
+                vnc.captureScreen(str(interim))
+
+                # Some original Puppies then display a separate Welcome
+                # screen (at x269..1017,y149..645). This also must be closed
+                # as a real guest window, never photoshopped from a capture.
+                if has_orange_header(interim,530,159):
+                    print("VNC_HOST_ORIGINAL_PUPPY_WELCOME_VISIBLE",flush=True)
                     vnc.mouseMove(1004,160)
                     vnc.mousePress(1)
-                    time.sleep(9)
+                    time.sleep(8)
+                else:
+                    print("VNC_HOST_NO_WELCOME_DIALOG_AFTER_QUICK_SETUP",flush=True)
                 vnc.captureScreen(str(out/"qemu-real-desktop-after-setup.png"))
+                if (has_orange_header(out/"qemu-real-desktop-after-setup.png",530,116)
+                    or has_orange_header(out/"qemu-real-desktop-after-setup.png",530,159)):
+                    print("VNC_HOST_ORIGINAL_PUPPY_SETUP_STILL_OPEN",flush=True)
+                    return 9
+                print("VNC_HOST_PUPPY_SETUP_DISMISSED_VIA_REAL_INPUT",flush=True)
                 # The original JWM menu button really is at the bottom left.
                 if desktop_visible(out/"qemu-real-desktop-after-setup.png"):
                     vnc.mouseMove(43,785)
