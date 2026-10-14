@@ -25,6 +25,22 @@ if ! mkdir "$STATE/once" 2>/dev/null; then exit 0; fi
   /usr/local/bin/venvwin-wallpaper-apply
   sleep 34
   /usr/local/bin/venvwin-wallpaper-apply
+  # Guest-origin diagnostics only after all timed wallpaper retries complete.
+  # Do not claim wallpaper success from source files alone.
+  if [ -c /dev/ttyS0 ]; then
+    printf '%s\n' 'VENVWIN_WALLPAPER_GUEST_LOG_BEGIN' > /dev/ttyS0
+    tail -n 40 "$STATE/wallpaper.log" 2>/dev/null | while IFS= read -r line; do
+      printf 'VENVWIN_WALLPAPER_LOG: %s\n' "$line" > /dev/ttyS0 || true
+    done
+    for candidate in "$HOME/Choices/ROX-Filer/PuppyPin" "$HOME/.config/rox.sourceforge.net/ROX-Filer/PuppyPin"; do
+      if [ -f "$candidate" ]; then
+        grep 'backdrop' "$candidate" 2>/dev/null | while IFS= read -r line; do
+          printf 'VENVWIN_GUEST_BACKDROP=%s:%s\n' "$candidate" "$line" > /dev/ttyS0 || true
+        done
+      fi
+    done
+    printf '%s\n' 'VENVWIN_WALLPAPER_GUEST_LOG_END' > /dev/ttyS0
+  fi
 ) >"$STATE/wallpaper.log" 2>&1 &
 
 /usr/local/bin/venvwin-wine --status >"$STATE/wine-status.log" 2>&1 || true
