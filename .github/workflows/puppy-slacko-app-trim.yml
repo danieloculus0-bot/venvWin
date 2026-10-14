@@ -71,6 +71,29 @@ jobs:
           test ! -e "$OUT/work-root/opt/deadbeef"
           test -s "$OUT/trim-application-plan.json"
           echo FIRST_PASS_REMOVAL_COMPLETE_OFFICE_NETWORK_AND_SYSTEM_PROTECTED
+          python3 - "$OUT/work-root" "$OUT/default-handler-review.txt" <<'PY'
+          import pathlib,sys
+          root=pathlib.Path(sys.argv[1])
+          lines=[]
+          for stem in ('defaultaudioplayer','defaultaudioeditor','defaultmediaplayer','defaultcdplayer'):
+            for prefix in ('usr/bin','usr/local/bin'):
+              path=root/prefix/stem
+              if path.is_symlink():
+                lines.append(f'{prefix}/{stem} -> {path.readlink()}')
+              elif path.is_file():
+                if path.stat().st_size < 8192:
+                  try:
+                    data=path.read_text(errors='replace')
+                    lines.append(f'{prefix}/{stem}: {data[:1200]!r}')
+                  except Exception as exc:
+                    lines.append(f'{prefix}/{stem}: UNREADABLE {exc}')
+                else:
+                  lines.append(f'{prefix}/{stem}: LARGE_OR_BINARY')
+              else:
+                lines.append(f'{prefix}/{stem}: NOT_PRESENT')
+          pathlib.Path(sys.argv[2]).write_text('\n'.join(lines)+'\n')
+          print('\n'.join(lines))
+          PY
       - name: Recompress test system and inspect measured difference (NO release)
         run: |
           set -euo pipefail
@@ -124,4 +147,5 @@ jobs:
             dist/slacko-app-trim/experimental-hashes.txt
             dist/slacko-app-trim/unsquashfs.log
             dist/slacko-app-trim/recompress.log
+            dist/slacko-app-trim/default-handler-review.txt
             dist/slacko-app-trim/test-iso-build.log
