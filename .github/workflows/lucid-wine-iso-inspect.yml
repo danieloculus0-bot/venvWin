@@ -1,0 +1,63 @@
+name: Inspect original Lucid Wine preinstalled ISO
+# Experimental evidence only; no ISO remaster, release, or publication.
+on:
+  push:
+    branches: [test/lucid-wine-iso-inspection-20261013]
+    paths: [.github/workflows/lucid-wine-iso-inspect.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: venvwin-lucid-original-wine-inspect
+  cancel-in-progress: false
+jobs:
+  inspect-original-image:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ISO and SquashFS inspection tools only
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends xorriso squashfs-tools file
+      - name: Download original Lucid Puppy Wine ISO (no remaster)
+        run: |
+          set -euo pipefail
+          mkdir -p dist/lucid-wine-inspect
+          cd dist/lucid-wine-inspect
+          curl --fail --location --retry 3 --connect-timeout 30 --max-time 900 \
+            --user-agent 'venvWin historical ISO inspection (GitHub Actions)' \
+            -o meaty_lucid_08052019.iso \
+            'https://downloads.sourceforge.net/project/alienpupos/LucidPup%205.2.8/meaty_lucid_08052019.iso'
+          file meaty_lucid_08052019.iso | tee image-type.txt
+          stat -c 'ACTUAL_ISO_BYTES=%s' meaty_lucid_08052019.iso | tee iso-size.txt
+          test "$(stat -c '%s' meaty_lucid_08052019.iso)" -gt 190000000
+          file -b meaty_lucid_08052019.iso | grep -qi 'iso 9660'
+          sha256sum meaty_lucid_08052019.iso | tee original-iso-sha256.txt
+          echo 'SOURCEFORGE_ISO_DOWNLOADED_INTACT_BY_FORMAT_NOT_YET_GUEST_PROOF'
+      - name: Inspect original ISO contents and identify actual Wine files
+        run: |
+          set -euo pipefail
+          OUT=dist/lucid-wine-inspect
+          ISO="$OUT/meaty_lucid_08052019.iso"
+          mkdir -p "$OUT/extracted"
+          xorriso -osirrox on -indev "$ISO" -extract / "$OUT/extracted" >"$OUT/extraction.log" 2>&1
+          find "$OUT/extracted" -maxdepth 4 -type f | tee "$OUT/iso-inventory.txt"
+          find "$OUT/extracted" -type f -name '*.sfs' -print0 | while IFS= read -r -d '' sfs; do
+            echo "ORIGINAL_SFS_FILE=$sfs" | tee -a "$OUT/sfs-inspection.txt"
+            unsquashfs -ll "$sfs" >> "$OUT/sfs-inspection.txt"
+          done
+          grep -Ei '/(usr/bin|usr/local/bin|opt|root/my-applications/bin)/wine(cfg|boot|server)?$|/usr/lib/wine/|/usr/share/wine/' "$OUT/sfs-inspection.txt" \
+            | tee "$OUT/wine-files-found.txt"
+          test -s "$OUT/wine-files-found.txt"
+          echo 'WINE_PROGRAM_FILES_CONFIRMED_INSIDE_DOWNLOADED_LUCID_ISO_NOT_EXECUTION_PROOF'
+      - name: Retain inspectable evidence without republishing ISO
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lucid-preinstalled-wine-iso-inspection-no-binary
+          retention-days: 21
+          if-no-files-found: warn
+          path: |
+            dist/lucid-wine-inspect/*.txt
+            dist/lucid-wine-inspect/*.log
