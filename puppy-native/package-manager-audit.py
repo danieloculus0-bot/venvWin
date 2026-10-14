@@ -15,7 +15,8 @@ REQUIRED_TOOLS = {
     "apt_binary": ["usr/bin/apt", "usr/bin/apt-get"],
     "dependency_resolver": ["usr/bin/apt-cache"],
     "dpkg_binary": ["usr/bin/dpkg", "usr/bin/dpkg-query"],
-    "synaptic_gui": ["usr/bin/synaptic", "usr/share/applications/synaptic.desktop"],
+    "synaptic_gui": ["usr/sbin/synaptic", "usr/bin/synaptic-pkexec",
+                     "usr/share/applications/synaptic.desktop"],
     "puppy_pet_gui": ["usr/local/petget/pkg_chooser.sh",
                       "usr/share/applications/Puppy-package-manager.desktop"],
     "sfs_gui": ["usr/share/applications/SFS-Load.desktop"],
@@ -30,6 +31,9 @@ PACKAGE_DATA = {
     "puppy_metadata": "var/local/petget/",
     "python_sqlite3": "usr/lib/python3.11/sqlite3/__init__.py",
     "sqlite3_binary": "usr/bin/sqlite3",
+    "sqlite3_python_dynamic_extension": "usr/lib/python3.11/lib-dynload/_sqlite3.cpython-311-x86_64-linux-gnu.so",
+    "petget_binary": "usr/local/petget/pkg_chooser.sh",
+    "sfs_loader_script": "usr/sbin/sfs_load",
     "apt_frontend_gdebi": "usr/share/applications/gdebi.desktop",
 }
 
