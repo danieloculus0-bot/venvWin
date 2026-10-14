@@ -2,7 +2,7 @@ name: Real BookwormPup64 10.0.12 and archived Wine 9.19 32/64 guest proof
 # Isolated experimental compatibility verification. No Windows partition, Debian OS build, merge, or ISO publishing.
 on:
   push:
-    branches: [test/bookwormpup-1012-wine919-compat-20261013]
+    branches: [test/bookwormpup-1012-wine919-maxcompat-20261013]
     paths: [.github/workflows/puppy-1012-wine919-guest.yml]
   workflow_dispatch:
 permissions:
