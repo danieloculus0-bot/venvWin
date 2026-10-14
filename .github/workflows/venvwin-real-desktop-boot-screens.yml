@@ -5,6 +5,11 @@ on:
     paths:
       - .github/workflows/venvwin-real-desktop-boot-screens.yml
       - puppy-native/capture-real-boot-screens.py
+      - puppy-native/venvwin-wallpaper-apply
+      - puppy-native/venvwin-session
+      - puppy-native/build-puppy.sh
+      - puppy-native/art/venvwin-amber-arc.webp.b64
+      - puppy-native/check-wallpaper-screenshot.py
   workflow_dispatch:
 permissions:
   contents: read
