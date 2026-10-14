@@ -77,6 +77,6 @@ def test_reassert_only_during_first_boot_setup_not_indefinitely():
 
 def test_production_does_not_overwrite_existing_desktop_icon_layout():
     source = SCRIPT.read_text()
-    assert "replace only the backdrop" in source.lower()
+    assert "edit just the backdrop" in source.lower()
     assert "VENVWIN_ROX_REAL_PINBOARD_RELOADED" in source
     assert "VENVWIN_WALLPAPER_MISSING_NO_FAKE_SUCCESS" in source
