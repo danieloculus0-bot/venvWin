@@ -48,6 +48,15 @@ def fixture(tmp_path: Path) -> Path:
         path = root / rel
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text("remove: " + rel)
+    wrappers = {
+        "usr/local/bin/defaultaudioplayer": '#!/bin/sh\\nexec deadbeef "$@"\\n',
+        "usr/local/bin/defaultcdplayer": '#!/bin/sh\\nexec deadbeef /dev/sr0/all.cda "$@"\\n',
+        "usr/local/bin/defaultaudioeditor": '#!/bin/sh\\nexec mhwaveedit "$@"\\n',
+    }
+    for rel, payload in wrappers.items():
+        path = root / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(payload, encoding="utf-8")
     return root
 
 
@@ -82,6 +91,9 @@ def test_actual_trim_only_removes_standalone_extras(tmp_path: Path):
                 "usr/bin/celluloid", "usr/bin/simsu", "usr/bin/qwinff"):
         assert not (root / rel).exists()
     report = json.loads(report_path.read_text())
+    assert "mpv" in (root / "usr/local/bin/defaultaudioplayer").read_text()
+    assert "mpv cdda://" in (root / "usr/local/bin/defaultcdplayer").read_text()
+    assert "Install one via Synaptic" in (root / "usr/local/bin/defaultaudioeditor").read_text()
     assert report["status"] == "TEST_COPY_MUTATED"
     assert report["system_or_wine_library_components_removed"] == 0
     assert report["guest_puppy_boot"] == "NOT_TESTED_BY_THIS_SCRIPT"
@@ -108,3 +120,19 @@ def test_no_library_paths_or_wine_in_direct_removal_list():
             assert "frisbee" not in p and "connman" not in p
             assert not p.startswith("usr/bin/mpv")
             assert not p.startswith("usr/bin/smplayer")
+
+def test_protect_package_management_and_db_metadata():
+    source=SCRIPT.read_text()
+    for key in ("usr/bin/synaptic", "usr/bin/apt", "usr/bin/dpkg",
+                "usr/local/petget/pkg_chooser.sh", "usr/local/bin/sfs_load",
+                "var/lib/dpkg/", "var/lib/apt/"):
+        assert key in source
+    assert "NOT_PROVEN_NEEDS_POST_TRIM_DPKG_PET_AUDIT" in source
+
+def test_refuse_unknown_audio_handler(tmp_path: Path):
+    root=fixture(tmp_path)
+    handler=root/"usr/local/bin/defaultaudioplayer"
+    handler.write_text("#!/bin/sh\\nrm -rf /\\n",encoding="utf-8")
+    r=invoke(root, tmp_path/"unknown.json", apply=True)
+    assert r.returncode != 0
+    assert "STOP_UNKNOWN_DEFAULT_HANDLER" in (r.stderr+r.stdout)
