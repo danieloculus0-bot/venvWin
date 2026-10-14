@@ -48,7 +48,7 @@ jobs:
           OUT="$GITHUB_WORKSPACE/dist/slacko-app-trim"
           sudo unsquashfs -d "$OUT/work-root" "$OUT/extracted-iso/original-main.sfs" \
             > "$OUT/unsquashfs.log" 2>&1
-          test -e "$OUT/work-root/etc/puppyversion"
+          test -e "$OUT/work-root/usr/share/applications/gnumeric.desktop"
           test -e "$OUT/work-root/usr/bin/abiword"
           test -e "$OUT/work-root/usr/bin/gnumeric"
           echo ORIGINAL_SYSTEM_UNPACKED_TEST_COPY_ONLY
@@ -76,7 +76,7 @@ jobs:
           set -euo pipefail
           OUT="$GITHUB_WORKSPACE/dist/slacko-app-trim"
           sudo mksquashfs "$OUT/work-root" "$OUT/opt-main.sfs" -noappend \
-            -comp xz -b 1048576 -processors 4 \
+            -comp zstd -Xcompression-level 19 -b 262144 -processors 4 \
             >"$OUT/recompress.log" 2>&1
           unsquashfs -s "$OUT/opt-main.sfs" >"$OUT/optimized-sfs-format.txt"
           unsquashfs -ll "$OUT/opt-main.sfs" > "$OUT/optimized-inventory.txt"
