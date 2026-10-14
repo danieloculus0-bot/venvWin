@@ -1,0 +1,39 @@
+#!/bin/sh
+# Runs INSIDE a real Puppy desktop. Serial records are the acceptance evidence.
+set -u
+OUT=/tmp/venvwin-wine919-guest
+mkdir -p "$OUT"
+emit() {
+  printf '%s\n' "$1" >> "$OUT/guest-origin.log"
+  if [ -c /dev/ttyS0 ]; then printf '%s\n' "$1" > /dev/ttyS0 || true; fi
+}
+fail() { emit "VENVWIN_WINE919_GUEST_FAIL=$1"; exit 1; }
+emit VENVWIN_WINE919_REAL_GUEST_STARTUP
+emit "VENVWIN_WINE919_GUEST_KERNEL=$(uname -r)"
+test -n "${DISPLAY:-}" || fail NO_DESKTOP_DISPLAY
+emit "VENVWIN_WINE919_GUEST_DISPLAY=$DISPLAY"
+grep -qE '[[:space:]]overlay[[:space:]]|[[:space:]]aufs[[:space:]]' /proc/mounts || fail NO_LIVE_UNION
+emit VENVWIN_WINE919_LIVE_UNION_CONFIRMED
+LAB=/opt/venvwin/wine919-lab
+RUNTIME=/opt/venvwin/wine919-runtime
+test -x "$RUNTIME/AppRun" || fail EXTERNAL_WINE_APPRUN_NOT_PRESENT
+test -s "$LAB/smoke64.exe" && test -s "$LAB/smoke32.exe" || fail TEST_EXES_NOT_MOUNTED
+(cd "$LAB" && sha256sum -c manifest.sha256 > "$OUT/fixture-hashes.log" 2>&1) || fail INVALID_EXE_HASHES
+emit VENVWIN_WINE919_PROBE_FILES_VERIFIED
+export WINEPREFIX="$OUT/prefix"
+export WINEARCH=win64
+export WINEDEBUG=-all
+export HOME=/root
+"$RUNTIME/AppRun" wine --version > "$OUT/wine-version.log" 2>&1 || fail WINE_VERSION_FAILED
+emit "VENVWIN_WINE919_GUEST_WINE_VERSION=$(head -n 1 "$OUT/wine-version.log")"
+grep -Eq 'wine-9[.]19' "$OUT/wine-version.log" || fail WRONG_WINE_VERSION
+timeout 145 "$RUNTIME/AppRun" wineboot --init > "$OUT/wineboot.log" 2>&1 || fail WINEBOOT_FAILED
+test -s "$WINEPREFIX/system.reg" || fail MISSING_PREFIX_REGISTRY
+emit VENVWIN_WINE919_GUEST_PREFIX_PASS
+timeout 95 "$RUNTIME/AppRun" wine "$LAB/smoke64.exe" > "$OUT/win64.log" 2>&1 || fail WINDOWS64_EXECUTION_FAILED
+grep -Fq 'VENVWIN_REAL_GUEST_WINDOWS64_EXECUTED' "$OUT/win64.log" || fail WINDOWS64_OUTPUT_MISSING
+emit VENVWIN_WINE919_REAL_WINDOWS64_PASS
+timeout 95 "$RUNTIME/AppRun" wine "$LAB/smoke32.exe" > "$OUT/win32.log" 2>&1 || fail WINDOWS32_EXECUTION_FAILED
+grep -Fq 'VENVWIN_REAL_GUEST_WINDOWS32_EXECUTED' "$OUT/win32.log" || fail WINDOWS32_OUTPUT_MISSING
+emit VENVWIN_WINE919_REAL_WINDOWS32_PASS
+emit VENVWIN_WINE919_CORE_GUEST_EXECUTION_PASS
