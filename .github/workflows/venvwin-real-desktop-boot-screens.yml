@@ -83,6 +83,16 @@ jobs:
             echo REAL_GUEST_DESKTOP_SCREENSHOT_GATE_FAIL
             exit 1
           fi
+          # JWM Startup can run after a delayed native Puppy Welcome dialog.
+          # Give the real guest time to initialize; never manufacture markers.
+          for attempt in $(seq 1 16); do
+            if grep -Fxq PUPPY_GUEST_BOOT_PROVEN "$SERIAL" 2>/dev/null; then
+              echo "REAL_GUEST_STARTUP_AUTOSTART_ARRIVED_AT_POLL=$attempt"
+              break
+            fi
+            echo "WAITING_FOR_GUEST_AUTOSTART_RECEIPT=$attempt"
+            sleep 10
+          done
           grep -Fxq PUPPY_GUEST_STARTUP_EXECUTED "$SERIAL" || {
             echo REAL_GUEST_AUTOSTART_NOT_CONFIRMED; exit 1;
           }
