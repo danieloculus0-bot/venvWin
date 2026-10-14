@@ -1,0 +1,57 @@
+name: Inventory original Puppy apps for safe Slacko-style slimming
+on:
+  push:
+    branches: [feat/puppy-slacko-app-optimization-20261013]
+    paths:
+      - .github/workflows/puppy-slacko-app-inventory.yml
+      - puppy-native/slacko-app-inventory.py
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect-original:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 28
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install only inspection tools
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends xorriso squashfs-tools
+          python3 -m py_compile puppy-native/slacko-app-inventory.py
+      - name: Fetch verified unchanged official BookwormPup64 10.0.12
+        run: |
+          set -euo pipefail
+          mkdir -p dist/slacko-app-audit
+          curl --fail --location --retry 3 --max-time 1100 \
+            -o dist/slacko-app-audit/Puppy-10.0.12.iso \
+            https://distro.ibiblio.org/puppylinux/puppy-bookwormpup/BookwormPup64/10.0.12/BookwormPup64_10.0.12.iso
+          printf '%s  %s\n' 'ae65f6e6d70a96f48bdbb291c2426f8a2fd77a73692e149e81a5eecb6fe7509f' \
+            dist/slacko-app-audit/Puppy-10.0.12.iso | sha256sum -c -
+          file dist/slacko-app-audit/Puppy-10.0.12.iso
+          echo OFFICIAL_PUPPY_SHA256_VERIFIED_NOT_GUEST_APP_PROOF
+      - name: Inspect original SquashFS app files and desktop entries without modifying image
+        run: |
+          set -euo pipefail
+          mkdir -p dist/slacko-app-audit/iso
+          xorriso -osirrox on \
+            -indev dist/slacko-app-audit/Puppy-10.0.12.iso \
+            -extract / dist/slacko-app-audit/iso \
+            >dist/slacko-app-audit/iso-extract.log 2>&1
+          ls -lh dist/slacko-app-audit/iso/*.sfs
+          python3 puppy-native/slacko-app-inventory.py \
+            dist/slacko-app-audit/iso \
+            --output dist/slacko-app-audit
+          echo INSPECTION_COMPLETE_NO_PUPPY_COMPONENT_REMOVED_NO_WINE_FILE_MODIFIED
+      - name: Publish inventories only, never any ISO, binaries or original SFS
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: original-puppy1012-app-inventory-no-iso
+          retention-days: 21
+          if-no-files-found: warn
+          path: |
+            dist/slacko-app-audit/slacko-app-inventory.json
+            dist/slacko-app-audit/slacko-app-inventory.md
+            dist/slacko-app-audit/iso-extract.log
