@@ -49,7 +49,7 @@ convert "$OUT/venvwin-boot.png" -quality 91 "$OUT/venvwin-boot.jpg"
 # The original full-quality PNG source is separately preserved in the art kit.
 WALLPAPER_SOURCE="$ROOT/puppy-native/art/venvwin-amber-arc.webp.b64"
 WALLPAPER_WEBP="$OUT/venvwin-amber-arc.webp"
-WALLPAPER_SHA256="6f66eb67f8b0a05a8811c10038282abd26f6cd2f3afc43064e5262efdd1a24e0"
+WALLPAPER_SHA256="6187575271bf955ba4daaca6db01f168fdead49b4abce22c7f3275a1b004b6ab"
 test -s "$WALLPAPER_SOURCE" || { echo "VENVWIN_APPROVED_WALLPAPER_NOT_IN_REPO" >&2; exit 44; }
 base64 -d "$WALLPAPER_SOURCE" > "$WALLPAPER_WEBP"
 printf '%s  %s\n' "$WALLPAPER_SHA256" "$WALLPAPER_WEBP" | sha256sum -c -
