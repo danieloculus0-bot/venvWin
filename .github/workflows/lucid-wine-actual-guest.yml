@@ -1,0 +1,167 @@
+name: Lucid built-in Wine real guest compatibility proof
+# One isolated, no-publish compatibility check of ORIGINAL Wine already in Lucid ISO.
+on:
+  push:
+    branches: [test/lucid-wine-iso-inspection-20261013]
+    paths: [.github/workflows/lucid-wine-actual-guest.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: venvwin-lucid-wine-real-guest
+  cancel-in-progress: false
+jobs:
+  guest-proof:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install host tools, inspect KVM availability
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends xorriso squashfs-tools qemu-system-x86 gcc-mingw-w64-i686 file binutils
+          if test -c /dev/kvm; then
+            sudo chmod a+rw /dev/kvm
+            echo 'HOST_KVM_PRESENT_NOT_GUEST_PROOF'
+          else
+            echo 'BLOCKER_KVM_MISSING_NO_TCG_20_MINUTE_ATTEMPT'
+            exit 2
+          fi
+      - name: Fetch EXACT previously inspected original Lucid + native Wine ISO
+        run: |
+          set -euo pipefail
+          mkdir -p dist/lucid-real-guest
+          cd dist/lucid-real-guest
+          curl --fail --location --retry 3 --connect-timeout 30 --max-time 900 \
+            --user-agent 'venvWin experimental Lucid native Wine proof' \
+            -o meaty_lucid_08052019.iso \
+            'https://downloads.sourceforge.net/project/alienpupos/LucidPup%205.2.8/meaty_lucid_08052019.iso'
+          echo 'eb55b47045321c163b14f648a05b35f9fe55c52d91d124086ded181203db99e4  meaty_lucid_08052019.iso' | sha256sum -c -
+          file meaty_lucid_08052019.iso
+          echo ORIGINAL_LUCID_ISO_SHA256_VERIFIED_NOT_BOOT_PROOF
+      - name: Inspect native Wine compatibility BEFORE modifying bootable test copy
+        run: |
+          set -euo pipefail
+          OUT="$GITHUB_WORKSPACE/dist/lucid-real-guest"
+          xorriso -osirrox on -indev "$OUT/meaty_lucid_08052019.iso" -extract / "$OUT/iso-files" > "$OUT/iso-extract.log" 2>&1
+          test -s "$OUT/iso-files/lupu_528.sfs"
+          unsquashfs -d "$OUT/root" "$OUT/iso-files/lupu_528.sfs" > "$OUT/unsquashfs.log"
+          for bin in wine wineboot winecfg wineserver; do test -s "$OUT/root/usr/bin/$bin"; done
+          file "$OUT/root/usr/bin/wine" "$OUT/root/usr/bin/wineserver" | tee "$OUT/wine-file-architecture.txt"
+          readelf -h "$OUT/root/usr/bin/wine" | tee "$OUT/wine-elf-header.txt"
+          grep -q 'ELF32' "$OUT/wine-file-architecture.txt" || {
+            echo 'BASELINE_ARCHITECTURE_UNEXPECTED_STOP_BEFORE_BUILD'; exit 9;
+          }
+          grep -q '80386' "$OUT/wine-elf-header.txt" || {
+            echo 'BASELINE_NOT_I386_STOP_BEFORE_BUILD'; exit 9;
+          }
+          test -d "$OUT/root/usr/lib/wine"
+          echo 'LUCID_ORIGINAL_WINE_I386_ELF_CONFIRMED_NOT_64BIT_SUPPORT'
+      - name: Create ONLY a test startup probe and 32-bit Windows executable
+        run: |
+          set -euo pipefail
+          OUT="$GITHUB_WORKSPACE/dist/lucid-real-guest"
+          mkdir -p "$OUT/root/root/Startup" "$OUT/root/opt/venvwin/lucid-test"
+          cat > "$OUT/win32.c" <<'C'
+          #include <stdio.h>
+          int main(void) { puts("VENVWIN_LUCID_WIN32_EXE_RAN_IN_GUEST"); return 0; }
+          C
+          i686-w64-mingw32-gcc -Os -o "$OUT/root/opt/venvwin/lucid-test/smoke32.exe" "$OUT/win32.c"
+          sha256sum "$OUT/root/opt/venvwin/lucid-test/smoke32.exe" > "$OUT/windows-exe-sha256.txt"
+          cat > "$OUT/root/root/Startup/venvwin-lucid-real-guest" <<'SH'
+          #!/bin/sh
+          LOG=/tmp/venvwin-lucid-guest-proof.log
+          emit() { printf '%s\n' "$1" >> "$LOG"; test -c /dev/ttyS0 && printf '%s\n' "$1" >/dev/ttyS0; }
+          fail() { emit "LUCID_GUEST_FAILURE=$1"; exit 1; }
+          emit 'LUCID_REAL_GUEST_STARTUP'
+          emit "LUCID_GUEST_UNAME=$(uname -a)"
+          test -n "${DISPLAY:-}" || fail NO_X_DISPLAY
+          emit "LUCID_GUEST_X_DISPLAY=$DISPLAY"
+          /usr/bin/wine --version >/tmp/venvwin-lucid-wine-version 2>&1 || fail WINE_VERSION_COMMAND_FAILED
+          emit "LUCID_GUEST_WINE_VERSION=$(cat /tmp/venvwin-lucid-wine-version)"
+          export WINEPREFIX=/tmp/venvwin-lucid-proof-prefix
+          export WINEDEBUG=-all
+          timeout 90 /usr/bin/wineboot --init >/tmp/venvwin-lucid-prefix.log 2>&1 || fail WINEBOOT_INIT_FAILED
+          test -s "$WINEPREFIX/system.reg" || fail PREFIX_SYSTEM_REG_MISSING
+          emit 'LUCID_GUEST_WINEPREFIX_INIT_PASS'
+          timeout 70 /usr/bin/wine /opt/venvwin/lucid-test/smoke32.exe >/tmp/venvwin-lucid-exe.log 2>&1 || fail WIN32_EXE_RETURNED_FAILURE
+          grep -Fxq VENVWIN_LUCID_WIN32_EXE_RAN_IN_GUEST /tmp/venvwin-lucid-exe.log || fail WIN32_EXE_OUTPUT_NOT_VERIFIED
+          emit 'LUCID_GUEST_REAL_WIN32_EXE_PASS'
+          SH
+          chmod 0755 "$OUT/root/root/Startup/venvwin-lucid-real-guest"
+          mksquashfs "$OUT/root" "$OUT/lupu_528-patched.sfs" -noappend -all-root -comp gzip > "$OUT/repack.log" 2>&1
+          unsquashfs -cat "$OUT/lupu_528-patched.sfs" root/Startup/venvwin-lucid-real-guest > "$OUT/roundtrip-guest-probe"
+          cmp "$OUT/root/root/Startup/venvwin-lucid-real-guest" "$OUT/roundtrip-guest-probe"
+          xorriso -indev "$OUT/meaty_lucid_08052019.iso" \
+            -outdev "$OUT/lucid-original-wine-guest-test-only.iso" \
+            -map "$OUT/lupu_528-patched.sfs" /lupu_528.sfs \
+            -boot_image any replay -commit > "$OUT/iso-remap.log" 2>&1
+          xorriso -indev "$OUT/lucid-original-wine-guest-test-only.iso" -report_el_torito plain > "$OUT/boot-catalog.txt" 2>&1
+          grep -qi 'El Torito' "$OUT/boot-catalog.txt"
+          sha256sum "$OUT/lucid-original-wine-guest-test-only.iso" > "$OUT/test-only-iso-sha256.txt"
+          echo TEST_ONLY_REPACK_WITH_ORIGINAL_WINE_NOT_GUEST_PROOF
+      - name: Boot actual guest and demand serial-origin Wine prefix and Windows execution evidence
+        run: |
+          set -euo pipefail
+          OUT="$GITHUB_WORKSPACE/dist/lucid-real-guest"
+          rm -f "$OUT/guest-serial.log" "$OUT/monitor.sock"
+          qemu-system-x86_64 -accel kvm -m 2048 -smp 2 \
+            -cdrom "$OUT/lucid-original-wine-guest-test-only.iso" -boot order=d \
+            -vga std -display vnc=127.0.0.1:0 \
+            -serial "file:$OUT/guest-serial.log" \
+            -monitor "unix:$OUT/monitor.sock,server=on,wait=off" \
+            -no-reboot -net none > "$OUT/qemu-stderr.log" 2>&1 &
+          PID=$!
+          cleanup() { kill "$PID" 2>/dev/null || true; wait "$PID" 2>/dev/null || true; }
+          trap cleanup EXIT
+          sleep 9
+          python3 - "$OUT/monitor.sock" <<'PY'
+          import socket, sys
+          try:
+              with socket.socket(socket.AF_UNIX) as s:
+                  s.settimeout(4); s.connect(sys.argv[1]); s.recv(2048)
+                  s.sendall(b"sendkey ret\n")
+          except Exception as exc:
+              print("BOOT_MENU_KEY_NOT_PROOF",str(exc))
+          PY
+          PASS=0
+          for i in $(seq 1 32); do
+            sleep 10
+            if test -f "$OUT/guest-serial.log" &&
+               grep -Fxq LUCID_REAL_GUEST_STARTUP "$OUT/guest-serial.log" &&
+               grep -Fxq LUCID_GUEST_WINEPREFIX_INIT_PASS "$OUT/guest-serial.log" &&
+               grep -Fxq LUCID_GUEST_REAL_WIN32_EXE_PASS "$OUT/guest-serial.log"; then
+               PASS=1; break
+            fi
+            kill -0 "$PID" 2>/dev/null || break
+          done
+          python3 - "$OUT/monitor.sock" "$OUT/last-frame.ppm" <<'PY'
+          import socket, sys
+          try:
+              with socket.socket(socket.AF_UNIX) as s:
+                  s.settimeout(3); s.connect(sys.argv[1]); s.recv(2048)
+                  s.sendall(("screendump "+sys.argv[2]+"\n").encode())
+          except Exception as exc:
+              print("FRAME_DIAGNOSTIC_ONLY",str(exc))
+          PY
+          if test -f "$OUT/guest-serial.log"; then tail -n 100 "$OUT/guest-serial.log"; fi
+          if test "$PASS" = 1; then
+            printf 'guest_startup=PASS\nwineprefix=PASS\nwin32_exe=PASS\nwin64_exe=NOT_SUPPORTED_BY_THIS_LEGACY_BUILD\nmsi=NOT_TESTED\n' > "$OUT/guest-verdict.txt"
+            echo 'LUCID_ACTUAL_GUEST_WIN32_WINE_PASS_BUT_NOT_FULL_PRODUCT_READY'
+          else
+            printf 'guest_startup=UNVERIFIED\nwineprefix=UNVERIFIED\nwin32_exe=UNVERIFIED\n' > "$OUT/guest-verdict.txt"
+            echo 'LUCID_GUEST_COMPATIBILITY_UNVERIFIED'
+            exit 1
+          fi
+      - name: Upload evidence but NEVER upload the experimental ISO
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lucid-real-guest-wine-evidence-NO-ISO
+          retention-days: 21
+          if-no-files-found: warn
+          path: |
+            dist/lucid-real-guest/*.txt
+            dist/lucid-real-guest/*.log
+            dist/lucid-real-guest/*.ppm
