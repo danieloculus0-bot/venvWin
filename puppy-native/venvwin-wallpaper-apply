@@ -75,23 +75,32 @@ if [ "$ALT_PINBOARD" != "$DEFAULT_PINBOARD" ] && [ -f "$ALT_PINBOARD" ]; then
   update_pinboard "$ALT_PINBOARD"
 fi
 
-# Reinitialize *the actual Puppy ROX pinboard*, not a rendered substitute.
-# -p accepts the PuppyPin path used in the original Puppy startup scripts.
+# Apply directly to the RUNNING ROX pinboard through its native SOAP/RPC
+# interface, as the original Puppy wallpaper setter does. This avoids
+# launching another ROX desktop/pinboard that can disappear at menu redraw.
 if command -v rox >/dev/null 2>&1; then
-  # ROX -p normally stays resident as the actual desktop pinboard.
-  # Never synchronously wait for it; that blocked later post-setup retries.
-  rox -p "$DEFAULT_PINBOARD" >/dev/null 2>&1 &
-  rox_pid=$!
-  sleep 1
-  if kill -0 "$rox_pid" 2>/dev/null; then
-    echo 'VENVWIN_ROX_REAL_PINBOARD_RELOADED_PROCESS_RUNNING'
+  if rox --RPC >/dev/null 2>&1 <<EOF
+<?xml version="1.0"?>
+<env:Envelope xmlns:env="http://www.w3.org/2001/12/soap-envelope">
+  <env:Body xmlns="http://rox.sourceforge.net/SOAP/ROX-Filer">
+    <SetBackdrop>
+      <Filename><![CDATA[$WALLPAPER]]></Filename>
+      <Style>Stretch</Style>
+    </SetBackdrop>
+  </env:Body>
+</env:Envelope>
+EOF
+  then
+    # The standard Puppy Wallpaper app stores this separate source setting;
+    # otherwise Quick Setup can reselect the old Puppy wallpaper on reload.
+    config="$HOME_DIR/.config/wallpaper"
+    mkdir -p "$config"
+    printf '%s\n' "$WALLPAPER" > "$config/bg_img"
+    echo 'VENVWIN_ROX_REAL_PINBOARD_RELOADED_VIA_RPC'
+    echo 'VENVWIN_PUPPY_WALLPAPER_CONFIG_UPDATED'
   else
-    if wait "$rox_pid"; then
-      echo 'VENVWIN_ROX_REAL_PINBOARD_RELOADED'
-    else
-      echo 'VENVWIN_ROX_RELOAD_FAILED' >&2
-      exit 71
-    fi
+    echo 'VENVWIN_ROX_RPC_BACKDROP_FAILED' >&2
+    exit 71
   fi
 else
   echo 'VENVWIN_ROX_EXECUTABLE_MISSING' >&2
