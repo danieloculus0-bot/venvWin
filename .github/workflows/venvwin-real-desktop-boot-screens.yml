@@ -1,0 +1,125 @@
+name: Actual venvWin Puppy 10.0.12 branded desktop boot and screenshots
+on:
+  push:
+    branches: [feat/restore-original-venvwin-splash-20261013]
+    paths:
+      - .github/workflows/venvwin-real-desktop-boot-screens.yml
+      - puppy-native/capture-real-boot-screens.py
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  actual-boot-and-screens:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 32
+    steps:
+      - uses: actions/checkout@v4
+      - name: Preflight original branding and guest scripts, not boot proof
+        run: |
+          set -euo pipefail
+          bash -n puppy-native/build-puppy.sh
+          sh -n puppy-native/venvwin-guest-probe
+          sh -n puppy-native/venvwin-session
+          sh -n puppy-native/venvwin-control-center
+          sh -n puppy-native/venvwin-wine
+          sh -n puppy-native/venvwin-theme-apply
+          python3 -m py_compile puppy-native/brand-boot-menu.py puppy-native/brand-jwm-template.py puppy-native/brand-jwm-theme.py puppy-native/capture-real-boot-screens.py puppy-native/qemu-monitor-probe.py
+          test -s puppy-native/art/venvwin-boot.svg
+          test -s puppy-native/art/venvwin-wallpaper.svg
+          test -s puppy-native/art/PuppyPin
+          echo SOURCE_PRECHECK_PASS_NOT_PUPPY_BOOT_PROOF
+      - name: Install genuine ISO/QEMU/graphics tools on host
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends qemu-system-x86 xorriso squashfs-tools rsync curl librsvg2-bin imagemagick
+          python3 -m pip install --quiet 'pillow>=10,<12' 'vncdotool==1.4.2'
+      - name: Build exact original venvWin splash-branded Puppy image
+        run: |
+          set -euo pipefail
+          bash puppy-native/build-puppy.sh
+          OUT=dist/puppy-native
+          grep -q 'squashfs-root/root/.jwm/jwmrc-theme' "$OUT/venvwin-layer-inventory.txt"
+          grep -q 'squashfs-root/root/Choices/ROX-Filer/PuppyPin' "$OUT/venvwin-layer-inventory.txt"
+          grep -q 'squashfs-root/root/Startup/venvwin-session' "$OUT/venvwin-layer-inventory.txt"
+          echo ORIGINAL_VENVWIN_BRANDING_EMBEDDED_NOT_DESKTOP_PROOF
+      - name: Boot actual Puppy guest; preserve splash, desktop and menu screenshots
+        id: actual
+        run: |
+          set -euo pipefail
+          OUT="$GITHUB_WORKSPACE/dist/puppy-native"
+          SERIAL="$OUT/real-boot-guest-serial.log"
+          MONITOR="$OUT/real-boot-monitor.sock"
+          mkdir -p "$OUT"
+          rm -f "$SERIAL" "$MONITOR"
+          ACCEL=tcg
+          if test -r /dev/kvm && test -w /dev/kvm; then ACCEL=kvm; fi
+          echo "REAL_GUEST_ACCEL=$ACCEL"
+          qemu-system-x86_64 -accel "$ACCEL" -m 3072 -smp 2 \
+            -boot order=d -cdrom "$OUT/venvwin-puppy-native-10.0.12-experimental.iso" \
+            -vga std -usb -device usb-tablet -display vnc=127.0.0.1:0 \
+            -serial "file:$SERIAL" \
+            -monitor "unix:$MONITOR,server=on,wait=off" \
+            -no-reboot -net none >"$OUT/real-boot-qemu-stderr.log" 2>&1 &
+          PID=$!
+          trap 'kill "$PID" 2>/dev/null || true; wait "$PID" 2>/dev/null || true' EXIT
+          sleep 6
+          python3 puppy-native/qemu-monitor-probe.py \
+            --socket "$MONITOR" --action screen \
+            --output "$OUT/real-boot-splash.ppm" > "$OUT/splash-capture.log" 2>&1 || true
+          python3 puppy-native/qemu-monitor-probe.py \
+            --socket "$MONITOR" --action enter >"$OUT/boot-menu-enter.log" 2>&1 || true
+          set +e
+          python3 puppy-native/capture-real-boot-screens.py \
+            --output "$OUT" --max-seconds 560 >"$OUT/desktop-capture.log" 2>&1
+          CAPTURE_EXIT=$?
+          set -e
+          cat "$OUT/desktop-capture.log"
+          echo "DESKTOP_CAPTURE_EXIT=$CAPTURE_EXIT"
+          echo "GUEST_SERIAL_RECORDS_START"
+          if test -f "$SERIAL"; then cat "$SERIAL"; fi
+          echo "GUEST_SERIAL_RECORDS_END"
+          if test "$CAPTURE_EXIT" -ne 0; then
+            echo REAL_GUEST_DESKTOP_SCREENSHOT_GATE_FAIL
+            exit 1
+          fi
+          grep -Fxq PUPPY_GUEST_STARTUP_EXECUTED "$SERIAL" || {
+            echo REAL_GUEST_AUTOSTART_NOT_CONFIRMED; exit 1;
+          }
+          grep -Fxq PUPPY_GUI_AND_OVERLAY_PRESENT "$SERIAL" || {
+            echo REAL_GUEST_DESKTOP_FILESYSTEM_NOT_CONFIRMED; exit 1;
+          }
+          grep -Fxq PUPPY_VENVWIN_CAPSULE_CLI_PASS "$SERIAL" || {
+            echo REAL_GUEST_VENVWIN_PYTHON_FAILED; exit 1;
+          }
+          grep -Fxq PUPPY_GUEST_BOOT_PROVEN "$SERIAL" || {
+            echo REAL_GUEST_BOOT_RECEIPT_MISSING; exit 1;
+          }
+          test -s "$OUT/qemu-real-desktop-first.png"
+          test -s "$OUT/qemu-real-desktop-after-setup.png"
+          test -s "$OUT/qemu-real-start-menu.png"
+          printf 'status=ACTUAL_BRANDED_PUPPY_DESKTOP_PROVEN\napp_exec=NOT_TESTED\nwine=NOT_TESTED\nmsi=NOT_TESTED\n' >"$OUT/boot-desktop-verdict.txt"
+          echo ACTUAL_BRANDED_PUPPY_DESKTOP_GUEST_ORIGIN_AND_SCREENSHOTS_PASS
+      - name: Upload bounded original guest screenshots and proof only (NO ISO)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: venvwin-real-puppy-1012-splash-desktop-menu-pictures
+          retention-days: 21
+          if-no-files-found: warn
+          path: |
+            dist/puppy-native/real-boot-splash.ppm
+            dist/puppy-native/qemu-after-boot-selection.png
+            dist/puppy-native/qemu-live-latest.png
+            dist/puppy-native/qemu-real-desktop-first.png
+            dist/puppy-native/qemu-real-desktop-settled.png
+            dist/puppy-native/qemu-real-desktop-after-setup.png
+            dist/puppy-native/qemu-real-start-menu.png
+            dist/puppy-native/real-boot-guest-serial.log
+            dist/puppy-native/real-boot-qemu-stderr.log
+            dist/puppy-native/boot-menu-enter.log
+            dist/puppy-native/splash-capture.log
+            dist/puppy-native/desktop-capture.log
+            dist/puppy-native/boot-desktop-verdict.txt
+            dist/puppy-native/iso-size.txt
+            dist/puppy-native/tested-sources.sha256
