@@ -11,7 +11,7 @@ SFS="$OUT/$MODULE"
 URL="https://distro.ibiblio.org/puppylinux/puppy-bookwormpup/BookwormPup64/10.0.12/BookwormPup64_10.0.12.iso"
 UPSTREAM_SHA256="ae65f6e6d70a96f48bdbb291c2426f8a2fd77a73692e149e81a5eecb6fe7509f"
 mkdir -p "$OUT"
-for cmd in curl sha256sum xorriso mksquashfs unsquashfs rsync rsvg-convert convert python3; do
+for cmd in curl sha256sum xorriso mksquashfs unsquashfs rsync rsvg-convert convert python3 base64; do
   command -v "$cmd" >/dev/null || { echo "MISSING_TOOL=$cmd" >&2; exit 1; }
 done
 if [[ ! -f "$BASE" ]]; then
