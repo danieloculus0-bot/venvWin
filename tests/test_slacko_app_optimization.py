@@ -128,7 +128,7 @@ def test_no_library_paths_or_wine_in_direct_removal_list():
 
 def test_protect_package_management_and_db_metadata():
     source=SCRIPT.read_text()
-    for key in ("usr/bin/synaptic", "usr/bin/apt", "usr/bin/dpkg",
+    for key in ("usr/sbin/synaptic", "usr/bin/apt", "usr/bin/dpkg",
                 "usr/local/petget/pkg_chooser.sh", "usr/local/bin/sfs_load",
                 "var/lib/dpkg/", "var/lib/apt/"):
         assert key in source
