@@ -80,8 +80,8 @@ def test_rox_apply_preserves_icons_and_reloads_real_pinboard(tmp_path: Path):
     assert text.count(str(approved))==1
     assert '<icon x="32" y="128" label="Terminal">' in text
     assert "/usr/share/backgrounds/puppy.png" not in text
-    assert "-p" in marker.read_text()
-    assert str(pin) in marker.read_text()
+    assert "--RPC" in marker.read_text()
+    assert (home / ".config/wallpaper/bg_img").read_text().strip() == str(approved)
 
 
 def test_unknown_rox_pinboard_fails_closed(tmp_path: Path):
