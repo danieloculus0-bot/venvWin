@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "puppy-native" / "venvwin-wallpaper-apply"
 BUILD = ROOT / "puppy-native" / "build-puppy.sh"
 SESSION = ROOT / "puppy-native" / "venvwin-session"
-EXPECTED_SHA = "6f66eb67f8b0a05a8811c10038282abd26f6cd2f3afc43064e5262efdd1a24e0"
+EXPECTED_SHA = "6187575271bf955ba4daaca6db01f168fdead49b4abce22c7f3275a1b004b6ab"
 
 
 def mutator_code():
