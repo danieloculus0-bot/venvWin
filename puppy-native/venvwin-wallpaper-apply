@@ -96,6 +96,16 @@ EOF
     config="$HOME_DIR/.config/wallpaper"
     mkdir -p "$config"
     printf '%s\n' "$WALLPAPER" > "$config/bg_img"
+    # Keep the ROX pinboard and Puppy's wallpaper chooser in agreement.
+    # Quick Setup may have replaced PuppyPin while the RPC was running.
+    update_pinboard "$DEFAULT_PINBOARD"
+    if [ "$ALT_PINBOARD" != "$DEFAULT_PINBOARD" ] && [ -f "$ALT_PINBOARD" ]; then
+      update_pinboard "$ALT_PINBOARD"
+    fi
+    if [ "$(cat "$config/bg_img")" != "$WALLPAPER" ]; then
+      echo 'VENVWIN_WALLPAPER_CONFIG_MISMATCH' >&2
+      exit 73
+    fi
     echo 'VENVWIN_ROX_REAL_PINBOARD_RELOADED_VIA_RPC'
     echo 'VENVWIN_PUPPY_WALLPAPER_CONFIG_UPDATED'
   else
