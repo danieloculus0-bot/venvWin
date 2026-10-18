@@ -1,5 +1,14 @@
 # venvWin
 
+## Free software and upstream rights
+
+**venvWin and venvWin Portable are intended to be available for download and use at no charge**, for personal, educational, and business use. The venvWin project code is distributed under the **GNU General Public License, version 3 (GPL-3.0)** as provided in [LICENSE](LICENSE). That license also permits modification and redistribution, including commercial redistribution, subject to its conditions. Zero-cost availability of official builds is a project policy, not a restriction on GPL recipients.
+
+**Linux and upstream components remain under their own licenses.** Any Linux kernel, distribution base (including Puppy Linux, if used), Wine, libraries, firmware, desktop components, or bundled packages remain the work of their respective copyright holders. This repository's GPL-3.0 LICENSE does not replace or relicense those components. A redistributed OS image must retain applicable notices, source-code access or offers, and other obligations required by each included component's license. The Linux kernel is GPL-2.0-only. Do not assume one license applies to the entire distro image.
+
+This project does not claim to own the underlying Linux or Puppy Linux code. Compatibility, credits, and redistribution obligations should be verified against the actual build manifest before any image is published.
+
+
 venvWin is the Windows-app compatibility capsule engine for venvWin Portable.
 
 venvWin Portable is the lightweight Linux-based portable OS shell. It is meant to extend the usable life of older PCs by giving them a familiar desktop, portable storage behavior, and managed compatibility paths for old Windows apps, obsolete tech, and legacy workflows.
