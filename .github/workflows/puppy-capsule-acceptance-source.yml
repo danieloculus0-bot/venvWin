@@ -1,0 +1,33 @@
+name: Puppy EXE MSI guest acceptance source gate
+# Lightweight fixture and contract check. NOT guest execution.
+on:
+  push:
+    branches: [test/puppy-capsule-acceptance-contract-20261020]
+    paths:
+      - puppy-native/probe-capsule-exe-msi-guest
+      - .github/workflows/puppy-capsule-acceptance-source.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-acceptance-probe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate shell and evidence requirements
+        shell: bash
+        run: |
+          set -euo pipefail
+          sh -n puppy-native/probe-capsule-exe-msi-guest
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path("puppy-native/probe-capsule-exe-msi-guest").read_text()
+          for required in (
+              "NOT_PUPPY", "NO_DESKTOP", "NO_LIVE_UNION",
+              "EXE_FIRST_RUN", "EXE_RELAUNCH", "MSI_INSTALLED_PAYLOAD_MISSING",
+              "VENVWIN_CAPSULE_BEAN_RECEIPTS_NOT_VERIFIED",
+          ):
+              assert required in s, required
+          print("CAPSULE_PROBE_SOURCE_CONTRACT_PASS_NOT_GUEST_PROOF")
+          PY
