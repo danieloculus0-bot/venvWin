@@ -12,9 +12,10 @@ grep -qi puppy /etc/DISTRO_SPECS || fail NOT_PUPPY
 [ -n "${DISPLAY:-}" ] || fail NO_DESKTOP
 grep -Eq '[[:space:]](overlay|aufs)[[:space:]]' /proc/mounts || fail NO_LIVE_UNION
 WINE_RUNNER="${VENVWIN_WINE_RUNNER:-wine}"
+# Runner must implement the standard Wine CLI; extracted AppRun accepts wine subcommands.
 # For extracted AppImage runtimes set VENVWIN_WINE_RUNNER to a wrapper
 # that forwards: wine --version, wineboot --init, wine EXE, wine msiexec.
-run_wine() { "$WINE_RUNNER" "$@"; }
+run_wine() { if [ "$WINE_RUNNER" = wine ]; then "$WINE_RUNNER" "$@"; else "$WINE_RUNNER" "$@"; fi; }
 if [ "$WINE_RUNNER" = wine ]; then command -v wine >/dev/null 2>&1 || fail WINE_NOT_INSTALLED_IN_GUEST; else [ -x "$WINE_RUNNER" ] || fail WINE_RUNNER_NOT_EXECUTABLE; fi
 command -v sha256sum >/dev/null 2>&1 || fail HASH_TOOL_MISSING
 [ "$#" -eq 2 ] || fail EXPECT_EXE_AND_MSI_FIXTURES
@@ -24,7 +25,7 @@ case "$exe" in *.exe|*.EXE) : ;; *) fail BAD_EXE_EXTENSION ;; esac
 case "$msi" in *.msi|*.MSI) : ;; *) fail BAD_MSI_EXTENSION ;; esac
 emit VENVWIN_CAPSULE_REAL_PUPPY_GUEST_BEGIN
 emit "VENVWIN_CAPSULE_KERNEL=$(uname -r)"
-emit "VENVWIN_CAPSULE_WINE=$(run_wine wine --version)"
+emit "VENVWIN_CAPSULE_WINE=$(run_wine --version)"
 sha256sum "$exe" "$msi" > "$OUT/fixture-sha256.txt"
 export WINEPREFIX="$OUT/prefix"
 export WINEARCH=win64
@@ -34,7 +35,7 @@ timeout 150 "$WINE_RUNNER" wineboot --init > "$OUT/wineboot.log" 2>&1 || fail WI
 # The EXE fixture must emit this exact marker on every invocation.
 timeout 90 "$WINE_RUNNER" wine "$exe" > "$OUT/exe-first.log" 2>&1 || fail EXE_FIRST_RUN
 grep -Fq VENVWIN_CAPSULE_EXE_OK "$OUT/exe-first.log" || fail EXE_FIRST_MARKER
-timeout 90 wine "$exe" > "$OUT/exe-relaunch.log" 2>&1 || fail EXE_RELAUNCH
+timeout 90 "$WINE_RUNNER" wine "$exe" > "$OUT/exe-relaunch.log" 2>&1 || fail EXE_RELAUNCH
 grep -Fq VENVWIN_CAPSULE_EXE_OK "$OUT/exe-relaunch.log" || fail EXE_RELAUNCH_MARKER
 emit VENVWIN_CAPSULE_EXE_LAUNCH_AND_RELAUNCH_PASS
 # MSI fixture must install a known file and identify it via a manifest supplied
