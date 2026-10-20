@@ -4,11 +4,11 @@ Experimental GPL-3.0 Windows-compatibility capsule and portable Linux-system too
 
 ## Current build state
 
-**Reviewed:** 2026-10-20 · **Inspected main:** `9c4896392f0a`.
+**Reviewed:** 2026-10-20 · **Inspected main:** `55bb11d1644f`.
 
-- [tests](https://github.com/danieloculus0-bot/venvWin/actions/runs/39489966536) — **Passed** at inspected `main`.
-- [preflight-lite](https://github.com/danieloculus0-bot/venvWin/actions/runs/39489966865) — **Passed** at inspected `main`.
-- [brand-audit](https://github.com/danieloculus0-bot/venvWin/actions/runs/39489966498) — **Passed** at inspected `main`.
+- [tests](https://github.com/danieloculus0-bot/venvWin/actions/runs/39516239383) — **Passed** after README contract repair at inspected `main`.
+- [preflight-lite](https://github.com/danieloculus0-bot/venvWin/actions/runs/39516239457) — **Passed** at inspected `main`.
+- [brand-audit](https://github.com/danieloculus0-bot/venvWin/actions/runs/39516239415) — **Passed** at inspected `main`.
 
 [Live CI history](https://github.com/danieloculus0-bot/venvWin/actions) supersedes this dated report.
 
