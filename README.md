@@ -25,7 +25,7 @@ Experimental GPL-3.0 Windows-compatibility capsule and portable Linux-system too
 **Windows PowerShell WSL build runner** (repo root, Windows with WSL installed):
 
 ```powershell
-.\\venvwin-portable\\run-wsl-flash-ready.ps1
+.\venvwin-portable\run-wsl-flash-ready.ps1
 ```
 
 - [Local WSL/Linux flash-ready build instructions](venvwin-portable/local-flash-ready-build.md)
