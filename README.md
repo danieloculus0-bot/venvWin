@@ -1,222 +1,39 @@
 # venvWin
 
-## Free software and upstream rights
+Experimental GPL-3.0 Windows-compatibility capsule and portable Linux-system tooling. Official project use is intended to remain free of charge, including personal and business use.
 
-**venvWin and venvWin Portable are intended to be available for download and use at no charge**, for personal, educational, and business use. The venvWin project code is distributed under the **GNU General Public License, version 3 (GPL-3.0)** as provided in [LICENSE](LICENSE). That license also permits modification and redistribution, including commercial redistribution, subject to its conditions. Zero-cost availability of official builds is a project policy, not a restriction on GPL recipients.
+## Current build state
 
-**Linux and upstream components remain under their own licenses.** Any Linux kernel, distribution base (including Puppy Linux, if used), Wine, libraries, firmware, desktop components, or bundled packages remain the work of their respective copyright holders. This repository's GPL-3.0 LICENSE does not replace or relicense those components. A redistributed OS image must retain applicable notices, source-code access or offers, and other obligations required by each included component's license. The Linux kernel is GPL-2.0-only. Do not assume one license applies to the entire distro image.
+**Reviewed:** 2026-10-20 · **Inspected main:** `9c4896392f0a`.
 
-This project does not claim to own the underlying Linux or Puppy Linux code. Compatibility, credits, and redistribution obligations should be verified against the actual build manifest before any image is published.
+- [tests](https://github.com/danieloculus0-bot/venvWin/actions/runs/39489966536) — **Passed** at inspected `main`.
+- [preflight-lite](https://github.com/danieloculus0-bot/venvWin/actions/runs/39489966865) — **Passed** at inspected `main`.
+- [brand-audit](https://github.com/danieloculus0-bot/venvWin/actions/runs/39489966498) — **Passed** at inspected `main`.
 
+[Live CI history](https://github.com/danieloculus0-bot/venvWin/actions) supersedes this dated report.
 
-venvWin is the Windows-app compatibility capsule engine for venvWin Portable.
+## Implemented or recorded today
 
-venvWin Portable is the lightweight Linux-based portable OS shell. It is meant to extend the usable life of older PCs by giving them a familiar desktop, portable storage behavior, and managed compatibility paths for old Windows apps, obsolete tech, and legacy workflows.
+- Windows compatibility-capsule tooling, local filesystem/state abstractions and experimental image/first-run build tooling.
+- Automated project tests, lightweight preflight and branding checks in GitHub Actions.
+- Experimental venvWin Portable Linux path; the current source/build tools do not prove a universally bootable hardware image.
 
-venvWin is the subsystem that manages isolated Windows-like app environments on Linux. It owns capsules, runner profiles, install routing, launch routing, snapshots, recovery, and compatibility backend selection.
+## Run and verification
 
-The goal is not to rebuild Windows from scratch. The goal is to make older hardware useful again with a small, familiar Linux system where compatibility is boring, repeatable, isolated, recoverable, and easy enough that a normal user can install an app without spelunking through prefix hell.
+See [archived README and build instructions](docs/archive/README_2026-10-20_before_refresh.md) plus `venvwin-portable/product-gate.md` for image validation criteria. Run repository-provided test and preflight scripts before distribution.
 
-Wine is allowed as backend number one. Wine is not the product. The product is the repeatable capsule environment and venvWin Portable shell wrapped around it.
+## Known boundaries
 
-## Product intent
+- Physical hardware boots and application compatibility must be measured on target devices; CI alone does not demonstrate them.
+- Linux distributions, Wine, kernel and bundled dependencies keep **their own upstream licenses**. The project [GPL-3.0 license](LICENSE) does not relicense those works.
+- No-fee distribution is project policy, not a restriction on lawful GPL redistribution.
 
-venvWin Portable should feel more like a practical 2011-era lightweight Linux appliance than a bloated modern desktop distro.
+## Next work
 
-Target direction:
+Demonstrate verified live-boot first-run experience, persistence/isolation behavior and manifest-compliant redistributable images.
 
-- bootable portable OS
-- Windows-familiar shell and launcher flow without impersonating Windows
-- visible desktop shortcuts on first boot
-- useful on older 2010-ish PCs where practical
-- compatibility layer for obsolete tech and legacy apps
-- low background overhead
-- local dashboard, not cloud dependency
-- no host hard-drive usage by default
-- venvWin-owned state, logs, and capsules
-- Windows app routing through venvWin capsules
+## References
 
-Leave No Trace means no unwanted host hard-drive writes. It does not mean stealth, hidden use, or hacker bullshit. venvWin Portable should keep visible proof and logs inside its own session/storage while avoiding host desktop/browser residue.
-
-## Current status
-
-Pre-alpha skeleton with real plumbing:
-
-- Python CLI package
-- per-app capsule metadata
-- runner profiles
-- Wine backend command preparation
-- installer recording
-- EXE/MSI file classification
-- desktop handler generation
-- visible first-boot desktop launchers
-- launcher generation
-- capsule snapshots and reset backups
-- first-run storage flow
-- LNT storage reporting
-- local venvWin Portable dashboard
-- ISO build script for venvWin Portable profiles
-- CI smoke gates and pre-ISO readiness checks
-
-This is not native Windows compatibility yet. It is the product structure needed to make compatibility inspectable, recoverable, and less stupid than prefix chaos.
-
-## Product split
-
-```text
-venvWin Portable
-  Lightweight bootable Linux OS shell
-  Windows-familiar desktop flow
-  First-boot setup
-  Visible desktop shortcuts
-  Local dashboard
-  App launcher UX
-  System settings direction
-  Storage policy
-  venvWin integration
-
-venvWin
-  Per-app capsules
-  Runner profiles
-  Isolated prefixes
-  Installer capture
-  Windows file routing
-  Legacy app compatibility
-  Obsolete tech compatibility layer
-  Launcher generation
-  Snapshots and rollback
-  Backend abstraction
-  VM fallback later
-```
-
-## Alpha product gate
-
-The hard definition of "real" lives here:
-
-`venvwin-portable/product-gate.md`
-
-venvWin Portable Alpha is real when a user can boot the image, see venvWin controls, initialize storage, double-click or route a Windows installer into a capsule, inspect the capsule, and understand where the app state lives.
-
-Until that boot-tested evidence exists, this project is pre-alpha with a strong skeleton.
-
-## First milestone
-
-Build and prove a boot-tested venvWin Portable Alpha ISO:
-
-- ISO boots to a usable lightweight desktop
-- first-run setup completes
-- first-boot GUI opens automatically
-- visible desktop shortcuts are present
-- dashboard opens locally
-- storage destination is visible
-- host write risk is reported
-- EXE/MSI handlers are installed
-- one dummy installer dry-run routes into a capsule
-- capsule create/list/inspect/install dry-run works
-- doctor/status output is visible
-- first-boot proof bundle appears in the venvWin Portable session
-
-Required first-boot desktop shortcuts:
-
-```text
-venvWin-First-Boot.desktop
-venvWin-Dashboard.desktop
-venvWin-Capsules.desktop
-venvWin-Doctor.desktop
-venvWin-Private-Browser.desktop
-```
-
-## Build gates
-
-Two GitHub Actions workflows exist:
-
-```text
-preflight-lite
-flash-ready-standard
-```
-
-If workflow runs do not appear after commits, check:
-
-```text
-Settings > Actions > General
-```
-
-Expected:
-
-```text
-Actions enabled
-workflow_dispatch available
-push workflows allowed
-artifact upload allowed
-```
-
-Manual build trigger from phone:
-
-```text
-Actions > flash-ready-standard > Run workflow > main
-```
-
-Build attempt checklist:
-
-```text
-venvwin-portable/build-attempt-checklist.md
-```
-
-Windows PowerShell WSL build runner:
-
-```powershell
-.\venvwin-portable\run-wsl-flash-ready.ps1
-```
-
-Local/WSL build guide:
-
-```text
-venvwin-portable/local-flash-ready-build.md
-```
-
-USB flash guide:
-
-```text
-venvwin-portable/usb-flash-guide.md
-```
-
-Flash-ready artifact bundle:
-
-```text
-venvwin-portable-flash-ready-standard
-```
-
-Required files:
-
-```text
-venvwin-portable-alpha-standard.iso
-venvwin-portable-alpha-standard.iso.sha256
-venvwin-portable-alpha-standard-manifest.txt
-venvwin-flash-ready-verdict.txt
-```
-
-Do not flash until the verdict file says:
-
-```text
-status=FLASH_READY
-```
-
-## Backend philosophy
-
-venvWin must not collapse into "Wine with a hat."
-
-The backend layer should support:
-
-- Wine
-- Proton-style runner profiles
-- Bottles-style managed runners
-- containerized runners
-- VM fallback
-- future compatibility shims
-
-The CLI, dashboard, capsule model, and venvWin Portable shell should survive backend changes without being rewritten from scratch.
-
-## Repository audit note (2026-10-20)
-
-**Status: experimental compatibility capsule engine and portable Linux image tooling, not a demonstrated general Windows replacement.** October 18 repository tests, branding audit and lightweight preflight passed. Source contains capsule metadata, backends, first-run/storage tools and ISO build scripts, but that evidence does not mean the latest image has been physically boot-tested across target hardware, that all listed Windows applications run under Wine, or that leave-no-trace guarantees are independently proven. Keep the explicit [first-boot product gate](venvwin-portable/product-gate.md) and actual artifact checks authoritative.
-
-This remains a standalone OS/compatibility product, separate from Axiom. Official venvWin remains available at no charge under its stated GPL terms; optional future distribution must respect upstream Linux/Wine licenses. [Portfolio audit](https://github.com/danieloculus0-bot/Axiom_Beta/blob/main/docs/PORTFOLIO_AUDIT_2026-10-20.md).
+- [Portable product gate](venvwin-portable/product-gate.md)
+- [Project license](LICENSE)
+- [Complete previous README and historical planning notes](docs/archive/README_2026-10-20_before_refresh.md)
