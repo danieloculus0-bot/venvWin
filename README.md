@@ -214,3 +214,9 @@ The backend layer should support:
 - future compatibility shims
 
 The CLI, dashboard, capsule model, and venvWin Portable shell should survive backend changes without being rewritten from scratch.
+
+## Repository audit note (2026-10-20)
+
+**Status: experimental compatibility capsule engine and portable Linux image tooling, not a demonstrated general Windows replacement.** October 18 repository tests, branding audit and lightweight preflight passed. Source contains capsule metadata, backends, first-run/storage tools and ISO build scripts, but that evidence does not mean the latest image has been physically boot-tested across target hardware, that all listed Windows applications run under Wine, or that leave-no-trace guarantees are independently proven. Keep the explicit [first-boot product gate](venvwin-portable/product-gate.md) and actual artifact checks authoritative.
+
+This remains a standalone OS/compatibility product, separate from Axiom. Official venvWin remains available at no charge under its stated GPL terms; optional future distribution must respect upstream Linux/Wine licenses. [Portfolio audit](https://github.com/danieloculus0-bot/Axiom_Beta/blob/main/docs/PORTFOLIO_AUDIT_2026-10-20.md).
