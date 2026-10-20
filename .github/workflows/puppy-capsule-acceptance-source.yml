@@ -6,6 +6,7 @@ on:
     paths:
       - puppy-native/probe-capsule-exe-msi-guest
       - .github/workflows/puppy-capsule-acceptance-source.yml
+      - puppy-native/fixtures/capsule-smoke.c
   workflow_dispatch:
 permissions:
   contents: read
@@ -20,6 +21,12 @@ jobs:
         run: |
           set -euo pipefail
           sh -n puppy-native/probe-capsule-exe-msi-guest
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends gcc-mingw-w64-x86-64 file
+          x86_64-w64-mingw32-gcc -Os puppy-native/fixtures/capsule-smoke.c -o /tmp/capsule-smoke.exe
+          file /tmp/capsule-smoke.exe | grep -q "PE32+"
+          sha256sum /tmp/capsule-smoke.exe
+          grep -Fq VENVWIN_CAPSULE_EXE_OK puppy-native/fixtures/capsule-smoke.c
           python3 - <<'PY'
           from pathlib import Path
           s=Path("puppy-native/probe-capsule-exe-msi-guest").read_text()
