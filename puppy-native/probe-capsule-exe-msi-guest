@@ -1,0 +1,45 @@
+#!/bin/sh
+# Execute ONLY inside a live Puppy guest, after explicitly loading Wine.
+# Does not install packages, create a persistent save, or claim success from host tests.
+set -eu
+OUT="${VENVWIN_ACCEPTANCE_OUT:-/tmp/venvwin-capsule-acceptance}"
+mkdir -p "$OUT"
+log="$OUT/guest.log"
+emit() { printf '%s\n' "$1" | tee -a "$log"; if [ -c /dev/ttyS0 ]; then printf '%s\n' "$1" > /dev/ttyS0 || :; fi; }
+fail() { emit "VENVWIN_CAPSULE_GUEST_BLOCKED=$1"; exit 1; }
+[ -r /etc/DISTRO_SPECS ] || fail NOT_PUPPY
+grep -qi puppy /etc/DISTRO_SPECS || fail NOT_PUPPY
+[ -n "${DISPLAY:-}" ] || fail NO_DESKTOP
+grep -Eq '[[:space:]](overlay|aufs)[[:space:]]' /proc/mounts || fail NO_LIVE_UNION
+command -v wine >/dev/null 2>&1 || fail WINE_NOT_INSTALLED_IN_GUEST
+command -v sha256sum >/dev/null 2>&1 || fail HASH_TOOL_MISSING
+[ "$#" -eq 2 ] || fail EXPECT_EXE_AND_MSI_FIXTURES
+exe="$1"; msi="$2"
+[ -s "$exe" ] && [ -s "$msi" ] || fail FIXTURES_MISSING
+case "$exe" in *.exe|*.EXE) : ;; *) fail BAD_EXE_EXTENSION ;; esac
+case "$msi" in *.msi|*.MSI) : ;; *) fail BAD_MSI_EXTENSION ;; esac
+emit VENVWIN_CAPSULE_REAL_PUPPY_GUEST_BEGIN
+emit "VENVWIN_CAPSULE_KERNEL=$(uname -r)"
+emit "VENVWIN_CAPSULE_WINE=$(wine --version)"
+sha256sum "$exe" "$msi" > "$OUT/fixture-sha256.txt"
+export WINEPREFIX="$OUT/prefix"
+export WINEARCH=win64
+export WINEDEBUG=-all
+timeout 150 wineboot --init > "$OUT/wineboot.log" 2>&1 || fail WINEBOOT
+[ -s "$WINEPREFIX/system.reg" ] || fail NO_PREFIX_REGISTRY
+# The EXE fixture must emit this exact marker on every invocation.
+timeout 90 wine "$exe" > "$OUT/exe-first.log" 2>&1 || fail EXE_FIRST_RUN
+grep -Fq VENVWIN_CAPSULE_EXE_OK "$OUT/exe-first.log" || fail EXE_FIRST_MARKER
+timeout 90 wine "$exe" > "$OUT/exe-relaunch.log" 2>&1 || fail EXE_RELAUNCH
+grep -Fq VENVWIN_CAPSULE_EXE_OK "$OUT/exe-relaunch.log" || fail EXE_RELAUNCH_MARKER
+emit VENVWIN_CAPSULE_EXE_LAUNCH_AND_RELAUNCH_PASS
+# MSI fixture must install a known file and identify it via a manifest supplied
+# by the test author. Exit status alone does not prove installation.
+[ -n "${VENVWIN_MSI_EXPECTED_FILE:-}" ] || fail MSI_EXPECTED_FILE_UNSET
+timeout 150 wine msiexec /i "$msi" /qn /norestart > "$OUT/msi-install.log" 2>&1 || fail MSI_INSTALL
+[ -s "$VENVWIN_MSI_EXPECTED_FILE" ] || fail MSI_INSTALLED_PAYLOAD_MISSING
+sha256sum "$VENVWIN_MSI_EXPECTED_FILE" > "$OUT/msi-payload-sha256.txt"
+emit VENVWIN_CAPSULE_MSI_INSTALLED_PAYLOAD_PASS
+emit VENVWIN_CAPSULE_GUEST_CORE_ACCEPTANCE_PASS
+# BEAN hash-chain validation and persistence/reboot are separate mandatory gates.
+emit VENVWIN_CAPSULE_BEAN_RECEIPTS_NOT_VERIFIED
