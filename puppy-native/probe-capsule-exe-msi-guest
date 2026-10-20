@@ -12,7 +12,9 @@ grep -qi puppy /etc/DISTRO_SPECS || fail NOT_PUPPY
 [ -n "${DISPLAY:-}" ] || fail NO_DESKTOP
 grep -Eq '[[:space:]](overlay|aufs)[[:space:]]' /proc/mounts || fail NO_LIVE_UNION
 WINE_RUNNER="${VENVWIN_WINE_RUNNER:-wine}"
-run_wine() { if [ "$WINE_RUNNER" = wine ]; then wine "$@"; else "$WINE_RUNNER" "$@"; fi; }
+# For extracted AppImage runtimes set VENVWIN_WINE_RUNNER to a wrapper
+# that forwards: wine --version, wineboot --init, wine EXE, wine msiexec.
+run_wine() { "$WINE_RUNNER" "$@"; }
 if [ "$WINE_RUNNER" = wine ]; then command -v wine >/dev/null 2>&1 || fail WINE_NOT_INSTALLED_IN_GUEST; else [ -x "$WINE_RUNNER" ] || fail WINE_RUNNER_NOT_EXECUTABLE; fi
 command -v sha256sum >/dev/null 2>&1 || fail HASH_TOOL_MISSING
 [ "$#" -eq 2 ] || fail EXPECT_EXE_AND_MSI_FIXTURES
@@ -22,7 +24,7 @@ case "$exe" in *.exe|*.EXE) : ;; *) fail BAD_EXE_EXTENSION ;; esac
 case "$msi" in *.msi|*.MSI) : ;; *) fail BAD_MSI_EXTENSION ;; esac
 emit VENVWIN_CAPSULE_REAL_PUPPY_GUEST_BEGIN
 emit "VENVWIN_CAPSULE_KERNEL=$(uname -r)"
-emit "VENVWIN_CAPSULE_WINE=$(run_wine --version)"
+emit "VENVWIN_CAPSULE_WINE=$(run_wine wine --version)"
 sha256sum "$exe" "$msi" > "$OUT/fixture-sha256.txt"
 export WINEPREFIX="$OUT/prefix"
 export WINEARCH=win64
