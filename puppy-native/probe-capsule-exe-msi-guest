@@ -15,7 +15,8 @@ WINE_RUNNER="${VENVWIN_WINE_RUNNER:-wine}"
 # Runner must implement the standard Wine CLI; extracted AppRun accepts wine subcommands.
 # For extracted AppImage runtimes set VENVWIN_WINE_RUNNER to a wrapper
 # that forwards: wine --version, wineboot --init, wine EXE, wine msiexec.
-run_wine() { if [ "$WINE_RUNNER" = wine ]; then "$WINE_RUNNER" "$@"; else "$WINE_RUNNER" "$@"; fi; }
+run_wine() { if [ "$WINE_RUNNER" = wine ]; then wine "$@"; else "$WINE_RUNNER" "$@"; fi; }
+run_wine_timeout() { limit="$1"; shift; if [ "$WINE_RUNNER" = wine ]; then timeout "$limit" wine "$@"; else timeout "$limit" "$WINE_RUNNER" "$@"; fi; }
 if [ "$WINE_RUNNER" = wine ]; then command -v wine >/dev/null 2>&1 || fail WINE_NOT_INSTALLED_IN_GUEST; else [ -x "$WINE_RUNNER" ] || fail WINE_RUNNER_NOT_EXECUTABLE; fi
 command -v sha256sum >/dev/null 2>&1 || fail HASH_TOOL_MISSING
 [ "$#" -eq 2 ] || fail EXPECT_EXE_AND_MSI_FIXTURES
@@ -25,15 +26,15 @@ case "$exe" in *.exe|*.EXE) : ;; *) fail BAD_EXE_EXTENSION ;; esac
 case "$msi" in *.msi|*.MSI) : ;; *) fail BAD_MSI_EXTENSION ;; esac
 emit VENVWIN_CAPSULE_REAL_PUPPY_GUEST_BEGIN
 emit "VENVWIN_CAPSULE_KERNEL=$(uname -r)"
-emit "VENVWIN_CAPSULE_WINE=$(run_wine --version)"
+emit "VENVWIN_CAPSULE_WINE=$(run_wine --version 2>/dev/null)"
 sha256sum "$exe" "$msi" > "$OUT/fixture-sha256.txt"
 export WINEPREFIX="$OUT/prefix"
 export WINEARCH=win64
 export WINEDEBUG=-all
-timeout 150 "$WINE_RUNNER" wineboot --init > "$OUT/wineboot.log" 2>&1 || fail WINEBOOT
+run_wine_timeout 150 wineboot --init > "$OUT/wineboot.log" 2>&1 || fail WINEBOOT
 [ -s "$WINEPREFIX/system.reg" ] || fail NO_PREFIX_REGISTRY
 # The EXE fixture must emit this exact marker on every invocation.
-timeout 90 "$WINE_RUNNER" wine "$exe" > "$OUT/exe-first.log" 2>&1 || fail EXE_FIRST_RUN
+run_wine_timeout 90 wine "$exe" > "$OUT/exe-first.log" 2>&1 || fail EXE_FIRST_RUN
 grep -Fq VENVWIN_CAPSULE_EXE_OK "$OUT/exe-first.log" || fail EXE_FIRST_MARKER
 timeout 90 "$WINE_RUNNER" wine "$exe" > "$OUT/exe-relaunch.log" 2>&1 || fail EXE_RELAUNCH
 grep -Fq VENVWIN_CAPSULE_EXE_OK "$OUT/exe-relaunch.log" || fail EXE_RELAUNCH_MARKER
@@ -41,7 +42,7 @@ emit VENVWIN_CAPSULE_EXE_LAUNCH_AND_RELAUNCH_PASS
 # MSI fixture must install a known file and identify it via a manifest supplied
 # by the test author. Exit status alone does not prove installation.
 [ -n "${VENVWIN_MSI_EXPECTED_FILE:-}" ] || fail MSI_EXPECTED_FILE_UNSET
-timeout 150 "$WINE_RUNNER" wine msiexec /i "$msi" /qn /norestart > "$OUT/msi-install.log" 2>&1 || fail MSI_INSTALL
+run_wine_timeout 150 wine msiexec /i "$msi" /qn /norestart > "$OUT/msi-install.log" 2>&1 || fail MSI_INSTALL
 [ -s "$VENVWIN_MSI_EXPECTED_FILE" ] || fail MSI_INSTALLED_PAYLOAD_MISSING
 sha256sum "$VENVWIN_MSI_EXPECTED_FILE" > "$OUT/msi-payload-sha256.txt"
 emit VENVWIN_CAPSULE_MSI_INSTALLED_PAYLOAD_PASS
