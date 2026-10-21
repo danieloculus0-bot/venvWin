@@ -1,0 +1,2456 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#08131f">
+  <meta name="description" content="Emperor Gauntlet: free Antarctic arcade carnage with an Uzi, nighttime flamethrower, rocket launcher, winding ice rivers, leopard seals, Yeti and polar nights.">
+  <title>Emperor Gauntlet | FUN</title>
+  <style>
+:root{color-scheme:dark;--ice:#aaf4ff;--lime:#d9fc70;--paper:#f2f8fa;--muted:#8d9eaa;--ink:#07111a;--rule:#263541;font-family:Arial,Helvetica,sans-serif}*{box-sizing:border-box}html{min-height:100%;background:#07121c}body{margin:0;background:radial-gradient(ellipse at 50% 10%,#182e3c 0,#091823 44%,#061018 90%);color:var(--paper);min-height:100vh}button,a{-webkit-tap-highlight-color:transparent}button{font:inherit;cursor:pointer}a{color:inherit;text-decoration:none}.shell{max-width:1260px;margin:auto;padding:0 26px}.masthead{height:83px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--rule)}.brand{display:flex;gap:16px;align-items:center}.brand-symbol{font-size:31px;font-weight:1000;letter-spacing:-4px;color:var(--lime);line-height:1}.brand-symbol span{color:var(--ice)}.brand-sub{font-size:10px;font-weight:800;letter-spacing:3px;color:#9bacb6}.edition{font-size:10px;font-weight:800;letter-spacing:2px;color:#8ca8b5}.edition-dot{display:inline-block;width:6px;height:6px;background:var(--lime);border-radius:50%;margin-left:10px;vertical-align:middle;box-shadow:0 0 12px var(--lime)}.game-section{padding-top:32px}.title-row{display:flex;align-items:end;justify-content:space-between;gap:20px;padding-bottom:20px}.eyebrow{font-size:11px;font-weight:800;letter-spacing:2.5px;color:var(--ice);margin-bottom:9px}h1{font-weight:1000;letter-spacing:-3px;line-height:.96;font-size:clamp(36px,5.2vw,73px);margin:0}h1 em,h2 em{font-style:normal;color:var(--lime)}.record{border-left:2px solid #334c55;padding-left:15px;display:flex;align-items:baseline;gap:9px;white-space:nowrap;color:var(--muted);font-size:10px;font-weight:800;letter-spacing:1px}.record strong{color:var(--lime);font-size:39px;line-height:1}.game-frame{position:relative;overflow:hidden;border:1px solid #446074;background:#8cbbd0;box-shadow:0 18px 60px #0006;isolation:isolate}.game-frame:after{content:"";position:absolute;inset:0;box-shadow:inset 0 0 70px #05172238;pointer-events:none;z-index:1}canvas{display:block;width:100%;height:auto;aspect-ratio:1000 / 640;touch-action:none}.overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(105deg,#061624ee,#0b1d2ace);z-index:3;padding:24px;text-align:center}.overlay[hidden]{display:none}.overlay-card{width:min(740px,100%);border:1px solid #6c909a52;padding:52px 40px 36px;background:radial-gradient(circle at 50% 0%,#18364590,transparent 80%)}.overlay-kicker{font-size:11px;letter-spacing:2.5px;color:var(--ice);font-weight:900}h2{font-size:clamp(32px,5vw,67px);font-weight:1000;letter-spacing:-2.5px;line-height:.98;margin:18px 0}#overlay-copy{font-size:16px;line-height:1.65;color:#c9d6de;max-width:545px;margin:0 auto 25px}.primary-button{border:0;padding:17px 27px;background:var(--lime);color:#13201b;font-weight:1000;letter-spacing:1.2px;font-size:14px;box-shadow:5px 5px 0 #769038;transition:transform .1s,box-shadow .1s}.primary-button:hover{transform:translate(-2px,-2px);box-shadow:7px 7px 0 #769038}.primary-button span{margin-left:12px}.overlay-hint{font-size:10px;letter-spacing:1.1px;color:#9fb1bb;margin:26px 0 0}.below-game{display:flex;justify-content:space-between;align-items:center;padding:18px 0;border-bottom:1px solid var(--rule);gap:12px}.status{display:flex;gap:10px;align-items:center;font-size:11px;font-weight:900;letter-spacing:1.5px;color:#bdcbd5}.status-dot{background:var(--lime);width:8px;height:8px;border-radius:50%;box-shadow:0 0 14px #d9fc706a}.tools{display:flex;gap:14px}.tools button{border:1px solid #344a59;background:#0b1c29;color:#c7d5db;font-size:10px;letter-spacing:1px;font-weight:800;padding:10px 13px}.tools button:hover{border-color:var(--ice)}kbd{font:inherit;color:#83aeb9;padding-left:6px}.details{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;padding:40px 0 34px}.detail{border-top:1px solid #36505c;padding-top:16px}.detail-num{color:var(--ice);font-size:11px;letter-spacing:2px;font-weight:900}.detail h3{font-size:17px;letter-spacing:1.5px;margin:12px 0 7px}.detail p{color:#9fb1bc;line-height:1.6;font-size:13px;max-width:290px;margin:0}footer{border-top:1px solid var(--rule);padding:25px 0 45px;display:flex;gap:20px;justify-content:space-between;color:#82949e;font-size:10px;letter-spacing:1px;line-height:1.6;font-weight:800}footer a{color:var(--lime);text-decoration:underline;text-underline-offset:3px}.touch-controls{display:none;position:absolute;bottom:1.5%;left:2%;right:2%;z-index:2;justify-content:space-between;pointer-events:none}.touch-btn{pointer-events:auto;border:1px solid #ffffffa8;background:#071827aa;color:white;border-radius:11px;touch-action:none;user-select:none;min-width:45px;min-height:42px;font-weight:900}.touch-btn:active,.touch-btn.pressed{background:#d9fc70c9;color:#08121a}.dpad{display:grid;grid-template-columns:repeat(3,45px);grid-template-rows:repeat(2,44px);gap:3px}.dpad .up{grid-column:2;grid-row:1}.dpad .left{grid-column:1;grid-row:2}.dpad .down{grid-column:2;grid-row:2}.dpad .right{grid-column:3;grid-row:2}.action-pad{display:flex;align-items:end;gap:7px}.action-pad .sprint,.action-pad .shove{height:54px;min-width:74px;font-size:12px}.action-pad .shove{background:#d9fc70e8;color:#111c16}@media(pointer:coarse){.touch-controls{display:flex}}@media(max-width:700px){.shell{padding:0 12px}.masthead{height:62px}.brand-symbol{font-size:26px}.brand-sub{font-size:8px;letter-spacing:1.3px}.edition{font-size:8px;letter-spacing:1px}.title-row{align-items:start;flex-direction:column;gap:13px}.game-section{padding-top:23px}.eyebrow{font-size:9px;letter-spacing:1.6px}.record{border-left:0;border-top:1px solid #334c55;padding:9px 0 0}.record strong{font-size:27px}.overlay-card{padding:24px 13px}.overlay-kicker{font-size:8px;letter-spacing:1.1px}.overlay h2{font-size:clamp(26px,7vw,48px);margin:11px 0}.overlay p#overlay-copy{font-size:11px;line-height:1.35;margin-bottom:14px}.primary-button{padding:11px 14px;font-size:10px}.overlay-hint{font-size:8px;margin-top:13px!important}.details{grid-template-columns:1fr;gap:19px;padding:24px 0}.detail p{max-width:none}.below-game{flex-wrap:wrap;gap:12px}.status{font-size:9px;letter-spacing:1px}.tools button{font-size:9px;padding:8px}footer{flex-direction:column;font-size:9px;gap:8px}}@media(max-width:480px) and (pointer:coarse){.game-frame{margin:0 -8px}.touch-btn{min-height:35px;min-width:35px;border-radius:7px;font-size:11px}.dpad{grid-template-columns:repeat(3,35px);grid-template-rows:repeat(2,35px);gap:2px}.action-pad .sprint,.action-pad .shove{height:40px;min-width:57px;font-size:9px}.overlay-card{padding:8px 8px}.overlay-kicker{display:none}.overlay h2{font-size:26px}.overlay p#overlay-copy{font-size:10px}.overlay-hint{display:none}}@media(prefers-reduced-motion:reduce){.primary-button{transition:none}}
+
+/* Emperor Gauntlet CHAOS build additions */
+.controls-guide{margin:22px 0 3px;padding:19px 24px;background:#102533;border:1px solid #3a5664}
+.controls-guide h3{font-size:13px;letter-spacing:2px;color:#d9fc70;margin:0 0 15px}
+.control-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.control-grid span{font-size:11px;line-height:1.65;color:#bfd0db;font-weight:700}
+.control-grid kbd{display:inline-block;padding:4px 6px;margin-right:5px;background:#274354;border:1px solid #59859a;color:#e8f5fd;font-size:10px}
+.action-pad .swap,.action-pad .grenade{min-width:60px;height:48px;font-size:11px}
+.action-pad .grenade{background:#dc745ecc;color:#fff}
+.action-pad .shove{background:#e7ed69ed;color:#111b18}
+@media(max-width:850px){.control-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:480px){.controls-guide{padding:13px}.control-grid{gap:9px}.control-grid span{font-size:10px}.action-pad{gap:3px}.action-pad .swap,.action-pad .grenade,.action-pad .sprint,.action-pad .shove{min-width:45px;height:39px;font-size:9px}}
+
+/* Mobile-only fixed SNES-inspired game cabinet. Never overlaps the arena. */
+.mobile-topbar{display:none}.arena-stage{position:relative;width:100%}.dpad-hub{display:none}
+@media(pointer:coarse) and (max-width:1180px){
+ html,body{position:fixed;inset:0;width:100%;height:100%;overflow:hidden;overscroll-behavior:none;touch-action:none;-webkit-text-size-adjust:100%}
+ body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+ .shell{position:fixed;inset:0;height:100%;height:100dvh;width:100%;max-width:none;margin:0;padding:0;overflow:hidden}
+ .masthead,.title-row,.below-game,.controls-guide,.details,footer{display:none!important}
+ .game-section{padding:0;position:relative;width:100%;height:100%}
+ .game-frame{position:relative;display:flex;flex-direction:column;width:100%;height:100%;min-height:0;margin:0;border:0;border-radius:0;box-shadow:none;overflow:hidden;touch-action:none}
+ .game-frame:after{display:none}
+ .mobile-topbar{display:flex;flex:0 0 calc(32px + env(safe-area-inset-top,0px));padding-top:env(safe-area-inset-top,0px);align-items:center;justify-content:space-between;gap:8px;padding:0 max(12px,env(safe-area-inset-right)) 0 max(12px,env(safe-area-inset-left));background:#1a2634;border-bottom:2px solid #546574;color:#d5e7eb;font-size:10px;font-weight:900;letter-spacing:1px}
+ .mobile-topbar strong span{color:#e9be6f}.mobile-topbar>span{font-size:9px;white-space:nowrap}
+ .arena-stage{flex:1 1 auto;min-width:0;min-height:0;overflow:hidden;display:flex;align-items:center;justify-content:center;background:repeating-linear-gradient(145deg,#a7cddd,#a7cddd 26px,#a0c4d5 26px,#a0c4d5 52px)}
+ .arena-stage canvas{display:block;width:auto;height:auto;max-width:100%;max-height:100%;aspect-ratio:1000/640;touch-action:none}
+ .arena-stage .overlay{inset:0;padding:8px;overflow:hidden;align-items:center}
+ .arena-stage .overlay-card{width:min(510px,98%);max-height:100%;padding:9px 12px;overflow:auto}
+ .arena-stage .overlay-kicker,.arena-stage .overlay-hint{display:none}
+ .arena-stage .overlay h2{font-size:clamp(23px,5vw,35px);margin:7px 0}
+ .arena-stage .overlay p#overlay-copy{font-size:clamp(10px,2.3vw,13px);line-height:1.25;margin:4px auto 9px}
+ .arena-stage .primary-button{font-size:12px;padding:9px 15px;min-height:36px}
+ .touch-controls{position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(64px,.65fr) minmax(0,1fr);grid-template-rows:27px minmax(0,1fr) 20px;gap:4px;align-items:center;flex:0 0 clamp(198px,30dvh,247px);width:100%;min-height:0;max-height:48%;left:auto;right:auto;bottom:auto;margin:0;padding:5px max(9px,env(safe-area-inset-right)) max(3px,env(safe-area-inset-bottom)) max(9px,env(safe-area-inset-left));background:linear-gradient(#cfd3d7,#a7acb4 55%,#78828e);border-top:4px solid #45505e;box-shadow:inset 0 5px 9px #ffffff70;pointer-events:auto;touch-action:none;-webkit-user-select:none;user-select:none}
+ .touch-controls .touch-btn{position:relative;display:flex;align-items:center;justify-content:center;flex-direction:column;min-width:0;min-height:0;width:100%;height:100%;border:2px solid #353a43;border-radius:50%;color:#f8faff;background:#373c47;text-shadow:0 1px 1px #0009;font-weight:1000;font-size:clamp(14px,3.5vw,23px);box-shadow:inset 0 -3px 2px #0004,0 3px 2px #45505a;touch-action:none;-webkit-tap-highlight-color:transparent}
+ .touch-controls .touch-btn small{font-size:clamp(6px,1.4vw,9px);font-weight:900;margin-top:2px}
+ .touch-controls .touch-btn:active,.touch-controls .touch-btn.pressed{transform:translateY(2px);box-shadow:inset 0 3px 4px #0008;background:#667187;color:white}
+ .touch-controls .shoulder{grid-row:1;width:min(100%,98px);height:26px;border-radius:14px;font-size:12px;flex-direction:row;gap:4px;background:#53596a}
+ .touch-controls .shoulder small{margin:0;font-size:7px}
+ .touch-controls .shoulder-left{grid-column:1;justify-self:start}
+ .touch-controls .shoulder-right{grid-column:3;justify-self:end}
+ .touch-controls .dpad{grid-area:2/1;display:grid;justify-self:center;align-self:center;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(3,minmax(0,1fr));gap:1px;width:min(36vw,156px);height:auto;aspect-ratio:1/1;margin:0}
+ .touch-controls .dpad .touch-btn{border-radius:7px;background:#333947;border-width:1px;font-size:16px}
+ .touch-controls .dpad .up{grid-area:1/2}.touch-controls .dpad .left{grid-area:2/1}.touch-controls .dpad .down{grid-area:3/2}.touch-controls .dpad .right{grid-area:2/3}
+ .touch-controls .dpad-hub{display:block;grid-area:2/2;background:#333947;border:1px solid #282e3b;border-radius:5px;pointer-events:none}
+ .touch-controls .action-pad{grid-area:2/3;display:grid;align-self:center;justify-self:center;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(3,minmax(0,1fr));gap:2px;width:min(39vw,161px);height:auto;aspect-ratio:1/1;margin:0}
+ .touch-controls .action-pad .face{width:100%;height:100%;min-width:0;min-height:0;border-radius:50%;font-size:clamp(16px,4.2vw,24px)}
+ .touch-controls .action-pad .x{grid-area:1/2;background:#4d5c88}.touch-controls .action-pad .y{grid-area:2/1;background:#655281}.touch-controls .action-pad .a{grid-area:2/3;background:#3f746b}.touch-controls .action-pad .b{grid-area:3/2;background:#985169}
+ .touch-controls .system-pad{grid-area:2/2;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:13px}
+ .touch-controls .system-key{width:min(100%,73px);height:25px;min-height:25px;border-radius:13px;background:#696f7d;font-size:9px;transform:rotate(-15deg)}
+ .touch-controls .system-key:active{transform:rotate(-15deg) translateY(2px)}
+ .touch-controls .pad-legend{grid-area:3/1/4/4;justify-self:center;color:#2f3c46;align-self:center;font-size:9px;letter-spacing:.65px;font-weight:900;white-space:nowrap}
+}
+@media(pointer:coarse) and (max-width:1180px) and (orientation:landscape) and (max-height:760px){
+ /* The whole viewport becomes: D-PAD | GAME | ABXY. No controls over the ice. */
+ .game-frame{display:grid;grid-template-columns:clamp(135px,18.5vw,210px) minmax(0,1fr) clamp(135px,18.5vw,210px);grid-template-rows:minmax(0,1fr) 30px;background:linear-gradient(180deg,#cbd0d7,#9aa3ad 58%,#7e8998);gap:0}
+ .mobile-topbar{display:none}
+ .arena-stage{grid-area:1/2;width:100%;height:100%;min-width:0;min-height:0;border-left:3px solid #4b5663;border-right:3px solid #4b5663;overflow:hidden}
+ .arena-stage canvas{width:auto;height:auto;max-width:100%;max-height:100%}
+ .arena-stage .overlay p#overlay-copy{font-size:10px;line-height:1.14}
+ .arena-stage .overlay h2{font-size:24px}.arena-stage .overlay-card{padding:7px}
+ /* Flatten the controller wrapper: each side becomes a grid item in game-frame. */
+ .touch-controls{display:contents}
+ .touch-controls .dpad{grid-area:1/1;align-self:center;justify-self:center;width:min(82%,164px);height:auto;margin:18px 0 0}
+ .touch-controls .action-pad{grid-area:1/3;align-self:center;justify-self:center;width:min(83%,169px);height:auto;margin:18px 0 0}
+ .touch-controls .shoulder{grid-row:1;height:29px;width:min(90%,145px);align-self:start;justify-self:center;margin-top:11px;z-index:1}
+ .touch-controls .shoulder-left{grid-column:1}
+ .touch-controls .shoulder-right{grid-column:3}
+ .touch-controls .system-pad{grid-area:2/1/3/4;display:flex;align-self:stretch;justify-self:stretch;flex-direction:row;justify-content:center;align-items:center;gap:18px;background:#707988;border-top:1px solid #5a6473;z-index:1}
+ .touch-controls .system-key{height:23px;min-height:23px;width:82px;flex:none;font-size:9px}
+ .touch-controls .pad-legend{display:none}
+ .touch-controls .face small{font-size:7px}
+}
+@media(pointer:coarse) and (max-width:1180px) and (orientation:landscape) and (max-height:355px){
+ .game-frame{grid-template-columns:clamp(115px,17vw,160px) minmax(0,1fr) clamp(115px,17vw,160px);grid-template-rows:minmax(0,1fr) 25px}
+ .touch-controls .dpad,.touch-controls .action-pad{width:min(75%,121px);margin-top:15px}
+ .touch-controls .shoulder{margin-top:4px;height:23px}
+ .touch-controls .system-key{height:20px;min-height:20px}
+}
+
+</style>
+</head>
+<body>
+  <main class="shell">
+    <header class="masthead">
+      <a class="brand" href="https://github.com/danieloculus0-bot/FUN" aria-label="FUN on GitHub"><span class="brand-symbol">F<span>U</span>N</span><span class="brand-sub">UNREASONABLE EXPERIMENTS</span></a>
+      <span class="edition">BROWSER EDITION <span class="edition-dot"></span> v2.6.1 · HANDHELD</span>
+    </header>
+    <section class="game-section" aria-label="Emperor Gauntlet">
+      <div class="title-row">
+        <div><div class="eyebrow">ANTARCTICA / QUESTIONABLE ARMORY / EXTREMELY POOR JUDGMENT</div><h1>EMPEROR <em>GAUNTLET</em></h1></div>
+        <div class="record">THE LEGENDARY RECORD <strong>37</strong> <span>PENGUINS</span></div>
+      </div>
+      <div class="game-frame" id="game-frame">
+        <div class="mobile-topbar" aria-hidden="true"><strong>EG <span>✦</span> HANDHELD</strong><span>ANTARCTICA · SURVIVE</span></div>
+        <div class="arena-stage" id="arena-stage">
+        <canvas id="game" width="1000" height="640" aria-label="Emperor Gauntlet game arena. Use WASD or arrow keys to move, Shift to sprint, Space or click to attack, G for grenades, Q and E to switch weapons."></canvas>
+        <div class="overlay" id="overlay">
+          <div class="overlay-card">
+            <span class="overlay-kicker" id="overlay-kicker">WELCOME TO THE WORST FIELD TRIP ON EARTH</span>
+            <h2 id="overlay-title">THE ICE DOESN'T <em>CARE.</em></h2>
+            <p id="overlay-copy">UZI BY DAY. FLAMETHROWER BY NIGHT. A 59-second polar night hits every third wave with flashlight-only visibility away from the fires. Ignite temporary warming patches, launch rockets, fracture jagged Antarctic rivers with plasma, and avoid leopard seals hiding in ice holes.</p>
+            <button class="primary-button" id="play-button" type="button">ENTER THE ARENA <span aria-hidden="true">↗</span></button>
+            <p class="overlay-hint" id="overlay-hint">WASD: MOVE &nbsp; · &nbsp; MOUSE: AIM &nbsp; · &nbsp; SPACE / CLICK: ATTACK &nbsp; · &nbsp; G: GRENADE</p>
+          </div>
+        </div>
+        </div>
+        <div class="touch-controls" aria-label="SNES-style handheld game controller">
+          <button type="button" class="shoulder shoulder-left touch-btn" id="touch-prev" aria-label="Previous weapon">L <small>WEAPON</small></button>
+          <div class="dpad" aria-label="Movement D-pad">
+            <button type="button" class="touch-btn up" data-hold="up" aria-label="Move up">▲</button>
+            <button type="button" class="touch-btn left" data-hold="left" aria-label="Move left">◀</button>
+            <span class="dpad-hub" aria-hidden="true"></span>
+            <button type="button" class="touch-btn right" data-hold="right" aria-label="Move right">▶</button>
+            <button type="button" class="touch-btn down" data-hold="down" aria-label="Move down">▼</button>
+          </div>
+          <div class="system-pad">
+            <button type="button" class="touch-btn system-key" id="touch-select" aria-label="Previous weapon">SELECT</button>
+            <button type="button" class="touch-btn system-key" id="touch-start" aria-label="Pause or resume game">START</button>
+          </div>
+          <div class="action-pad" aria-label="Action buttons">
+            <button type="button" class="touch-btn face x" id="touch-grenade" aria-label="X: Throw grenade">X<small>BOOM</small></button>
+            <button type="button" class="touch-btn face y" id="touch-swap" aria-label="Y: Change weapon">Y<small>SWAP</small></button>
+            <button type="button" class="touch-btn face b" id="touch-shove" aria-label="B: Hold to fire">B<small>FIRE</small></button>
+            <button type="button" class="touch-btn face a" data-hold="sprint" aria-label="A: Hold to sprint">A<small>RUN</small></button>
+          </div>
+          <button type="button" class="shoulder shoulder-right touch-btn" id="touch-next" aria-label="Next weapon">R <small>WEAPON</small></button>
+          <div class="pad-legend" aria-hidden="true">D-PAD MOVES + AIMS · B FIRES · TOUCH AIM OPTIONAL</div>
+        </div>
+      </div>
+      <div class="below-game">
+        <div class="status"><span class="status-dot"></span><span id="game-status" aria-live="polite">READY TO MAKE TERRIBLE DECISIONS</span></div>
+        <div class="tools"><button type="button" id="pause-button">PAUSE <kbd>P</kbd></button><button type="button" id="sound-button" aria-pressed="false" hidden>SOUND OFF</button><button type="button" id="fullscreen-button">FULL SCREEN <span aria-hidden="true">⛶</span></button></div>
+      </div>
+    </section>
+    <section class="controls-guide" aria-label="Controls">
+      <h3>HOW TO CAUSE ABSOLUTE MAYHEM</h3>
+      <div class="control-grid">
+        <span><kbd>W A S D</kbd> MOVE</span><span><kbd>SHIFT</kbd> SPRINT</span>
+        <span><kbd>MOUSE</kbd> AIM · <kbd>SPACE / CLICK</kbd> ATTACK</span><span><kbd>G</kbd> GRENADE</span>
+        <span><kbd>Q / E</kbd> SWITCH WEAPONS</span><span><kbd>1 - 9</kbd> DIRECT WEAPON SLOTS</span><span><kbd>MOBILE</kbd> SNES D-PAD + ABXY · DRAG TO AIM</span>
+        <span><kbd>P</kbd> PAUSE</span><span><kbd>WALK OVER GEAR</kbd> PICK IT UP</span>
+        <span><kbd>SOUND</kbd> OPTIONAL SYNTH EFFECTS</span>
+      </div>
+    </section>
+    <section class="details" aria-label="How to play">
+      <div class="detail"><span class="detail-num">01 /</span><h3>MOVE SMART</h3><p>Every third wave triggers 15 seconds of dusk, 59 seconds of darkness, and 15 seconds of dawn. The flashlight and fires reveal attackers. Flaming fuel patches keep you warm until they burn out.</p></div>
+      <div class="detail"><span class="detail-num">02 /</span><h3>PICK YOUR FIGHTS</h3><p>The Uzi is the daytime default, the flamethrower the nighttime default, and you can manually choose any owned weapon. Rocket launchers, plentiful ion cannons, winding rivers and leopard seal ambushes raise the stakes.</p></div>
+      <div class="detail"><span class="detail-num">03 /</span><h3>BEAT 37</h3><p>That's the original record. Penguins killed by your weapons or ice count; penguins eaten by the Yeti don't. Leopard seals require twice the force of giant Emperor penguins. Defeating an enraged Yeti earns 1,000 bonus points.</p></div>
+    </section>
+    <footer><span>EMPEROR GAUNTLET / PART OF THE <a href="https://github.com/danieloculus0-bot/FUN">FUN PROJECT</a></span><span>SIMULATED PENGUINS ONLY. REAL-WORLD JUDGMENT NOT INCLUDED.</span></footer>
+  </main>
+  <script>
+(() => {
+  "use strict";
+
+  // A native HTML5 Canvas port of Emperor Gauntlet.
+  // The original Pygame version remains at emperor-gauntlet/emperor_gauntlet.py.
+  const W = 1000, H = 640, FPS = 60, WORLD_W = 2450, WORLD_H = 1700;
+  const PR = 18, ER = 15, START_PENGUINS = 22, MAX_PENGUINS = 54;
+  const ARMORY = {
+    fists: {name:"FISTS",type:"melee",damage:30,reach:43,cooldown:28,stamina:12,color:"#fbb667"},
+    knife: {name:"KNIFE",type:"melee",damage:44,reach:48,cooldown:18,stamina:8,color:"#e5f3fa"},
+    nunchucks: {name:"NUNCHUCKS",type:"melee",damage:27,reach:60,cooldown:11,stamina:7,color:"#f8d578"},
+    staff: {name:"BO STAFF",type:"melee",damage:56,reach:86,cooldown:27,stamina:10,color:"#deb179"},
+    uzi: {name:"UZI",type:"gun",damage:26,cooldown:5,velocity:24,spread:.11,color:"#ffeb80"},
+    shotgun: {name:"SHOTGUN",type:"gun",damage:26,cooldown:39,velocity:20,spread:.37,pellets:7,color:"#ffc16d"},
+    ion: {name:"ION CANNON",type:"gun",damage:420,cooldown:85,velocity:12,spread:0,color:"#73f4ff"},
+    rocket: {name:"ROCKET LAUNCHER",type:"gun",damage:340,cooldown:52,velocity:15,spread:.025,color:"#ff9d51"},
+    flame: {name:"FLAMETHROWER",type:"gun",damage:19,cooldown:3,velocity:0,spread:.40,color:"#ff6b28"}
+  };
+  const WEAPON_ORDER = Object.keys(ARMORY);
+  // Permanent survival campfires keep the cold mechanic playable during extended waves.
+  const CAMP_SITES = [
+    {x:245,y:345},{x:795,y:700},{x:1170,y:305},{x:1750,y:790},
+    {x:1920,y:1420},{x:420,y:1440},{x:1160,y:1450},{x:2250,y:1500}
+  ];
+  const WARMTH_RADIUS=145;
+  const DUSK_TICKS=15*FPS, NIGHT_TICKS=59*FPS, DAWN_TICKS=15*FPS;
+  const MIN_DAY_TICKS=180*FPS;
+  const DROP_COLORS = {uzi:"#f9cb5d",shotgun:"#f4a575",knife:"#dcebf5",
+    nunchucks:"#ffdf6e",staff:"#caa47b",parka:"#77e0f5",medkit:"#f76879",
+    grenade:"#f1af51",ammo:"#ffe48b",coffee:"#dbafff",cleats:"#afff7a",ion:"#73f4ff",ioncell:"#99f5ff",rocket:"#ff9d51",rockets:"#ffa64c",flame:"#ff6b28",fuel:"#ffd36c"};
+  const C = {
+    snow: "#e8f4f7", ice: "#b0dce9", darkIce: "#123b51", blueIce: "#57a7c8",
+    white: "#f3f8f9", black: "#0b1319", gray: "#4c6270", red: "#dd5c63",
+    orange: "#ecaa55", yellow: "#e8ea81", green: "#c3f47e", cyan: "#92f3ff",
+    ink: "#152e3b"
+  };
+  const canvas = document.getElementById("game");
+  const ctx = canvas.getContext("2d");
+  const overlay = document.getElementById("overlay");
+  const overlayKicker = document.getElementById("overlay-kicker");
+  const overlayTitle = document.getElementById("overlay-title");
+  const overlayCopy = document.getElementById("overlay-copy");
+  const overlayHint = document.getElementById("overlay-hint");
+  const playButton = document.getElementById("play-button");
+  const pauseButton = document.getElementById("pause-button");
+  const fullButton = document.getElementById("fullscreen-button");
+  const statusText = document.getElementById("game-status");
+  const gameFrame = document.getElementById("game-frame");
+  const pressed = new Set();
+  // Mouse aim is optional. Keyboard and touch users retain move-to-face aiming.
+  const pointerAim={active:false,touch:false,x:500,y:320};
+  const soundButton=document.getElementById("sound-button");
+  let audio=null, soundOn=false, lastSfxTick={};
+  function playSfx(type){
+    if(!soundOn||!audio||!game)return;
+    const tick=game.clock;
+    const repeatLimit={uzi:4,shotgun:20,hit:3,collect:12,boss:40,boom:5,melee:8,flame:9};
+    if(lastSfxTick[type]!==undefined&&tick-lastSfxTick[type]<(repeatLimit[type]||2))return;
+    lastSfxTick[type]=tick;
+    try{
+      const now=audio.currentTime;
+      const osc=audio.createOscillator(),amp=audio.createGain();
+      const tones={
+        uzi:[170,48,.095,"sawtooth"],shotgun:[95,31,.24,"sawtooth"],
+        melee:[350,90,.09,"triangle"],hit:[195,55,.095,"square"],
+        collect:[480,880,.17,"sine"],boom:[95,23,.36,"sawtooth"],
+        boss:[150,52,.45,"sawtooth"],wave:[360,640,.28,"triangle"],
+        heal:[450,850,.26,"sine"],grenade:[310,160,.12,"square"],flame:[250,75,.16,"sawtooth"]
+      };
+      const t=tones[type]||tones.melee;
+      osc.type=t[3];
+      osc.frequency.setValueAtTime(t[0],now);
+      osc.frequency.exponentialRampToValueAtTime(Math.max(20,t[1]),now+t[2]);
+      amp.gain.setValueAtTime(.0001,now);
+      amp.gain.exponentialRampToValueAtTime(type==="boom"?.22:.12,now+.006);
+      amp.gain.exponentialRampToValueAtTime(.0001,now+t[2]);
+      osc.connect(amp);amp.connect(audio.destination);
+      osc.start(now);osc.stop(now+t[2]+.02);
+    }catch(_){ /* Sound is optional and must never break gameplay. */ }
+  }
+  if(soundButton){
+    soundButton.hidden=false;
+    soundButton.textContent="SOUND OFF";
+    soundButton.addEventListener("click",()=>{
+      if(!audio){
+        const AC=window.AudioContext||window.webkitAudioContext;
+        if(!AC){soundButton.textContent="SOUND UNAVAILABLE";return;}
+        try{audio=new AC();}catch(_){soundButton.textContent="SOUND UNAVAILABLE";return;}
+      }
+      soundOn=!soundOn;
+      if(soundOn)audio.resume?.().catch?.(()=>{});
+      soundButton.textContent=soundOn?"SOUND ON":"SOUND OFF";
+      soundButton.setAttribute?.("aria-pressed",String(soundOn));
+      if(soundOn)playSfx("collect");
+    });
+  }
+  let state = "menu", game, nextId = 1, accumulator = 0, lastTime = 0;
+  let best = 0;
+  try { best = Number(localStorage.getItem("emperorGauntletBest") || 0) || 0; } catch (_) { /* private browsing */ }
+
+  const rand = (lo, hi) => lo + Math.random() * (hi - lo);
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  const norm = (x, y) => {
+    const len = Math.hypot(x, y);
+    return len > 0.00001 ? { x: x / len, y: y / len } : { x: 0, y: 0 };
+  };
+  const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+  const within = (x, y, r) => x >= r.x && y >= r.y && x <= r.x + r.w && y <= r.y + r.h;
+  // Precomputed winding polylines: exactly the same coordinates define river
+  // painting and hazard collision. No fake rectangular collision geometry.
+  const RIVER_ROUTES=[
+    {points:[[705,160],[665,265],[725,387],[676,515],[725,632],[689,835]],width:29},
+    {points:[[1150,786],[1305,738],[1450,820],[1615,750],[1790,827],[1900,793]],width:35},
+    {points:[[1712,125],[1772,240],[1715,360],[1770,493],[1698,665]],width:29},
+    {points:[[340,1252],[536,1200],[700,1280],[858,1223],[1070,1287],[1200,1240]],width:34},
+    {points:[[2060,850],[2000,1020],[2075,1145],[1995,1250],[2100,1405],[2055,1600]],width:34}
+  ];
+  function makeRiver(route,index){
+    const samples=[];
+    for(let j=0;j<route.points.length-1;j++){
+      const a=route.points[j],b=route.points[j+1],len=Math.hypot(b[0]-a[0],b[1]-a[1]);
+      const steps=Math.max(3,Math.ceil(len/18));
+      for(let i=0;i<steps;i++){
+        const t=i/steps,k=j+t;
+        const jag=(Math.sin(k*13.4+index*6.2)+Math.sin(k*29.8+index))*2.5;
+        const n=norm(b[1]-a[1],a[0]-b[0]);
+        const x=a[0]+(b[0]-a[0])*t+n.x*jag;
+        const y=a[1]+(b[1]-a[1])*t+n.y*jag;
+        const width=route.width*(.86+.21*Math.sin(k*4.1+index*.8)+.1*Math.sin(k*13.2));
+        samples.push({x,y,width});
+      }
+    }
+    const last=route.points[route.points.length-1];
+    samples.push({x:last[0],y:last[1],width:route.width});
+    const xs=samples.map(p=>p.x),ys=samples.map(p=>p.y);
+    return {samples,minX:Math.min(...xs)-80,maxX:Math.max(...xs)+80,
+      minY:Math.min(...ys)-80,maxY:Math.max(...ys)+80,seed:index};
+  }
+  const RIVERS=RIVER_ROUTES.map(makeRiver);
+  function riverDistance(x,y,river){
+    if(x<river.minX||x>river.maxX||y<river.minY||y>river.maxY)return Infinity;
+    let best=Infinity;
+    const a=river.samples;
+    for(let i=0;i<a.length-1;i++){
+      const q=a[i],r=a[i+1],dx=r.x-q.x,dy=r.y-q.y,d2=dx*dx+dy*dy;
+      const t=clamp(d2?((x-q.x)*dx+(y-q.y)*dy)/d2:0,0,1);
+      const width=q.width+(r.width-q.width)*t;
+      best=Math.min(best,Math.hypot(x-q.x-t*dx,y-q.y-t*dy)/width);
+    }
+    return best;
+  }
+  function onIceBridge(x,y){
+    return game.bridges.some(b=>Math.hypot(x-b.x,y-b.y)<b.safeRadius);
+  }
+  function riverExposure(x,y){
+    if(onIceBridge(x,y))return Infinity;
+    let d=Infinity;
+    for(const river of game.rivers)d=Math.min(d,riverDistance(x,y,river));
+    return d;
+  }
+  const held = name => pressed.has(name);
+
+  function penguin(x, y) {
+    const variant=Math.random()<.11?"bruiser":Math.random()<.2?"berserker":"emperor";
+    return {
+      id: nextId++, x, y, vx: rand(-1, 1), vy: rand(-1, 1),
+      hp: rand(58, 76)*(variant==="bruiser"?1.9:variant==="berserker"?.8:1),
+      fear: rand(.2, .7), aggression: rand(.05, .28)+(variant==="berserker"?.38:0),
+      mass: rand(.9, 1.25)*(variant==="bruiser"?1.6:1),
+      state: "wander", down: false, downTimer: 0,
+      peckCD: Math.floor(rand(0, 80)), phase: rand(0, Math.PI * 2),
+      panic: 0, lastSwing: -1, variant, flash:0
+    };
+  }
+  function makeDrop(kind,x,y) {return {kind,x,y,life:2500,spin:rand(0,6.28)};}
+  function newGame() {
+    nextId = 1;
+    const g = {
+      player: {
+        x: 170, y: 200, vx: 0, vy: 0, fx: 1, fy: 0,
+        temp: 100, hp: 100, stamina: 100, wet: 0, slip: 0,
+        shoveCD: 0, swing: 0, swingId: 0, provocation: 0,
+        weapon:"fists",owned:{fists:true},ammo:{uzi:120,shotgun:20,ion:0,rocket:0,flame:0},
+        grenades:2,parka:0,cleats:false,rage:0,combo:0,comboTime:0,
+        swingReach:43,swingColor:"#fbb667",muzzle:0,warming:false,flameActive:0,flameFireCD:0,flameMeltCD:0
+      },
+      birds: [], leopardSeals:[], leopardKills:0, drifts: [
+        { x: 360, y: 300, w: 270, h: 120 },
+        { x: 820, y: 1040, w: 360, h: 150 },
+        { x: 1420, y: 450, w: 300, h: 135 },
+        { x: 1850, y: 1180, w: 260, h: 150 },
+        { x: 2100, y: 650, w: 210, h: 105 }
+      ],
+      rivers:RIVERS, cracks:[],
+      bridges:[{x:710,y:396,safeRadius:31},{x:1460,y:805,safeRadius:34},
+        {x:1760,y:485,safeRadius:31},{x:700,y:1280,safeRadius:33},
+        {x:2080,y:1160,safeRadius:30}],
+      holes: [
+        { x: 1040, y: 470, r: 58 }, { x: 1540, y: 1120, r: 72 },
+        { x: 2200, y: 350, r: 52 }, { x: 540, y: 910, r: 48 },
+        { x: 470, y: 455, r: 67 }
+      ],
+      fires:CAMP_SITES.map((site,i)=>({x:site.x,y:site.y,phase:i*1.87,life:Infinity,kind:"campfire"})),
+      particles: [], stains: [], gibs:[], bullets: [], bombs: [], explosions: [], drops: [], floats: [], shake:0,
+      seal:{x:350,y:270,phase:0,vx:.7,vy:.25,hurtCooldown:0,scared:0,lastSwing:-1},
+      sealWarnings:0, yetiEats:0, goreBursts:0, guardianNotice:0,
+      wave:1, waveBanner:0, bossWave:0, nextWaveAt:10,
+      night:false,nightNotice:0,phase:"day",phaseTicks:0,
+      darkness:0,nightQueue:0,nextNightAllowed:0,nightCycles:0,
+      points:0, ionCracks:[], ionShots:0, yeti:null, yetiNext:190, yetiVisits:0,yetiBanner:0,
+      score: 0, falls: 0, clock: 0,
+      windAngle: rand(0, Math.PI * 2), windStrength: rand(.3, 1),
+      blizzardTimer: 0, message: "GET GEAR. FIND AN UZI. RAISE HELL.",
+      messageTimer: 260, cause: ""
+    };
+    // Water predators emerge from holes but never walk onto the ice.
+    for(const index of [0,4]){
+      const hole=g.holes[index];
+      const hp=2*(650+Math.max(2,g.wave)*75); // Twice the next Emperor-class boss.
+      g.leopardSeals.push({holeIndex:index,hp,maxHp:hp,x:hole.x,y:hole.y,
+        phase:index*2.1,emerge:0,flash:0,attackCooldown:90,dead:false});
+    }
+    for (let i = 0; i < START_PENGUINS; i++) {
+      g.birds.push(penguin(rand(500, WORLD_W - 200), rand(180, WORLD_H - 180)));
+    }
+    g.drops.push(makeDrop("uzi",275,230),makeDrop("parka",350,285),
+      makeDrop("knife",440,290),makeDrop("medkit",560,350),makeDrop("grenade",675,410),
+      makeDrop("nunchucks",780,505),makeDrop("shotgun",1050,590),
+      makeDrop("staff",1260,440),makeDrop("cleats",1460,620),makeDrop("coffee",840,270),
+      makeDrop("ion",510,320),makeDrop("ion",1660,1200),
+      makeDrop("rocket",655,300),makeDrop("flame",575,230),makeDrop("fuel",625,215));
+    return g;
+  }
+
+  function say(message, duration = 170) { game.message = message; game.messageTimer = duration; }
+  function particles(x, y, color, count = 12, speed = 3) {
+    for (let i = 0; i < count; i++) {
+      const a = rand(0, Math.PI * 2), s = rand(.4, speed);
+      game.particles.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s,
+        life: rand(20, 58), color, radius: rand(1, 3) });
+    }
+    if (game.particles.length > 1500) game.particles.splice(0, game.particles.length - 1500);
+  }
+  function stain(x, y, radius = 10, color = "#9b2635") {
+    game.stains.push({ x, y, radius, color, life: 900 });
+    if (game.stains.length > 350) game.stains.splice(0,game.stains.length-350);
+  }
+  function wind() {
+    return { x: Math.cos(game.windAngle) * game.windStrength,
+      y: Math.sin(game.windAngle) * game.windStrength };
+  }
+  function recordBest() {
+    if (game.score > best) {
+      best = game.score;
+      try { localStorage.setItem("emperorGauntletBest", String(best)); } catch (_) { /* optional */ }
+    }
+  }
+  function setOverlay(kicker, title, copy, action, hint = "") {
+    overlayKicker.textContent = kicker;
+    overlayTitle.textContent = title;
+    overlayCopy.textContent = copy;
+    playButton.textContent = action;
+    overlayHint.textContent = hint;
+    overlay.hidden = false;
+  }
+  function start() {
+    if (state === "paused") {
+      state = "running";
+    } else {
+      game = newGame();
+      state = "running";
+    }
+    pressed.clear();
+    pointerAim.active=false;
+    overlay.hidden = true;
+    pauseButton.textContent = "PAUSE  P";
+    statusText.textContent = "IN THE ARENA · GOOD LUCK, YOU IDIOT";
+    lastTime = 0;
+    accumulator = 0;
+    canvas.focus?.();
+  }
+  function pause() {
+    if (state === "running") {
+      state = "paused";
+      setOverlay("TAKING A BREATHER", "THE ICE CAN WAIT.",
+        "Your score is " + game.score + ". Get back out there before the penguins start celebrating.",
+        "RESUME THE CHAOS", "P / ENTER TO RESUME");
+      pauseButton.textContent = "RESUME  P";
+      statusText.textContent = "PAUSED · THE PENGUINS ARE JUDGING YOU";
+      pressed.clear();
+    } else if (state === "paused") {
+      start();
+    }
+  }
+  function finish(cause) {
+    if (state !== "running") return;
+    game.cause = cause;
+    state = "over";
+    pressed.clear();
+    recordBest();
+    particles(game.player.x, game.player.y, C.cyan, 25, 5);
+    setOverlay("EMPEROR GAUNTLET OVER",
+      game.score + " PENGUINS DOWN.",
+      cause + ". " + game.falls + " additional penguin ice falls. Your personal best: " + best +
+      ". The legendary target: 37.",
+      "TRY AGAIN", "R / ENTER TO RESTART");
+    statusText.textContent = "GAME OVER · " + game.score + " DOWN · PERSONAL BEST " + best;
+    pauseButton.textContent = "PAUSE  P";
+  }
+  function selectWeapon(which){
+    const p=game.player;
+    if(state!=="running"||!p.owned[which])return false;
+    p.weapon=which;
+    say("EQUIPPED: "+ARMORY[which].name,110);
+    return true;
+  }
+  function cycleWeapon(direction){
+    const p=game.player,index=WEAPON_ORDER.indexOf(p.weapon);
+    for(let n=1;n<=WEAPON_ORDER.length;n++){
+      const k=WEAPON_ORDER[(index+n*direction+WEAPON_ORDER.length*10)%WEAPON_ORDER.length];
+      if(p.owned[k])return selectWeapon(k);
+    }
+    return false;
+  }
+  function goreBurst(bird){
+    const massive=bird.variant==="boss",big=massive||bird.variant==="bruiser";
+    const scale=massive?3.5:big?2.1:1;
+    const x=bird.x,y=bird.y;
+    game.goreBursts++;
+    const palette=["#be152f","#f12c40","#8e0925","#ff5960","#56091b"];
+    const count=massive?270:big?140:75;
+    // Exaggerated arcade particles and comic-book gibs, not photorealistic.
+    for(let i=0;i<count;i++){
+      const a=rand(0,Math.PI*2),speed=rand(1.5,14)*Math.sqrt(scale);
+      game.particles.push({x:x+rand(-4,4),y:y+rand(-6,6),
+        vx:Math.cos(a)*speed,vy:Math.sin(a)*speed,
+        radius:rand(1.8,6.2)*Math.sqrt(scale),life:rand(30,100),
+        color:palette[Math.floor(rand(0,palette.length))],blood:true});
+    }
+    for(let i=0;i<(massive?44:big?22:12);i++){
+      const a=rand(0,Math.PI*2),d=rand(5,96)*Math.sqrt(scale);
+      stain(x+Math.cos(a)*d,y+Math.sin(a)*d,rand(4,17)*Math.sqrt(scale),
+        palette[Math.floor(rand(0,palette.length))]);
+    }
+    for(let i=0;i<(massive?26:big?15:7);i++){
+      const a=rand(0,Math.PI*2),speed=rand(3,12)*Math.sqrt(scale);
+      game.gibs.push({x,y,vx:Math.cos(a)*speed,vy:Math.sin(a)*speed,
+        size:rand(4,13)*Math.sqrt(scale),angle:a,spin:rand(-.35,.35),
+        life:rand(90,190),color:i%4===0?"#121e25":palette[i%palette.length]});
+    }
+    game.gibs=game.gibs.slice(-280);
+    game.particles=game.particles.slice(-1500);
+    game.shake=Math.max(game.shake,massive?27:big?17:8);
+    if(big){
+      game.explosions.push({x,y,r:0,life:26,maxR:massive?175:105,blood:true});
+      floatText(x,y-66,massive?"EMPEROR EXPLODED!": "TUXEDO BLOOD TSUNAMI!",C.red);
+    }
+  }
+  function floatText(x,y,label,color=C.yellow){
+    game.floats.push({x,y,label,color,life:75});
+    if(game.floats.length>70)game.floats.shift();
+  }
+  function smack(b,damage,pushX,pushY){
+    if(b.down)return;
+    b.hp-=damage;
+    b.vx+=pushX/Math.max(.6,b.mass);
+    b.vy+=pushY/Math.max(.6,b.mass);
+    b.panic=110;b.flash=7;
+    particles(b.x,b.y,C.red,18,5);
+    for(let i=0;i<4;i++)stain(b.x+rand(-20,20),b.y+rand(-20,20),rand(4,11));
+    floatText(b.x,b.y-30,Math.round(damage)+"");
+    game.shake=Math.min(12,game.shake+2);
+    playSfx("hit");
+    if(b.hp<=0)downBird(b,"combat");
+  }
+  function dropFuelFire(x,y){
+    // Flames from spilled fuel on intact ice, NOT from blood or penguin corpses.
+    x=clamp(x,36,WORLD_W-36);y=clamp(y,36,WORLD_H-36);
+    if(riverExposure(x,y)<1.6||game.holes.some(h=>Math.hypot(h.x-x,h.y-y)<h.r+34))return false;
+    const current=game.fires.find(f=>f.kind==="fuel"&&Math.hypot(f.x-x,f.y-y)<65);
+    if(current){current.life=Math.max(current.life,720);return true;}
+    game.fires.push({x,y,kind:"fuel",phase:rand(0,6.28),life:720});
+    // Limit temporary fires independently so permanent camps are never removed.
+    const temporary=game.fires.filter(f=>f.kind==="fuel");
+    if(temporary.length>14)game.fires.splice(game.fires.indexOf(temporary[0]),1);
+    return true;
+  }
+  function sprayFlame(p){
+    p.flameActive=9;
+    p.temp=clamp(p.temp+.13,0,100);
+    const range=157,angle=.44;
+    const facing=Math.atan2(p.fy,p.fx);
+    const hits=(x,y,radius)=>{
+      const dx=x-p.x,dy=y-p.y,d=Math.hypot(dx,dy);
+      if(d>range+radius)return false;
+      const n=norm(dx,dy);
+      return d<33 || n.x*p.fx+n.y*p.fy>Math.cos(angle+Math.atan2(radius,Math.max(25,d)));
+    };
+    for(const b of game.birds){
+      if(b.down)continue;
+      if(hits(b.x,b.y,b.variant==="boss"?41:b.variant==="bruiser"?23:15)){
+        const n=norm(b.x-p.x,b.y-p.y);
+        smack(b,19*(p.rage>0?1.5:1),n.x*.95,n.y*.95);
+      }
+    }
+    for(const leopard of game.leopardSeals){
+      if(!leopard.dead&&leopard.emerge>.28&&hits(leopard.x,leopard.y,32))
+        hurtLeopard(leopard,16);
+    }
+    if(game.yeti?.alive&&hits(game.yeti.x,game.yeti.y,52))hurtYeti(9);
+    if(game.seal&&hits(game.seal.x,game.seal.y,19))warnSeal();
+    if(p.flameFireCD<=0){
+      const x=p.x+p.fx*rand(112,147),y=p.y+p.fy*rand(112,147);
+      if(dropFuelFire(x,y))p.flameFireCD=75;
+      else p.flameFireCD=20;
+    }
+    // Ice can scorch and fracture, but don't create a hole beneath a warming fire.
+    if(p.flameMeltCD<=0){
+      const x=clamp(p.x+p.fx*170,40,WORLD_W-40);
+      const y=clamp(p.y+p.fy*170,40,WORLD_H-40);
+      if(!onIceBridge(x,y)&&riverExposure(x,y)>2 &&
+         game.holes.every(h=>Math.hypot(h.x-x,h.y-y)>100)&&
+         game.fires.every(f=>Math.hypot(f.x-x,f.y-y)>90)){
+        game.ionCracks.push({x:x-8,y:y-23,w:16,h:46,depth:.5,ion:true});
+        if(game.ionCracks.length>28)game.ionCracks.shift();
+      }
+      p.flameMeltCD=420;
+    }
+    for(let i=0;i<15;i++){
+      const a=facing+rand(-angle,angle),d=rand(12,range);
+      game.particles.push({x:p.x+p.fx*23+Math.cos(a)*d,
+        y:p.y+p.fy*23+Math.sin(a)*d,
+        vx:Math.cos(a)*rand(1,4),vy:Math.sin(a)*rand(1,4),
+        life:rand(6,17),radius:rand(2.5,8),
+        color:i%6===0?"#fff0ac":i%2===0?"#ffbd43":"#f64a22"});
+    }
+    if(game.particles.length>1500)game.particles.splice(0,game.particles.length-1500);
+    playSfx("flame");
+  }
+  function fireWeapon(){
+    const p=game.player,w=ARMORY[p.weapon];
+    if(p.ammo[p.weapon]<=0){
+      p.shoveCD=18;say("CLICK. EMPTY. FIND AMMO OR SWITCH WEAPONS.",120);return;
+    }
+    p.ammo[p.weapon]--;p.shoveCD=w.cooldown;p.provocation+=.8;p.muzzle=5;
+    if(p.weapon==="flame"){sprayFlame(p);return;}
+    if(p.weapon==="rocket"){
+      const angle=Math.atan2(p.fy,p.fx);
+      game.bullets.push({x:p.x+p.fx*35,y:p.y+p.fy*35,
+        vx:Math.cos(angle)*w.velocity,vy:Math.sin(angle)*w.velocity,
+        damage:w.damage,life:85,color:w.color,rocket:true,trail:0});
+      particles(p.x+p.fx*27,p.y+p.fy*27,C.orange,36,6);
+      game.shake=Math.max(game.shake,8);
+      playSfx("shotgun");
+      say("ROCKET AWAY. THE ICE HAS QUESTIONS.",120);
+      return;
+    }
+    if(p.weapon==="ion"){ 
+      const a=Math.atan2(p.fy,p.fx);
+      game.bullets.push({x:p.x+p.fx*34,y:p.y+p.fy*34,
+        vx:Math.cos(a)*w.velocity,vy:Math.sin(a)*w.velocity,
+        damage:w.damage,life:70,color:w.color,ion:true});
+      game.ionShots++;
+      particles(p.x+p.fx*35,p.y+p.fy*35,C.cyan,40,8);
+      game.shake=Math.max(game.shake,9);
+      playSfx("boss");
+      say("PLASMA ION CHARGE AWAY. YOUR INSURANCE IS CANCELLED.",170);
+      return;
+    }
+    const angle=Math.atan2(p.fy,p.fx);
+    for(let i=0;i<(w.pellets||1);i++){
+      const theta=angle+rand(-w.spread,w.spread);
+      game.bullets.push({x:p.x+p.fx*25,y:p.y+p.fy*25,
+        vx:Math.cos(theta)*w.velocity,vy:Math.sin(theta)*w.velocity,
+        damage:w.damage*rand(.8,1.18),life:w.pellets?18:48,color:w.color});
+    }
+    particles(p.x+p.fx*35,p.y+p.fy*35,w.color,9,6);
+    if(w.pellets)game.shake+=5;
+    playSfx(w.pellets?"shotgun":"uzi");
+  }
+  function throwGrenade(){
+    if(state!=="running"||game.player.grenades<1)return;
+    const p=game.player;p.grenades--;
+    game.bombs.push({x:p.x+p.fx*22,y:p.y+p.fy*22,
+      vx:p.fx*10+p.vx*.3,vy:p.fy*10+p.vy*.3,life:56});
+    say("GRENADE OUT! THIS IS FINE.",100);
+    playSfx("grenade");
+  }
+  function boom(x,y){
+    game.explosions.push({x,y,r:0,life:22});
+    particles(x,y,C.orange,75,10);particles(x,y,C.red,25,7);
+    for(const b of game.birds){
+      if(b.down)continue;
+      const distance=Math.hypot(b.x-x,b.y-y);
+      if(distance<150){
+        const n=norm(b.x-x,b.y-y);
+        smack(b,Math.max(20,180*(1-distance/170)),n.x*15,n.y*15);
+      }
+    }
+    const p=game.player,d=Math.hypot(p.x-x,p.y-y);
+    if(d<110)p.hp-=Math.max(4,25*(1-d/120));
+    if(game.yeti?.alive&&Math.hypot(game.yeti.x-x,game.yeti.y-y)<155)hurtYeti(140);
+    if(game.seal&&Math.hypot(game.seal.x-x,game.seal.y-y)<120)warnSeal();
+    damageNearbyLeopards(x,y,155,150);
+    game.shake=16;say("BOOM. ANTARCTICA FILES A FORMAL COMPLAINT.",155);
+    playSfx("boom");
+  }
+  // Alien energy weapon. It makes the ground itself an enemy, including near the shooter.
+  function fractureIce(x,y,chaos=false){
+    const cx=clamp(x,55,WORLD_W-55),cy=clamp(y,55,WORLD_H-55);
+    // Extra narrow fissures create actual hazard strips, not merely visual effects.
+    for(let i=0;i<3;i++){
+      const horizontal=i%2===0;
+      const span=rand(110,235);
+      const fx=clamp(cx+rand(-65,65),25,WORLD_W-25);
+      const fy=clamp(cy+rand(-65,65),25,WORLD_H-25);
+      game.ionCracks.push({x:clamp(fx-(horizontal?span/2:10),0,WORLD_W-20),
+        y:clamp(fy-(horizontal?10:span/2),0,WORLD_H-20),
+        w:horizontal?span:20,h:horizontal?20:span,depth:1,ion:true});
+    }
+    // Destructible ice creates persistent water openings.
+    game.holes.push({x:cx,y:cy,r:rand(32,48),ion:true});
+    if(chaos&&Math.random()<.52){
+      const p=game.player,theta=rand(0,Math.PI*2),range=rand(50,155);
+      const px=clamp(p.x+Math.cos(theta)*range,20,WORLD_W-20);
+      const py=clamp(p.y+Math.sin(theta)*range,20,WORLD_H-20);
+      game.ionCracks.push({x:clamp(px-11,0,WORLD_W-22),
+        y:clamp(py-90,0,WORLD_H-180),w:22,h:180,depth:1,ion:true});
+      floatText(px,py-15,"DANGER: ICE CRACK!",C.red);
+    }
+    if(game.ionCracks.length>28)game.ionCracks.splice(0,game.ionCracks.length-28);
+    const ionHoles=game.holes.filter(h=>h.ion);
+    if(ionHoles.length>12){
+      const oldest=ionHoles[0];
+      game.holes.splice(game.holes.indexOf(oldest),1);
+    }
+  }
+  function hurtLeopard(seal,amount){
+    if(!seal||seal.dead||seal.emerge<.2)return false;
+    seal.hp-=amount;
+    seal.flash=9;
+    particles(seal.x,seal.y,C.red,17,5);
+    floatText(seal.x,seal.y-36,"-"+Math.round(amount),C.red);
+    if(seal.hp<=0){
+      seal.dead=true;game.leopardKills++;
+      game.points+=650; // Bonus is separate from emperor/penguin wave kills.
+      particles(seal.x,seal.y,C.red,90,10);
+      floatText(seal.x,seal.y-50,"LEOPARD SEAL +650",C.yellow);
+      say("LEOPARD SEAL DEFEATED. THE WATER FINALLY RELENTS.",190);
+      game.shake=Math.max(13,game.shake);
+    }
+    return true;
+  }
+  function updateLeopards(){
+    const p=game.player;
+    for(const seal of game.leopardSeals){
+      if(seal.dead)continue;
+      const hole=game.holes[seal.holeIndex];
+      if(!hole||hole.ion){seal.dead=true;continue;}
+      seal.phase+=.026;
+      if(seal.attackCooldown>0)seal.attackCooldown--;
+      if(seal.flash>0)seal.flash--;
+      const dist=Math.hypot(p.x-hole.x,p.y-hole.y);
+      // They surface when the player approaches, then slip back beneath water.
+      const near=dist<hole.r+220;
+      const desired=near?.95:(Math.sin(seal.phase*.7)>.65?.42:0);
+      seal.emerge+=(desired-seal.emerge)*.085;
+      const direction=norm(p.x-hole.x,p.y-hole.y);
+      seal.x=hole.x+direction.x*hole.r*.28*seal.emerge;
+      seal.y=hole.y+direction.y*hole.r*.28*seal.emerge;
+      if(dist<hole.r+105&&seal.emerge>.52&&seal.attackCooldown<=0){
+        seal.attackCooldown=Math.floor(rand(80,125));
+        const d=norm(p.x-seal.x,p.y-seal.y);
+        p.hp-=rand(13,23);
+        p.vx+=d.x*6;p.vy+=d.y*6;p.wet=Math.max(p.wet,185);
+        particles(p.x,p.y,C.red,22,5);
+        game.shake=Math.max(8,game.shake);
+        say("LEOPARD SEAL AMBUSH! THE WATER HAS TEETH.",130);
+        playSfx("hit");
+        if(p.hp<=0)finish("Mauled at the ice edge by a leopard seal");
+      }
+    }
+  }
+  function damageNearbyLeopards(x,y,radius,damage){
+    for(const seal of game.leopardSeals){
+      if(seal.dead||seal.emerge<.2)continue;
+      const d=Math.hypot(seal.x-x,seal.y-y);
+      if(d<radius)hurtLeopard(seal,Math.max(10,damage*(1-d/(radius+50))));
+    }
+  }
+  function hurtYeti(amount){
+    const yeti=game.yeti;
+    if(!yeti||!yeti.alive)return;
+    const newlyAngry=yeti.rage<=0;
+    yeti.hp-=amount;
+    yeti.rage=500;
+    yeti.flash=10;
+    game.shake=Math.max(7,game.shake);
+    particles(yeti.x,yeti.y,C.red,22,5);
+    floatText(yeti.x,yeti.y-72,"-"+Math.round(amount),C.red);
+    if(yeti.hp<=0){
+      yeti.alive=false;
+      game.points+=1000;
+      game.shake=23;
+      particles(yeti.x,yeti.y,C.red,130,12);
+      particles(yeti.x,yeti.y,C.white,105,12);
+      for(let i=0;i<17;i++)stain(yeti.x+rand(-75,75),yeti.y+rand(-75,75),rand(8,28));
+      floatText(yeti.x,yeti.y-82,"YETI SLAIN +1000 POINTS!",C.yellow);
+      say("YETI SLAIN. +1000 POINTS. THE MOUNTAIN DEMANDS AN EXPLANATION.",280);
+      playSfx("boom");
+    } else if(newlyAngry){
+      say("YOU SHOT THE FRIENDLY YETI. IT NOW WANTS YOUR HEAD.",220);
+      playSfx("boss");
+    }
+  }
+  function ionDetonate(x,y){
+    x=clamp(x,40,WORLD_W-40);y=clamp(y,40,WORLD_H-40);
+    game.explosions.push({x,y,r:0,life:38,ion:true});
+    particles(x,y,C.cyan,95,13);
+    particles(x,y,"#d2ffff",55,9);
+    fractureIce(x,y,true);
+    for(const b of game.birds){
+      if(b.down)continue;
+      const d=Math.hypot(b.x-x,b.y-y);
+      if(d<255){
+        const n=norm(b.x-x,b.y-y);
+        smack(b,Math.max(25,480*(1-d/300)),n.x*24,n.y*24);
+      }
+    }
+    // A guardian Yeti freshly summoned by a seal warning must not also
+    // get accidentally hit by the very same plasma detonation.
+    const yetiBeforeImpact=game.yeti?.alive?game.yeti:null;
+    if(game.seal&&Math.hypot(game.seal.x-x,game.seal.y-y)<245)warnSeal();
+    damageNearbyLeopards(x,y,250,520);
+    if(yetiBeforeImpact&&game.yeti===yetiBeforeImpact&&
+       game.yeti.alive&&Math.hypot(game.yeti.x-x,game.yeti.y-y)<240){
+      const d=Math.hypot(game.yeti.x-x,game.yeti.y-y);
+      hurtYeti(Math.max(90,550*(1-d/260)));
+    }
+    const p=game.player,d=Math.hypot(p.x-x,p.y-y);
+    if(d<155){p.hp-=Math.max(5,55*(1-d/175));p.slip=Math.max(p.slip,28);}
+    game.shake=22;
+    say("PLASMA ION DETONATION! ICE FRACTURES. ALL CRACK KILLS COUNT.",210);
+    playSfx("boom");
+  }
+  function spawnYeti(){
+    const p=game.player;
+    // Place the huge creature in the visible gameplay region, not off-camera.
+    const side=p.x<330?1:p.x>WORLD_W-330?-1:(Math.random()<.5?-1:1);
+    let x=clamp(p.x+side*195,105,WORLD_W-105);
+    let y=clamp(p.y+rand(-25,25),130,WORLD_H-100);
+    for(let attempt=0;attempt<15;attempt++){
+      if(game.holes.every(h=>Math.hypot(x-h.x,y-h.y)>h.r+120))break;
+      x=clamp(p.x+side*rand(150,230),105,WORLD_W-105);
+      y=clamp(p.y+rand(-55,55),135,WORLD_H-105);
+    }
+    game.yeti={x,y,hp:6000,maxHp:6000,vx:-side*1.15,vy:rand(-.2,.2),
+      life:1500,rage:0,attackCooldown:0,flash:0,lastSwing:-1,alive:true,
+      snackCooldown:Math.floor(rand(180,400)),munch:0,guardian:0};
+    game.yetiVisits++;
+    game.yetiNext=game.clock+rand(2300,3200);
+    say("ENORMOUS FRIENDLY YETI APPROACHING! WALK NEAR IT TO WARM UP.",260);
+    game.yetiBanner=195;
+    playSfx("collect");
+  }
+  function warnSeal(){
+    const seal=game.seal;
+    if(!seal||seal.hurtCooldown>0)return false;
+    seal.hurtCooldown=750;
+    seal.scared=180;
+    game.sealWarnings++;
+    const p=game.player;
+    // Protective Yeti's slap halves CURRENT health but cannot kill.
+    p.hp=Math.max(1,p.hp*.5);
+    p.slip=Math.max(20,p.slip);
+    const dx=p.x-seal.x,dy=p.y-seal.y,n=norm(dx,dy);
+    p.vx+=n.x*11;p.vy+=n.y*11;
+    particles(p.x,p.y,C.white,43,9);
+    floatText(p.x,p.y-42,"YETI WARNING! -50% HP",C.orange);
+    game.shake=Math.max(19,game.shake);
+    game.explosions.push({x:p.x,y:p.y,r:0,life:20,maxR:100,warning:true});
+    if(!game.yeti?.alive)spawnYeti();
+    const yeti=game.yeti;
+    if(yeti){
+      yeti.x=clamp(p.x+95,65,WORLD_W-65);
+      yeti.y=clamp(p.y-18,105,WORLD_H-80);
+      yeti.vx=-1.1;yeti.vy=0;
+      yeti.guardian=100;
+      yeti.rage=0; // This is a warning. He stays friendly afterward.
+      yeti.life=Math.max(yeti.life,500);
+    }
+    game.yetiBanner=150;
+    game.guardianNotice=175;
+    say("YOU CLUBBED A BABY SEAL! YETI WARNING SHOT: HALF YOUR HEALTH. LEAVE THE PUP ALONE.",250);
+    playSfx("boss");
+    return true;
+  }
+  function updateSeal(){
+    const seal=game.seal;
+    if(!seal)return;
+    seal.phase+=.027;
+    if(seal.hurtCooldown>0)seal.hurtCooldown--;
+    if(seal.scared>0){
+      seal.scared--;
+      const p=game.player,n=norm(seal.x-p.x,seal.y-p.y);
+      seal.vx+=n.x*.34;seal.vy+=n.y*.34;
+    }else{
+      seal.vx+=Math.cos(seal.phase)*.06;
+      seal.vy+=Math.sin(seal.phase*.7)*.06;
+    }
+    seal.vx=clamp(seal.vx,-2.2,2.2)*.97;
+    seal.vy=clamp(seal.vy,-2.2,2.2)*.97;
+    seal.x=clamp(seal.x+seal.vx,45,WORLD_W-45);
+    seal.y=clamp(seal.y+seal.vy,65,WORLD_H-65);
+  }
+  function yetiSnack(b){
+    const y=game.yeti;
+    if(!y?.alive||y.rage>0||!b||b.down||b.variant==="boss")return false;
+    downBird(b,"yeti");
+    y.snackCooldown=Math.floor(rand(450,800));
+    y.munch=80;
+    game.shake=Math.max(game.shake,3);
+    floatText(y.x,y.y-128,"GULP! - NO POINTS",C.white);
+    // No kill credit or rewards: this is the Yeti's snack, not a player kill.
+    say("THE YETI JUST ATE A PENGUIN. THAT ONE DOESN'T COUNT.",140);
+    playSfx("collect");
+    return true;
+  }
+  function updateYeti(){
+    if(!game.yeti){
+      if(game.clock>=game.yetiNext)spawnYeti();
+      return;
+    }
+    const y=game.yeti;
+    if(!y.alive){game.yeti=null;return;}
+    const p=game.player;
+    y.life--;
+    if(y.flash>0)y.flash--;
+    if(y.attackCooldown>0)y.attackCooldown--;
+    if(y.snackCooldown>0)y.snackCooldown--;
+    if(y.munch>0)y.munch--;
+    if(y.guardian>0)y.guardian--;
+    if(y.rage>0){
+      y.rage=Math.max(0,y.rage-1);
+      const n=norm(p.x-y.x,p.y-y.y);
+      y.vx=n.x*3.9;y.vy=n.y*3.9;
+      if(Math.hypot(p.x-y.x,p.y-y.y)<78&&y.attackCooldown<=0){
+        y.attackCooldown=68;
+        p.hp-=rand(18,28);
+        p.vx+=n.x*10;p.vy+=n.y*10;p.slip=22;
+        particles(p.x,p.y,C.red,35,7);
+        game.shake=Math.max(15,game.shake);
+        say("ANGRY YETI BODYSLAM. YOU'VE MADE A VERY LARGE MISTAKE.",190);
+        playSfx("boom");
+        if(p.hp<=0)finish("Got rearranged by the Yeti you decided to shoot");
+      }
+    } else {
+      // Whenever he gets hungry, stalk the nearest ordinary penguin
+      // and occasionally snap one up. He NEVER awards player credit.
+      const nearby=game.birds.filter(b=>!b.down&&b.variant!=="boss");
+      let target=null,dist=Infinity;
+      for(const b of nearby){
+        const d=Math.hypot(y.x-b.x,y.y-b.y);
+        if(d<dist){dist=d;target=b;}
+      }
+      if(y.snackCooldown<=0&&target&&dist<420){
+        const n=norm(target.x-y.x,target.y-y.y);
+        y.vx=clamp(y.vx+n.x*.20,-2.5,2.5);
+        y.vy=clamp(y.vy+n.y*.20,-2.5,2.5);
+        if(dist<68)yetiSnack(target);
+      }else{
+        y.vx+=rand(-.15,.15);y.vy+=rand(-.17,.17);
+        y.vx=clamp(y.vx,-1.8,1.8);y.vy=clamp(y.vy,-1.1,1.1);
+      }
+    }
+    y.x=clamp(y.x+y.vx,45,WORLD_W-45);
+    y.y=clamp(y.y+y.vy,70,WORLD_H-70);
+    if(y.life<=0&&y.rage===0)game.yeti=null;
+  }
+  function rocketDetonate(x,y){
+    x=clamp(x,35,WORLD_W-35);y=clamp(y,35,WORLD_H-35);
+    game.explosions.push({x,y,r:0,life:32,maxR:180,rocket:true});
+    particles(x,y,C.orange,115,12);particles(x,y,C.red,30,8);
+    for(const b of game.birds){
+      if(b.down)continue;
+      const d=Math.hypot(x-b.x,y-b.y);
+      if(d<200){
+        const n=norm(b.x-x,b.y-y);
+        smack(b,Math.max(25,350*(1-d/230)),n.x*20,n.y*20);
+      }
+    }
+    if(game.yeti?.alive&&Math.hypot(x-game.yeti.x,y-game.yeti.y)<180)hurtYeti(200);
+    if(game.seal&&Math.hypot(x-game.seal.x,y-game.seal.y)<140)warnSeal();
+    damageNearbyLeopards(x,y,195,340);
+    const p=game.player,dist=Math.hypot(x-p.x,y-p.y);
+    if(dist<160)p.hp-=Math.max(8,50*(1-dist/170));
+    game.shake=Math.max(17,game.shake);
+    say("ROCKET IMPACT: CARTOON EXPLOSION, MAXIMUM DISRESPECT.",155);
+    playSfx("boom");
+  }
+  function moveProjectiles(){
+    for(const bullet of game.bullets){
+      const ox=bullet.x,oy=bullet.y;
+      bullet.x+=bullet.vx;bullet.y+=bullet.vy;bullet.life--;
+      if(bullet.rocket){
+        bullet.trail++;
+        if(bullet.trail%2===0)particles(bullet.x,bullet.y,C.orange,3,1.8);
+        const impact=game.birds.some(b=>!b.down&&Math.hypot(b.x-bullet.x,b.y-bullet.y)<(b.variant==="boss"?53:23))||
+          game.leopardSeals.some(l=>!l.dead&&l.emerge>.35&&Math.hypot(l.x-bullet.x,l.y-bullet.y)<46);
+        if(impact||bullet.life<=0||bullet.x<35||bullet.y<35||
+           bullet.x>WORLD_W-35||bullet.y>WORLD_H-35){
+          rocketDetonate(bullet.x,bullet.y);bullet.life=0;
+        }
+        continue;
+      }
+      if(bullet.ion){
+        const hit=game.birds.some(b=>!b.down&&Math.hypot(b.x-bullet.x,b.y-bullet.y)<(b.variant==="boss"?55:28))||
+          game.leopardSeals.some(l=>!l.dead&&l.emerge>.35&&Math.hypot(l.x-bullet.x,l.y-bullet.y)<43);
+        const yetiHit=game.yeti?.alive&&Math.hypot(game.yeti.x-bullet.x,game.yeti.y-bullet.y)<63;
+        if(hit||yetiHit||bullet.life<=0||
+          bullet.x<=35||bullet.y<=35||bullet.x>=WORLD_W-35||bullet.y>=WORLD_H-35){
+          ionDetonate(bullet.x,bullet.y);
+          bullet.life=0;
+        }
+        continue;
+      }
+      if(bullet.x<0||bullet.y<0||bullet.x>WORLD_W||bullet.y>WORLD_H)bullet.life=0;
+      const seal=game.seal;
+      if(seal&&bullet.life>0){
+        const dx=bullet.x-ox,dy=bullet.y-oy,den=dx*dx+dy*dy;
+        const t=clamp(den?((seal.x-ox)*dx+(seal.y-oy)*dy)/den:0,0,1);
+        if(Math.hypot(seal.x-(ox+t*dx),seal.y-(oy+t*dy))<22){
+          warnSeal();bullet.life=0;
+        }
+      }
+      if(bullet.life>0){
+        for(const leopard of game.leopardSeals){
+          if(leopard.dead||leopard.emerge<.25)continue;
+          const dx=bullet.x-ox,dy=bullet.y-oy,len2=dx*dx+dy*dy;
+          const t=clamp(len2?((leopard.x-ox)*dx+(leopard.y-oy)*dy)/len2:0,0,1);
+          if(Math.hypot(leopard.x-ox-t*dx,leopard.y-oy-t*dy)<33){
+            hurtLeopard(leopard,bullet.damage);bullet.life=0;break;
+          }
+        }
+      }
+      const yeti=game.yeti;
+      if(yeti?.alive&&bullet.life>0){
+        const dx=bullet.x-ox,dy=bullet.y-oy,den=dx*dx+dy*dy;
+        const t=clamp(den?((yeti.x-ox)*dx+(yeti.y-oy)*dy)/den:0,0,1);
+        if(Math.hypot(yeti.x-(ox+t*dx),yeti.y-(oy+t*dy))<66){
+          hurtYeti(bullet.damage);
+          bullet.life=0;
+        }
+      }
+      for(const b of game.birds){
+        if(b.down||bullet.life<=0)continue;
+        const dx=bullet.x-ox,dy=bullet.y-oy,den=dx*dx+dy*dy;
+        const t=clamp(den?((b.x-ox)*dx+(b.y-oy)*dy)/den:0,0,1);
+        if(Math.hypot(b.x-(ox+t*dx),b.y-(oy+t*dy))<(b.variant==="boss"?42:b.variant==="bruiser"?24:17)){
+          const n=norm(dx,dy);
+          smack(b,bullet.damage*(game.player.rage>0?1.5:1),n.x*5,n.y*5);
+          bullet.life=0;break;
+        }
+      }
+    }
+    game.bullets=game.bullets.filter(b=>b.life>0);
+    for(const bomb of game.bombs){
+      bomb.x+=bomb.vx;bomb.y+=bomb.vy;
+      bomb.vx*=.95;bomb.vy*=.95;bomb.life--;
+      if(bomb.life<=0)boom(bomb.x,bomb.y);
+    }
+    game.bombs=game.bombs.filter(b=>b.life>0);
+    for(const blast of game.explosions){blast.life--;blast.r=Math.min(blast.maxR||135,blast.r+(blast.blood?22:15));}
+    game.explosions=game.explosions.filter(b=>b.life>0);
+    for(const p of game.floats){p.y-=.65;p.life--;}
+    game.floats=game.floats.filter(p=>p.life>0);
+  }
+  function collectDrops(){
+    const p=game.player;
+    for(let i=game.drops.length-1;i>=0;i--){
+      const drop=game.drops[i];drop.life--;
+      if(drop.life<=0){game.drops.splice(i,1);continue;}
+      if(Math.hypot(p.x-drop.x,p.y-drop.y)>36)continue;
+      game.drops.splice(i,1);
+      const k=drop.kind;
+      if(ARMORY[k]){
+        const hadUzi=!!p.owned.uzi;
+        p.owned[k]=true;
+        if(k==="uzi")p.ammo.uzi+=130;
+        if(k==="shotgun")p.ammo.shotgun+=18;
+        if(k==="ion")p.ammo.ion+=10;
+        if(k==="flame")p.ammo.flame+=225;
+        if(k==="rocket")p.ammo.rocket+=8;
+        // First Uzi pickup makes it the default. Later pickups must not
+        // interrupt a weapon the player explicitly chose.
+        if(k==="uzi"&&!hadUzi && game.phase!=="night")p.weapon="uzi";
+        else if(k==="flame"&&game.phase==="night")p.weapon="flame";
+        else if(!p.owned.uzi&&!p.owned.flame)p.weapon=k;
+        say("PICKED UP: "+ARMORY[k].name+(k==="uzi"&&!hadUzi?" · NOW YOUR DEFAULT":". CHOOSE WITH Q/E OR NUMBER KEYS."),190);
+      }else if(k==="parka"){p.parka=Math.min(3,p.parka+1);p.temp=clamp(p.temp+30,0,100);say("PARKA EQUIPPED. COLD RESISTANCE UP.",145);}
+      else if(k==="medkit"){p.hp=clamp(p.hp+50,0,100);say("FIRST AID KIT: +50 HEALTH.",120);}
+      else if(k==="cleats"){p.cleats=true;say("ICE CLEATS. TRACTION, YOU BEAUTIFUL BASTARD.",125);}
+      else if(k==="ammo"){p.ammo.uzi+=100;p.ammo.shotgun+=16;p.ammo.ion+=3;p.ammo.rocket+=3;p.ammo.flame+=80;say("AMMO RESTOCKED.",110);}
+      else if(k==="fuel"){p.ammo.flame+=160;say("FLAMETHROWER FUEL +160. THE PENGUIN BLOOD IS NOT THE FUEL.",140);}
+      else if(k==="rockets"){p.ammo.rocket+=5;say("FIVE MORE ROCKETS. ANTARCTICA IS WORRIED.",150);}
+      else if(k==="ioncell"){p.ammo.ion+=3;say("PLASMA ION CELLS +3. ANTARCTICA IS FUCKED.",160);}
+      else if(k==="grenade"){p.grenades+=3;say("THREE MORE GRENADES. NO ONE TELL THE PENGUINS.",150);}
+      else if(k==="coffee"){p.rage=900;p.stamina=100;p.temp=clamp(p.temp+16,0,100);say("CAFFEINATED RAGE: 15 SECONDS OF POOR JUDGMENT.",180);}
+      playSfx(k==="medkit"||k==="parka"?"heal":"collect");
+      floatText(drop.x,drop.y-35,k.toUpperCase()+"!",DROP_COLORS[k]);
+      particles(drop.x,drop.y,DROP_COLORS[k],20,5);
+    }
+  }
+  function shove() {
+    if (state !== "running") return;
+    const p = game.player;
+    const w=ARMORY[p.weapon];
+    if(p.shoveCD>0)return;
+    if(w.type==="gun"){fireWeapon();return;}
+    if(p.stamina<w.stamina)return;
+    p.shoveCD=w.cooldown;p.stamina-=w.stamina;
+    p.swing=9;p.swingReach=w.reach;p.swingColor=w.color;
+    p.swingId++;p.provocation++;
+    particles(p.x+p.fx*w.reach,p.y+p.fy*w.reach,w.color,12,4);
+    playSfx("melee");
+  }
+
+  function downBird(bird, reason) {
+    if (bird.down) return;
+    bird.down=true;
+    bird.downTimer=240;
+    // The Yeti gets hungry. Its dinner NEVER adds to the player's score,
+    // combo, kills, ice falls or wave progression.
+    if(reason==="yeti"){
+      bird.eaten=true;
+      bird.downTimer=0;
+      game.yetiEats++;
+      particles(bird.x,bird.y,"#f6fcff",18,2.5);
+      floatText(bird.x,bird.y-28,"YETI SNACK · +0",C.cyan);
+      return;
+    }
+    if(reason!=="ice"){
+      goreBurst(bird);
+      game.score++;
+      game.player.provocation += 2;
+      game.points+=bird.variant==="boss"?500:100;
+      if(bird.variant==="boss"){
+        say("THE KING IS DEAD. LONG LIVE YOUR TERRIBLE DECISIONS.",280);
+        game.drops.push(makeDrop("medkit",bird.x-35,bird.y),makeDrop("ammo",bird.x+35,bird.y),makeDrop("grenade",bird.x,bird.y+40));
+        playSfx("wave");
+      }
+      game.player.combo++;
+      game.player.comboTime=180;
+      if(game.player.combo%5===0)floatText(bird.x,bird.y-55,game.player.combo+"x COMBO!");
+      if(Math.random()<.19)game.drops.push(makeDrop(["ammo","medkit","grenade","coffee","parka"][Math.floor(rand(0,5))],bird.x,bird.y));
+      // goreBurst already scattered the comic-book snow stains and fragments.
+      if(bird.variant!=="boss")say([
+        "PENGUIN DOWN. THE ROOKERY FILES A COMPLAINT.",
+        "ONE TUXEDO PANCAKE. NATURE IS JUDGING YOU.",
+        "IMPACT CONFIRMED. BAD KARMA.",
+        "THAT ONE IS NOT WADDLING FOR A MINUTE."
+      ][Math.floor(rand(0, 4))]);
+      if (game.score === 37) say("37! YOU'VE TIED THE LEGENDARY RECORD. NOW DON'T FREEZE.", 280);
+      if (game.score === 38) say("38! THE LEGEND HAS BEEN TOPPLED. ANTARCTICA IS FURIOUS.", 310);
+    } else {
+      // Ice kills are now scored. The ion cannon turns the terrain into a weapon.
+      game.falls++;
+      game.score++;
+      game.points+=100;
+      game.player.combo++;
+      game.player.comboTime=180;
+      particles(bird.x,bird.y,C.blueIce,24,4);
+      floatText(bird.x,bird.y-25,"CRACK KILL +100",C.cyan);
+      if(game.score===37)say("37! THE LEGENDARY RECORD IS YOURS.",240);
+      else if(game.score===38)say("38! YOU'VE SURPASSED THE LEGEND.",260);
+      else say("ICE CLAIMS ANOTHER TUXEDO. YOU GET THE CREDIT.",110);
+    }
+  }
+
+  function updatePlayer() {
+    const p = game.player;
+    let mx = (held("right") ? 1 : 0) - (held("left") ? 1 : 0);
+    let my = (held("down") ? 1 : 0) - (held("up") ? 1 : 0);
+    const move = norm(mx, my);
+    const sprint = held("sprint") && p.stamina > 8 && (mx !== 0 || my !== 0);
+    let terrainSlow = 1;
+    for (const drift of game.drifts) {
+      if (within(p.x, p.y, drift)) terrainSlow = .48;
+    }
+    if (sprint) p.stamina -= .43;
+    else p.stamina += .22;
+    p.stamina = clamp(p.stamina, 0, 100);
+    if (mx !== 0 || my !== 0) {
+      // On mobile the D-pad is the PRIMARY steering and aiming control.
+      if(!pointerAim.active||pointerAim.touch){p.fx=move.x;p.fy=move.y;}
+      const acceleration = sprint ? .72 : .43;
+      p.vx += move.x * acceleration * terrainSlow;
+      p.vy += move.y * acceleration * terrainSlow;
+    }
+    const w = wind();
+    p.vx += w.x * .012;
+    p.vy += w.y * .012;
+    const friction = p.slip > 0 && !p.cleats ? .973 : terrainSlow >= .8 ? .945 : .89;
+    if (p.slip > 0) p.slip--;
+    p.vx *= friction;
+    p.vy *= friction;
+    p.x = clamp(p.x + p.vx, PR, WORLD_W - PR);
+    p.y = clamp(p.y + p.vy, PR, WORLD_H - PR);
+    // Finger aiming is optional. Any held D-pad direction overrides it.
+    if(pointerAim.active&&!(pointerAim.touch&&(mx!==0||my!==0))){
+      const camX=p.x-W/2,camY=p.y-385;
+      const face=norm(pointerAim.x+camX-p.x,pointerAim.y+camY-p.y);
+      if(face.x!==0||face.y!==0){p.fx=face.x;p.fy=face.y;}
+    }
+    if (p.shoveCD > 0) p.shoveCD--;
+    if(p.muzzle>0)p.muzzle--;
+    if(p.flameActive>0)p.flameActive--;
+    if(p.flameFireCD>0)p.flameFireCD--;
+    if(p.flameMeltCD>0)p.flameMeltCD--;
+    if(p.rage>0)p.rage--;
+    if(p.comboTime>0)p.comboTime--;else p.combo=0;
+    if (p.swing > 0) p.swing--;
+    let loss = .018 + (game.blizzardTimer > 0 ? .04 : 0) - (sprint ? .008 : 0);
+    if (p.wet > 0) { p.wet--; loss += .058; }
+    // Dusk chills; night is brutally cold. Daylight restores a little heat.
+    const climate=game.darkness/.88;
+    loss*=1+2.0*climate;
+    if(game.phase==="day")loss-=.013;
+    loss*=1-p.parka*.2;
+    // Standing in the golden ring turns the fire into a real warming station.
+    // It offsets blizzards and even wet clothing if you move in close enough.
+    let fireHeat=0;
+    for(const fire of game.fires){
+      const d=Math.hypot(p.x-fire.x,p.y-fire.y);
+      const radius=fire.kind==="fuel"?107:WARMTH_RADIUS;
+      if(d<radius){
+        const gain=(fire.kind==="fuel"?.39:.30)*(1-d/radius);
+        fireHeat=Math.max(fireHeat,gain);
+      }
+    }
+    p.yetiWarming=false;
+    if(game.yeti?.alive&&game.yeti.rage<=0){
+      const d=Math.hypot(p.x-game.yeti.x,p.y-game.yeti.y);
+      if(d<220){
+        const yetiHeat=.35*(1-d/220);
+        fireHeat=Math.max(fireHeat,yetiHeat);
+        p.yetiWarming=yetiHeat>loss;
+      }
+    }
+    p.warming=fireHeat>loss;
+    p.temp=clamp(p.temp-loss+fireHeat,0,100);
+    if (p.temp <= 0) {
+      finish("Froze after losing a very predictable thermodynamics argument");
+    } else if (p.hp <= 0) {
+      finish("Got swarmed by furious tuxedo linebackers");
+    }
+  }
+  function checkTerrain() {
+    const p=game.player;
+    const riverDepth=riverExposure(p.x,p.y);
+    if(riverDepth<.63){
+      finish("Fell into a winding Antarctic channel. That water is not a spa.");
+      return;
+    }
+    if(riverDepth<1.38){
+      p.wet=Math.max(p.wet,175);
+      p.slip=Math.max(p.slip,18);
+      p.vx*=.95;p.vy*=.95;
+    }
+    for (const hole of game.holes) {
+      const d = Math.hypot(p.x - hole.x, p.y - hole.y);
+      if (d < hole.r * .78) {
+        finish("Fell through weak ice because confidence is not buoyancy");
+        return;
+      }
+      if (d < hole.r * 1.15 && Math.hypot(p.vx, p.vy) > 4.5) {
+        p.slip = Math.max(p.slip, 35);
+        p.wet = Math.max(p.wet, 240);
+      }
+    }
+    for (const crack of [...game.cracks,...game.ionCracks]) {
+      if (!within(p.x, p.y, crack)) continue;
+      const speed = Math.hypot(p.vx, p.vy);
+      if (speed > (crack.ion?1.7:3.4) && Math.random() < (crack.ion?.11:.06) * crack.depth) {
+        p.slip = 55;
+        p.hp -= rand(3, 9);
+        particles(p.x, p.y, C.white, 14, 2.4);
+        say("YOU ATE SHIT ON A PRESSURE CRACK. THE ICE REMAINS UNDEFEATED.");
+      }
+      if (speed > (crack.ion?3.6:5.8) && Math.random() < (crack.ion?.025:.012) * crack.depth) {
+        finish("Vanished into a pressure crack like a cautionary pamphlet");
+        return;
+      }
+    }
+    if (p.hp <= 0) finish("Got defeated by ice before the penguins even finished laughing");
+  }
+  function updateBirds() {
+    const birds = game.birds;
+    const player = game.player;
+    const w = wind();
+    for (const b of birds) {
+      if (b.down) {
+        b.downTimer--;
+        continue;
+      }
+      if(b.variant==="boss"){
+        b.state="mob";
+        b.aggression=2;
+      }
+      const dx = player.x - b.x, dy = player.y - b.y;
+      const dist = Math.hypot(dx, dy);
+      let nearby = 0, cx = 0, cy = 0, sx = 0, sy = 0;
+      for (const other of birds) {
+        if (other === b || other.down) continue;
+        const ox = b.x - other.x, oy = b.y - other.y;
+        const d = Math.hypot(ox, oy);
+        if (d < 130) { nearby++; cx += other.x; cy += other.y; }
+        if (d > .00001 && d < 36) {
+          sx += ox / d * (36 - d) * .018;
+          sy += oy / d * (36 - d) * .018;
+        }
+      }
+      if (nearby) { cx /= nearby; cy /= nearby; }
+      const mobChance = b.aggression + player.provocation * .018 + nearby * .018;
+      if (b.variant==="boss"){
+        b.state="mob";b.panic=Math.max(b.panic,40);
+      } else if (dist < 80 && nearby >= 4 && Math.random() < mobChance * .045) {
+        b.state = "mob";
+        b.panic = Math.max(b.panic, 80);
+      } else if (dist < 155 && b.state !== "mob") {
+        b.state = "flee";
+        b.panic = Math.max(b.panic, 55);
+      } else if (dist >= 190 && b.state === "mob") {
+        b.state = "wander";
+      } else if (game.blizzardTimer > 0 && nearby > 0 && dist >= 155) {
+        b.state = "huddle";
+      } else if (Math.random() < .01) {
+        b.state = "wander";
+      }
+      let ax = 0, ay = 0;
+      if (b.state === "flee") {
+        const n = norm(dx, dy);
+        ax -= n.x * (.18 + b.fear * .22);
+        ay -= n.y * (.18 + b.fear * .22);
+        if (nearby) {
+          const c = norm(cx - b.x, cy - b.y);
+          ax += c.x * .04; ay += c.y * .04;
+        }
+      } else if (b.state === "mob") {
+        const n = norm(dx, dy);
+        ax += n.x * .22; ay += n.y * .22;
+      } else if (b.state === "huddle" && nearby) {
+        const n = norm(cx - b.x, cy - b.y);
+        ax += n.x * .12 - w.x * .018;
+        ay += n.y * .12 - w.y * .018;
+      } else {
+        b.phase += .025;
+        ax += Math.cos(b.phase) * .045;
+        ay += Math.sin(b.phase * .7) * .045;
+      }
+      ax += sx + w.x * .004;
+      ay += sy + w.y * .004;
+      if (b.panic > 0) { b.panic--; ax *= 1.25; ay *= 1.25; }
+      b.vx += ax; b.vy += ay;
+      const v = Math.hypot(b.vx, b.vy), maxSpeed = ((b.state === "flee" || b.state === "mob") ? 3 : 1.55) * (b.variant==="boss"?.95:b.variant==="berserker"?1.65:b.variant==="bruiser"?.75:1);
+      if (v > maxSpeed) { b.vx *= maxSpeed / v; b.vy *= maxSpeed / v; }
+      b.vx *= .94; b.vy *= .94;
+      b.x = clamp(b.x + b.vx, ER, WORLD_W - ER);
+      b.y = clamp(b.y + b.vy, ER, WORLD_H - ER);
+      if (b.peckCD > 0) b.peckCD--;
+      if (b.flash > 0) b.flash--;
+      if(riverExposure(b.x,b.y)<.64){downBird(b,"ice");continue;}
+      for (const hole of game.holes) {
+        if (Math.hypot(b.x - hole.x, b.y - hole.y) < hole.r * .72) {
+          downBird(b, "ice");
+          break;
+        }
+      }
+      if (b.down) continue;
+      for (const crack of [...game.cracks,...game.ionCracks]) {
+        if(within(b.x,b.y,crack)&&(crack.ion||b.panic>20)&&Math.random()<(crack.ion?.21:.045)*crack.depth) {
+          downBird(b, "ice");
+          break;
+        }
+      }
+    }
+    // Prevent indefinite growth in the living list as bodies expire.
+    game.birds = game.birds.filter(b => !b.down || b.downTimer > 0);
+  }
+  function collisions() {
+    const p = game.player;
+    for (const b of game.birds) {
+      if (b.down) continue;
+      let dx = p.x - b.x, dy = p.y - b.y;
+      const d = Math.hypot(dx, dy);
+      const contactRadius=PR+(b.variant==="boss"?41:b.variant==="bruiser"?21:ER);
+      if (d > 0.00001 && d < contactRadius) {
+        const nx = dx / d, ny = dy / d, overlap = contactRadius - d;
+        p.x += nx * overlap * .42;
+        p.y += ny * overlap * .42;
+        b.x -= nx * overlap * .58;
+        b.y -= ny * overlap * .58;
+        if (b.state === "mob" && b.peckCD <= 0) {
+          b.peckCD = Math.floor(rand(35, 70));
+          p.hp -= rand(4, 9)*(b.variant==="boss"?2.5:b.variant==="bruiser"?1.7:1);
+          p.vx += nx * rand(1.5, 2.8);
+          p.vy += ny * rand(1.5, 2.8);
+          particles(p.x - nx * 14, p.y - ny * 14, C.red, 8, 2.3);
+          stain(p.x - nx * 16, p.y - ny * 16, rand(5, 10));
+          say("PECKED AND FLIPPER-SLAPPED. DEEPLY EMBARRASSING.");
+        }
+      }
+      if (p.swing > 0 && b.lastSwing !== p.swingId) {
+        const rx = p.x + p.fx * p.swingReach - b.x, ry = p.y + p.fy * p.swingReach - b.y;
+        const toward = norm(b.x - p.x, b.y - p.y);
+        if (Math.hypot(rx, ry) < (b.variant==="boss"?62:43) && toward.x * p.fx + toward.y * p.fy > .15) {
+          b.lastSwing = p.swingId; // Exactly one hit per penguin per shove.
+          const push = norm(b.x - p.x, b.y - p.y);
+          const w=ARMORY[p.weapon];
+          smack(b,w.damage*rand(.8,1.2)*(p.rage>0?1.5:1),push.x*8,push.y*8);
+          p.vx-=p.fx*.5;p.vy-=p.fy*.5;
+        }
+      }
+    }
+    const seal=game.seal;
+    if(seal&&p.swing>0&&seal.lastSwing!==p.swingId){
+      const dx=seal.x-p.x,dy=seal.y-p.y,n=norm(dx,dy);
+      if(Math.hypot(dx-p.fx*p.swingReach,dy-p.fy*p.swingReach)<40&&
+         n.x*p.fx+n.y*p.fy>.15){
+        seal.lastSwing=p.swingId;
+        warnSeal();
+      }
+    }
+    for(const leopard of game.leopardSeals){
+      if(leopard.dead||leopard.emerge<.25||p.swing<=0||leopard.lastSwing===p.swingId)continue;
+      const dx=leopard.x-p.x,dy=leopard.y-p.y,n=norm(dx,dy);
+      if(Math.hypot(dx-p.fx*p.swingReach,dy-p.fy*p.swingReach)<58 &&
+         n.x*p.fx+n.y*p.fy>.1){
+        leopard.lastSwing=p.swingId;
+        hurtLeopard(leopard,ARMORY[p.weapon].damage*(p.rage>0?1.5:1));
+      }
+    }
+    const yeti=game.yeti;
+    if(yeti?.alive&&yeti.guardian<=0&&p.swing>0&&yeti.lastSwing!==p.swingId){
+      const dx=yeti.x-p.x,dy=yeti.y-p.y;
+      const n=norm(dx,dy);
+      if(Math.hypot(dx-p.fx*p.swingReach,dy-p.fy*p.swingReach)<70&&
+         n.x*p.fx+n.y*p.fy>.15){
+        yeti.lastSwing=p.swingId;
+        hurtYeti(ARMORY[p.weapon].damage*(p.rage>0?1.5:1));
+      }
+    }
+    if (p.hp <= 0) finish("Got swarmed by furious tuxedo linebackers");
+  }
+  function spawnBoss(){
+    // Position within the arena, away from the player and from any water holes.
+    const p=game.player;
+    let x=p.x,y=p.y;
+    for(let attempt=0;attempt<24;attempt++){
+      const a=rand(0,Math.PI*2),r=rand(330,480);
+      x=clamp(p.x+Math.cos(a)*r,60,WORLD_W-60);
+      y=clamp(p.y+Math.sin(a)*r,80,WORLD_H-80);
+      if(game.holes.every(h=>Math.hypot(x-h.x,y-h.y)>h.r+75))break;
+    }
+    const b=penguin(x,y);
+    b.variant="boss";b.hp=650+game.wave*75;b.maxHp=b.hp;
+    b.mass=4.4;b.aggression=2;b.fear=0;b.state="mob";b.peckCD=30;
+    game.birds.push(b);
+    // Boss fights light an extra orange signal brazier for a temporary safe zone.
+    const fireX=clamp(x+165,55,WORLD_W-55),fireY=clamp(y+55,65,WORLD_H-65);
+    if(game.holes.every(h=>Math.hypot(fireX-h.x,fireY-h.y)>h.r+40)){
+      game.fires.push({x:fireX,y:fireY,phase:rand(0,6.28),life:2400,kind:"signal"});
+    }
+    game.drops.push(makeDrop("medkit",clamp(p.x+100,20,WORLD_W-20),clamp(p.y+70,20,WORLD_H-20)));
+    say("BOSS ALERT: THE EMPEROR OF BAD DECISIONS HAS ARRIVED!",290);
+    playSfx("boss");
+    game.shake=13;
+  }
+  function updateSkyCycle(){
+    const g=game;
+    if(g.phase==="day"){
+      g.darkness=0;g.night=false;
+      if(g.nightQueue>0 && g.clock>=g.nextNightAllowed){
+        g.nightQueue--;
+        g.phase="dusk";g.phaseTicks=0;g.nightNotice=190;
+        say("POLAR DUSK: 15 SECONDS UNTIL DARKNESS.",170);
+      }
+      return;
+    }
+    g.phaseTicks++;
+    if(g.phase==="dusk"){
+      g.darkness=.88*clamp(g.phaseTicks/DUSK_TICKS,0,1);
+      g.night=false;
+      if(g.phaseTicks>=DUSK_TICKS){
+        g.phase="night";g.phaseTicks=0;g.night=true;g.darkness=.88;
+        g.nightCycles++;g.nightNotice=175;
+        // Night default: flamethrower. Grant a fueled one if missed.
+        const p=g.player;
+        if(!p.owned.flame){p.owned.flame=true;p.ammo.flame+=230;}
+        if(p.ammo.flame<100)p.ammo.flame+=160;
+        p.weapon="flame";p.shoveCD=0;
+        say("NIGHTFALL! 59 SECONDS. FLASHLIGHT, FIRE AND LUCK.",230);
+      }
+    }else if(g.phase==="night"){
+      g.darkness=.88;g.night=true;
+      if(g.phaseTicks>=NIGHT_TICKS){
+        g.phase="dawn";g.phaseTicks=0;g.night=false;g.nightNotice=190;
+        say("DAWN! THE SUN REMEMBERS THIS CONTINENT.",175);
+      }
+    }else if(g.phase==="dawn"){
+      g.darkness=.88*(1-clamp(g.phaseTicks/DAWN_TICKS,0,1));
+      g.night=false;
+      if(g.phaseTicks>=DAWN_TICKS){
+        g.phase="day";g.phaseTicks=0;g.darkness=0;
+        g.nextNightAllowed=g.clock+MIN_DAY_TICKS;
+        // Day default: Uzi if the player has collected one.
+        const p=g.player;
+        if(p.owned.uzi){p.weapon="uzi";p.shoveCD=0;}
+        g.nightNotice=120;
+      }
+    }
+  }
+  function waveDirector(){
+    if(game.score<game.nextWaveAt)return;
+    game.wave++;
+    game.nextWaveAt+=10+Math.min(20,(game.wave-1)*2);
+    // Leopard seals remain twice as durable as the current wave's Emperor.
+    const leopardMax=2*(650+Math.max(2,game.wave)*75);
+    for(const seal of game.leopardSeals){
+      if(seal.dead)continue;
+      seal.hp+=leopardMax-seal.maxHp;
+      seal.maxHp=leopardMax;
+    }
+    game.waveBanner=205;
+    if(game.wave%3===0){
+      game.nightQueue++;
+      const p=game.player;
+      game.drops.push(makeDrop("flame",clamp(p.x+72,40,WORLD_W-40),clamp(p.y-58,40,WORLD_H-40)));
+    }
+    // A milestone queues darkness. Timing is independent of how fast kills
+    // happen, so full night always lasts precisely 59 gameplay seconds.
+    game.player.temp=clamp(game.player.temp+10,0,100);
+    game.drops.push(makeDrop("ammo",clamp(game.player.x+65,40,WORLD_W-40),clamp(game.player.y+55,40,WORLD_H-40)));
+    if(game.wave===2||game.wave%3===0){
+      const p=game.player;
+      game.drops.push(makeDrop("ion",clamp(p.x+110,40,WORLD_W-40),clamp(p.y+55,40,WORLD_H-40)));
+      game.drops.push(makeDrop("ioncell",clamp(p.x+140,40,WORLD_W-40),clamp(p.y+35,40,WORLD_H-40)));
+    }
+    if(game.wave===2||game.wave%3===0){
+      const p=game.player;
+      game.drops.push(makeDrop("fuel",clamp(p.x-70,40,WORLD_W-40),clamp(p.y-90,40,WORLD_H-40)));
+    }
+    if(game.wave%2===0){
+      const p=game.player;game.drops.push(makeDrop("rocket",clamp(p.x-100,40,WORLD_W-40),clamp(p.y+75,40,WORLD_H-40)));
+    }
+    say(game.wave%3===0?"WAVE "+game.wave+": SUNSET INCOMING. KEEP YOUR FLASHLIGHT READY.":
+      "WAVE "+game.wave+": THE ROOKERY REQUESTS REINFORCEMENTS.",230);
+    playSfx("wave");
+    if(game.wave%2===0){game.bossWave=game.wave;spawnBoss();}
+  }
+  function maintainPopulation() {
+    let living = 0;
+    for (const b of game.birds) if (!b.down) living++;
+    const target = Math.min(MAX_PENGUINS, START_PENGUINS + Math.floor(game.score / 2));
+    if (living < target && Math.random() < .02) {
+      const side = Math.floor(rand(0, 4));
+      let x, y;
+      if (side === 0) { x = rand(80, WORLD_W - 80); y = 40; }
+      else if (side === 1) { x = rand(80, WORLD_W - 80); y = WORLD_H - 40; }
+      else if (side === 2) { x = 40; y = rand(80, WORLD_H - 80); }
+      else { x = WORLD_W - 40; y = rand(80, WORLD_H - 80); }
+      game.birds.push(penguin(x, y));
+    }
+  }
+  function tick() {
+    if (state !== "running") return;
+    game.clock++;
+    updateSkyCycle();
+    if (Math.random() < .002 && game.blizzardTimer <= 0) {
+      game.blizzardTimer = Math.floor(rand(420, 900));
+      game.windStrength = rand(1.2, 2.2);
+      say("WHITEOUT ROLLING IN. YOUR EYEBROWS RECONSIDER THEIR LIFE CHOICES.", 230);
+    }
+    if (game.blizzardTimer > 0) {
+      game.blizzardTimer--;
+      if (game.blizzardTimer === 0) {
+        game.windStrength = rand(.35, 1);
+        game.windAngle += rand(-.8, .8);
+      }
+    }
+    if (game.clock % 420 === 0) {
+      game.windAngle += rand(-.65, .65);
+      game.windStrength = clamp(game.windStrength + rand(-.25, .3), .25, 2.2);
+    }
+    for(const fire of game.fires)if(Number.isFinite(fire.life))fire.life--;
+    game.fires=game.fires.filter(fire=>fire.life>0);
+    updatePlayer();
+    if (state !== "running") return;
+    checkTerrain();
+    if (state !== "running") return;
+    updateBirds();
+    updateSeal();
+    updateYeti();
+    updateLeopards();
+    if(state!=="running")return;
+    if(state!=="running")return;
+    if(held("attack"))shove();
+    collisions();
+    moveProjectiles();
+    collectDrops();
+    waveDirector();
+    maintainPopulation();
+    if(game.waveBanner>0)game.waveBanner--;
+    if(game.nightNotice>0)game.nightNotice--;
+    if(game.yetiBanner>0)game.yetiBanner--;
+    if(game.guardianNotice>0)game.guardianNotice--;
+    if(game.clock%480===0){
+      const p=game.player;
+      const kinds=["ammo","medkit","coffee","grenade","parka","ion","ioncell","rocket","rockets","flame","fuel","fuel"];
+      game.drops.push(makeDrop(kinds[Math.floor(rand(0,kinds.length))],
+        clamp(p.x+rand(-180,180),35,WORLD_W-35),clamp(p.y+rand(-180,180),35,WORLD_H-35)));
+    }
+    if(game.shake>0)game.shake=Math.max(0,game.shake-.65);
+    for (const particle of game.particles) {
+      particle.x += particle.vx; particle.y += particle.vy;
+      particle.vx *= .94; particle.vy *= .94; particle.life--;
+    }
+    game.particles = game.particles.filter(p=>p.life>0);
+    for(const gib of game.gibs){
+      gib.x+=gib.vx;gib.y+=gib.vy;gib.vx*=.93;gib.vy*=.93;
+      gib.angle+=gib.spin;gib.life--;
+      if(gib.life%5===0)stain(gib.x,gib.y,Math.max(2,gib.size*.4),gib.color);
+    }
+    game.gibs=game.gibs.filter(g=>g.life>0);
+    for (const s of game.stains) s.life--;
+    game.stains = game.stains.filter(s => s.life > 0);
+    if (game.messageTimer > 0) game.messageTimer--;
+  }
+
+  function rect(x, y, w, h, color) {
+    ctx.fillStyle = color;
+    ctx.fillRect(x, y, w, h);
+  }
+  function circle(x, y, r, color) {
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+  }
+  function ellipse(x, y, rx, ry, color) {
+    ctx.beginPath();
+    ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+  }
+  function text(label, x, y, size = 17, color = C.white, align = "left", weight = 800) {
+    ctx.font = weight + " " + size + "px Arial, sans-serif";
+    ctx.fillStyle = color;
+    ctx.textAlign = align;
+    ctx.textBaseline = "middle";
+    ctx.fillText(label, x, y);
+  }
+  function drawCampfire(fire){
+    const x=fire.x,y=fire.y,t=game.clock*.095+fire.phase;
+    const pulse=1+Math.sin(t*2.3)*.055;
+    const signal=fire.kind==="signal",fuel=fire.kind==="fuel";
+    // Warm illumination on the ice, with translucent rings rather than expensive filters.
+    circle(x,y,117*pulse,"#ff952011");
+    circle(x,y,82*pulse,"#ffb43120");
+    circle(x,y,49*pulse,"#ffac3430");
+    ellipse(x,y+13,fuel?27:39,fuel?9:16,fuel?"#ec793c88":"#324c56a8");
+    if(fuel){
+      // Burning spill, no logs. It visibly shrinks before extinguishing.
+      const dying=clamp(fire.life/140,0,1);
+      for(let i=0;i<7;i++){
+        const dx=(i-3)*7;
+        const height=(21+Math.sin(t*2+i*1.8)*7)*dying;
+        ctx.beginPath();ctx.moveTo(x+dx-8,y+5);
+        ctx.quadraticCurveTo(x+dx-6,y-height*.5,x+dx+Math.sin(t+i)*4,y-height-10*dying);
+        ctx.quadraticCurveTo(x+dx+9,y-height*.25,x+dx+8,y+5);
+        ctx.closePath();ctx.fillStyle=i%2?"#ff4b25":"#ffbd43";ctx.fill();
+      }
+      ellipse(x,y+13,25,7,"#572f275b");
+      return;
+    }
+    // Charred crossed logs and hot coals.
+    ctx.save();ctx.translate(x,y+7);
+    ctx.strokeStyle="#4e291d";ctx.lineWidth=11;ctx.lineCap="round";
+    ctx.beginPath();ctx.moveTo(-20,-6);ctx.lineTo(20,11);
+    ctx.moveTo(20,-7);ctx.lineTo(-20,11);ctx.stroke();
+    ctx.strokeStyle="#98613b";ctx.lineWidth=3;
+    ctx.beginPath();ctx.moveTo(-19,-7);ctx.lineTo(19,10);ctx.stroke();
+    circle(0,0,14,"#e94b1e");
+    circle(0,-3,10,"#ffb23e");
+    ctx.restore();
+    // Five independently flickering flames, bright yellow cores and wisps.
+    for(let i=0;i<5;i++){
+      const ox=(i-2)*7+Math.sin(t+i*3.2)*3;
+      const height=(i===2?31:21)+Math.sin(t*1.9+i*2)*6+(signal?8:0);
+      const fy=y-7+Math.sin(t*1.4+i)*1.5;
+      ctx.beginPath();
+      ctx.moveTo(x+ox-8,fy+9);
+      ctx.quadraticCurveTo(x+ox-8,fy-height*.35,x+ox+Math.sin(t*1.2+i)*5,fy-height);
+      ctx.quadraticCurveTo(x+ox+11,fy-height*.2,x+ox+8,fy+9);
+      ctx.closePath();
+      ctx.fillStyle=i%2?"#f87924":"#ffb22c";ctx.fill();
+      ctx.beginPath();ctx.moveTo(x+ox-3,fy+5);
+      ctx.quadraticCurveTo(x+ox-2,fy-height*.3,x+ox+2,fy-height*.57);
+      ctx.quadraticCurveTo(x+ox+5,fy-height*.12,x+ox+4,fy+5);
+      ctx.closePath();ctx.fillStyle="#fff090";ctx.fill();
+    }
+    // Procedural drifting smoke and floating embers: animated but allocation-free.
+    for(let i=0;i<7;i++){
+      const age=(game.clock*.7+i*20+fire.phase*31)%145;
+      const windDrift=Math.sin(game.windAngle)*age*.12;
+      const dx=Math.sin(i*4+t*.7)*10+windDrift;
+      const dy=-20-age*.63;
+      const r=(i%2===0?2.2:3.6);
+      circle(x+dx,y+dy,r,i%3===0?"#a5a9a959":"#ffb450a8");
+    }
+    if(signal){
+      ctx.strokeStyle="#ffda71";ctx.lineWidth=2;
+      ctx.beginPath();ctx.arc(x,y,36,0,Math.PI*2);ctx.stroke();
+    }
+  }
+  function riverPath(river,extra){
+    const samples=river.samples;
+    ctx.beginPath();
+    for(let i=0;i<samples.length;i++){
+      const q=samples[i],before=samples[Math.max(0,i-1)],after=samples[Math.min(samples.length-1,i+1)];
+      const tangent=norm(after.x-before.x,after.y-before.y);
+      const nx=-tangent.y,ny=tangent.x;
+      const w=q.width+extra+Math.sin(i*2.4+river.seed)*2.1;
+      if(i===0)ctx.moveTo(q.x+nx*w,q.y+ny*w);
+      else ctx.lineTo(q.x+nx*w,q.y+ny*w);
+    }
+    for(let i=samples.length-1;i>=0;i--){
+      const q=samples[i],before=samples[Math.max(0,i-1)],after=samples[Math.min(samples.length-1,i+1)];
+      const tangent=norm(after.x-before.x,after.y-before.y),nx=-tangent.y,ny=tangent.x;
+      const w=q.width+extra+Math.cos(i*2.9+river.seed)*2.6;
+      ctx.lineTo(q.x-nx*w,q.y-ny*w);
+    }
+    ctx.closePath();
+  }
+  function drawRiver(river){
+    riverPath(river,13);ctx.fillStyle="#f8ffff";ctx.fill();
+    riverPath(river,8);ctx.fillStyle="#7ea9bc";ctx.fill();
+    riverPath(river,1);ctx.fillStyle="#173c51";ctx.fill();
+    riverPath(river,-8);ctx.fillStyle="#071d2e";ctx.fill();
+    // Foaming moving water and drifting ice flakes inside the actual channel.
+    const a=river.samples;
+    for(let i=4;i<a.length-4;i+=7){
+      const q=a[i],drift=Math.sin(game.clock*.035+i*2+river.seed)*q.width*.3;
+      circle(q.x+drift,q.y,2.2,"#b9e8f19c");
+      ctx.beginPath();ctx.moveTo(q.x-9+drift,q.y-3);
+      ctx.lineTo(q.x+8+drift,q.y-3);
+      ctx.lineWidth=1.3;ctx.strokeStyle="#75b4cf7d";ctx.stroke();
+    }
+  }
+  function drawIceBridge(bridge){
+    const river=game.rivers.find(r=>riverDistance(bridge.x,bridge.y,r)<1.3);
+    if(!river)return;
+    const pts=river.samples;let best=0,dist=Infinity;
+    for(let i=0;i<pts.length;i++){
+      const d=Math.hypot(bridge.x-pts[i].x,bridge.y-pts[i].y);
+      if(d<dist){dist=d;best=i;}
+    }
+    const before=pts[Math.max(0,best-1)],after=pts[Math.min(pts.length-1,best+1)];
+    const angle=Math.atan2(after.y-before.y,after.x-before.x);
+    ctx.save();ctx.translate(bridge.x,bridge.y);ctx.rotate(angle);
+    rect(-29,-52,58,104,"#d8eff7");
+    rect(-25,-44,50,88,"#effbff");
+    ctx.strokeStyle="#85bdce";ctx.lineWidth=3;
+    ctx.beginPath();ctx.moveTo(-18,-36);ctx.lineTo(-8,-12);
+    ctx.lineTo(-14,9);ctx.lineTo(4,30);ctx.stroke();
+    ctx.restore();
+  }
+  function drawWorld(camX, camY) {
+    rect(0, 0, W, H, C.ice);
+    const grd = ctx.createLinearGradient(0, 0, W, H);
+    grd.addColorStop(0, "#d4ecf3");
+    grd.addColorStop(.6, "#b2d7e3");
+    grd.addColorStop(1, "#91c0d4");
+    rect(0, 0, W, H, grd);
+    // Static snow specks drift with the camera, no per-frame randomness.
+    for (let sx = -80; sx < W + 120; sx += 80) {
+      for (let sy = -80; sy < H + 120; sy += 80) {
+        circle(sx + (camX * .18 % 80), sy + (camY * .18 % 80), 2, "#f4fcff");
+      }
+    }
+    ctx.save();
+    ctx.translate(-camX, -camY);
+    for (const d of game.drifts) {
+      ellipse(d.x + d.w / 2, d.y + d.h / 2, d.w / 2, d.h / 2, "#effbff");
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.ellipse(d.x + d.w / 2, d.y + d.h / 2, d.w / 2, d.h / 2, 0, 0, Math.PI * 2);
+      ctx.strokeStyle = "#b5d9e3";
+      ctx.stroke();
+    }
+    for(const river of game.rivers)drawRiver(river);
+    for(const bridge of game.bridges)drawIceBridge(bridge);
+    for (const c of [...game.cracks,...game.ionCracks]) {
+      rect(c.x, c.y, c.w, c.h, c.ion?"#193b69":C.darkIce);
+      rect(c.x + 3, c.y + 3, Math.max(1, c.w - 6), Math.max(1, c.h - 6), c.ion?"#4fe4f1":"#2d7189");
+    }
+    for (const hole of game.holes) {
+      circle(hole.x, hole.y, hole.r, C.darkIce);
+      circle(hole.x, hole.y, hole.r - 5, C.blueIce);
+      circle(hole.x, hole.y, hole.r * .58, "#0a2c3f");
+      if(hole.ion){
+        ctx.beginPath();ctx.arc(hole.x,hole.y,hole.r+5,0,Math.PI*2);
+        ctx.strokeStyle="#85efff";ctx.lineWidth=3;ctx.stroke();
+      }
+    }
+    for (const s of game.stains) {
+      circle(s.x, s.y, Math.max(2, s.radius * clamp(s.life / 900, .25, 1)), s.color);
+    }
+    for(const fire of game.fires)drawCampfire(fire);
+    for(const item of game.drops)drawDrop(item);
+    for(const leopard of game.leopardSeals)drawLeopard(leopard);
+    for(const b of game.birds)if(!b.eaten)drawBird(b);
+    if(game.seal)drawSeal(game.seal);
+    if(game.yeti?.alive)drawYeti(game.yeti);
+    drawPlayer(game.player);
+    for(const bullet of game.bullets){
+      if(bullet.rocket){
+        circle(bullet.x,bullet.y,13,"#ff9f43");
+        circle(bullet.x,bullet.y,6,"#ffe5a3");
+      }
+      if(bullet.ion){
+        circle(bullet.x,bullet.y,20+Math.sin(game.clock*.25)*3,"#52ecff44");
+        circle(bullet.x,bullet.y,12,"#3de9f8");
+        circle(bullet.x,bullet.y,5,"#f7ffff");
+      }
+      const n=norm(bullet.vx,bullet.vy);
+      ctx.beginPath();ctx.moveTo(bullet.x-n.x*13,bullet.y-n.y*13);
+      ctx.lineTo(bullet.x+n.x*5,bullet.y+n.y*5);
+      ctx.strokeStyle=bullet.color;ctx.lineWidth=4;ctx.stroke();
+    }
+    for(const bomb of game.bombs){
+      circle(bomb.x,bomb.y,8,"#293e3b");
+      circle(bomb.x-2,bomb.y-3,3,C.yellow);
+    }
+    for(const blast of game.explosions){
+      circle(blast.x,blast.y,blast.r,blast.warning?"#fbd3793d":blast.blood?"#bb123b38":blast.ion?"#7bffff48":"#ef7b2633");
+      ctx.beginPath();ctx.arc(blast.x,blast.y,blast.r,0,Math.PI*2);
+      ctx.strokeStyle=blast.warning?"#ffed92":blast.blood?"#ed254e":blast.ion?"#6ff9ff":"#ffcb59";ctx.lineWidth=blast.blood?10:7;ctx.stroke();
+    }
+    for(const gib of game.gibs){
+      ctx.save();ctx.translate(gib.x,gib.y);ctx.rotate(gib.angle);
+      ellipse(0,0,gib.size,gib.size*.52,gib.color);
+      ellipse(-gib.size*.25,-gib.size*.15,gib.size*.35,gib.size*.2,"#ff5f7180");
+      ctx.restore();
+    }
+    for(const p of game.particles) circle(p.x,p.y,p.radius,p.color);
+    for(const ft of game.floats)text(ft.label,ft.x,ft.y,17,ft.color,"center",1000);
+    ctx.restore();
+  }
+  function drawDrop(item){
+    const bob=Math.sin(game.clock*.09+item.spin)*5;
+    const x=item.x,y=item.y+bob,c=DROP_COLORS[item.kind];
+    circle(x,y+7,19,"#153d5150");
+    circle(x,y,18,c+"66");
+    ctx.strokeStyle=c;ctx.lineWidth=3;
+    ctx.beginPath();ctx.arc(x,y,17,0,Math.PI*2);ctx.stroke();
+    if(ARMORY[item.kind]){
+      ctx.save();ctx.translate(x,y);ctx.rotate(-.38);
+      rect(-11,-4,22,8,"#1b2a31");rect(4,-3,6,8,c);
+      rect(-6,2,4,11,"#374c53");
+      ctx.restore();
+    }else{
+      const icons={medkit:"+",parka:"J",cleats:"C",ammo:"A",grenade:"G",coffee:"!",ioncell:"⚡",rockets:"R",fuel:"F"};
+      text(icons[item.kind]||"?",x,y,22,"#132231","center",1000);
+    }
+    text(item.kind.toUpperCase(),x,y+28,11,"#19384a","center",950);
+  }
+  function drawLeopard(seal){
+    if(seal.dead||seal.emerge<.07)return;
+    const hole=game.holes[seal.holeIndex];
+    if(!hole)return;
+    const x=seal.x,y=seal.y,depth=seal.emerge;
+    const angle=Math.atan2(game.player.y-y,game.player.x-x);
+    circle(x,y,24*depth,"#7bc9df76");
+    ctx.save();ctx.translate(x,y);ctx.rotate(angle);ctx.scale(depth,depth);
+    // ONLY head and upper neck emerge. The rest remains underwater.
+    ellipse(-24,0,32,19,"#43575e");
+    ellipse(0,0,37,20,"#778d90");
+    ellipse(20,-3,30,16,"#c7d2cb");
+    ellipse(38,1,9,6,"#37484e");
+    for(const n of [-1,1]){
+      circle(11,n*11,4,"#171e24");
+      circle(13,n*11,1.4,"#e5f8ff");
+      for(let i=0;i<4;i++){
+        circle(-24+i*12,n*(i%2?6:12),2.8,"#313c42");
+      }
+    }
+    ctx.beginPath();ctx.moveTo(16,10);ctx.lineTo(48,8);
+    ctx.lineWidth=2.5;ctx.strokeStyle="#38252b";ctx.stroke();
+    if(seal.flash>0)ellipse(6,0,35,20,"#ff324966");
+    ctx.restore();
+    // Above-water health shown only while engaged.
+    if(depth>.55){
+      rect(x-37,y-34,74,7,"#142f43");
+      rect(x-37,y-34,74*clamp(seal.hp/Math.max(1,seal.maxHp),0,1),7,C.red);
+      text("LEOPARD SEAL",x,y-45,11,C.yellow,"center",1000);
+    }
+  }
+  function drawSeal(seal){
+    const x=seal.x,y=seal.y,bob=Math.sin(game.clock*.1+seal.phase)*2;
+    const scared=seal.scared>0;
+    ellipse(x,y+14,34,8,"#416b8166");
+    // A visible round white seal pup and a clear warning label.
+    ellipse(x-21,y+6+bob,13,8,"#e9f4f9");
+    ellipse(x+24,y+8+bob,13,9,"#d2e9f1");
+    ellipse(x,y+bob,35,20,"#f4fdff");
+    ellipse(x+23,y-7+bob,19,17,"#f7fcff");
+    ellipse(x+26,y+1+bob,11,7,"#d4ecf4");
+    circle(x+30,y-11+bob,4.5,"#1e3844");
+    circle(x+31,y-12+bob,1.6,"#f8ffff");
+    ellipse(x+38,y+bob,4,2.8,"#1c3d48");
+    for(const sy of [-1,1]){
+      ctx.strokeStyle="#638696";ctx.lineWidth=1.4;ctx.beginPath();
+      ctx.moveTo(x+37,y+3+bob);
+      ctx.lineTo(x+44,y+3+sy*6+bob);ctx.stroke();
+    }
+    rect(x-108,y-55,216,24,"#173848dc");
+    text(scared?"THE YETI IS WATCHING":"BABY SEAL · DON'T CLUB",
+      x,y-43,12,scared?C.orange:C.cyan,"center",1000);
+  }
+  function drawYeti(y){
+    // Side-profile Bigfoot: roughly the size of an Emperor boss penguin,
+    // with a hunched back, elongated arms, huge feet and projecting ape face.
+    const angry=y.rage>0;
+    const facing=y.vx<0?-1:1;
+    const walk=game.clock*.095,step=Math.sin(walk)*8,bob=Math.abs(Math.sin(walk))*.8;
+    circle(y.x,y.y,angry?126:151,angry?"#ff426519":"#ffbf4930");
+    ctx.save();ctx.translate(y.x,y.y);
+    ctx.scale(facing,1);
+    // Back-facing leg and massive heel.
+    ellipse(-22,26+step*.5,15,31,"#b2ccdb");
+    ellipse(-24,56+step*.6,27,9,"#f1f9ff");
+    // Trailing arm, bent elbow and oversized white knuckles.
+    ellipse(-40,-10+bob,13,36,"#c3dbe8");
+    ellipse(-47,19+bob+step*.2,13,24,"#a8cadb");
+    ellipse(-44,40+bob+step*.2,17,12,"#f0faff");
+    // Sloping Bigfoot shoulders + forward-leaning hump.
+    ctx.beginPath();
+    ctx.moveTo(-51,14+bob);
+    ctx.quadraticCurveTo(-60,-39+bob,-42,-63+bob);
+    ctx.quadraticCurveTo(-15,-92+bob,13,-69+bob);
+    ctx.quadraticCurveTo(34,-52+bob,28,-20+bob);
+    ctx.quadraticCurveTo(33,13+bob,8,36+bob);
+    ctx.quadraticCurveTo(-22,40+bob,-51,14+bob);
+    ctx.closePath();ctx.fillStyle="#a8c7d8";ctx.fill();
+    // Shaggy snow-white fur, sharp silhouette tufts along the bent spine.
+    for(let i=0;i<11;i++){
+      const px=-51+i*6,py=-22-Math.sin(i/10*Math.PI)*50+bob;
+      ctx.beginPath();ctx.moveTo(px-7,py+10);
+      ctx.lineTo(px-10,py-8);ctx.lineTo(px+6,py+8);
+      ctx.closePath();ctx.fillStyle=i%2?"#e4f3fb":"#f5fcff";ctx.fill();
+    }
+    ellipse(-6,-12+bob,31,45,"#edf7fd");
+    ellipse(3,6+bob,20,27,"#d6ecf5");
+    // Nearest leg is in front of the body. It makes the walking motion readable.
+    ellipse(16,28-step*.42,17,31,"#deeff8");
+    ellipse(27,56-step*.5,28,10,"#f9fdff");
+    // Long forward arm almost brushes the snow as the Yeti lumbers by.
+    ellipse(31,-10+bob,16,32,"#b6d5e4");
+    ellipse(39,15+bob-step*.45,13,27,"#eff8fd");
+    ellipse(44,37+bob-step*.5,18,12,"#c8e1ee");
+    for(let i=0;i<3;i++)circle(34+i*8,44+bob-step*.5,5,"#fbfeff");
+    // Side-facing ape skull. ONE visible eye, projecting brow and heavy muzzle.
+    ellipse(22,-73+bob,32,30,"#e6f4fc");
+    ellipse(43,-64+bob,24,19,"#91b5c7");
+    ellipse(49,-59+bob,24,11,"#bfd8e3");
+    ctx.beginPath();ctx.moveTo(9,-92+bob);
+    ctx.quadraticCurveTo(31,-103+bob,51,-82+bob);
+    ctx.lineTo(47,-75+bob);ctx.quadraticCurveTo(26,-86+bob,9,-82+bob);
+    ctx.fillStyle="#f5fcff";ctx.fill();
+    ellipse(36,-77+bob,9,7,"#244251");
+    circle(39,-77+bob,3.2,angry?"#ff314c":"#aeedff");
+    ellipse(64,-63+bob,5,4,"#1d3a49");
+    if(angry||y.munch>0){
+      ellipse(52,-48+bob,18,y.munch>0?13:8,"#6c2436");
+      for(let i=0;i<4;i++)rect(42+i*7,-54+bob,3,8,"#fff8f2");
+    }else{
+      ctx.beginPath();ctx.arc(49,-53+bob,9,.2,Math.PI*.82);
+      ctx.strokeStyle="#466978";ctx.lineWidth=2;ctx.stroke();
+    }
+    for(let i=0;i<6;i++){
+      const px=-13+i*8;
+      ctx.beginPath();ctx.moveTo(px,-93+bob);
+      ctx.lineTo(px+3,-102+Math.sin(walk*.3+i)*2+bob);
+      ctx.lineTo(px+6,-90+bob);
+      ctx.fillStyle="#fff";ctx.fill();
+    }
+    if(y.flash>0)ellipse(-6,-15+bob,39,52,"#ff49657a");
+    ctx.restore();
+    const labelY=y.y-127;
+    rect(y.x-100,labelY-15,200,29,angry?"#551729de":"#163844e6");
+    text(angry?"ENRAGED YETI +1000":y.munch>0?"YETI MUNCHING · +0":"FRIENDLY YETI · WARMTH",
+      y.x,labelY,14,angry?C.red:C.yellow,"center",1000);
+  }
+  function drawBird(b) {
+    ctx.save();ctx.translate(b.x,b.y);
+    if(b.down){
+      ellipse(0,5,24,8,"#557d92");
+      ellipse(0,0,23,12,C.black);
+      ellipse(0,0,15,7,C.white);
+      circle(22,2,5,C.orange);
+      ctx.restore();return;
+    }
+    const boss=b.variant==="boss",bruiser=b.variant==="bruiser",psycho=b.variant==="berserker";
+    const scale=boss?2.25:bruiser?1.32:(psycho?.88:1);
+    const bob=Math.sin(game.clock*(psycho?0.23:0.11)+b.phase)*3;
+    ctx.translate(0,bob);ctx.scale(scale,scale);
+    ellipse(0,21,19,7,"#466d8290");
+    // Tiny flippers with real silhouettes, feet, belly, and a beak.
+    ellipse(-13,3,7,19,C.black);ellipse(13,3,7,19,C.black);
+    ellipse(-10,24,8,5,C.orange);ellipse(11,24,8,5,C.orange);
+    ellipse(0,0,15,22,C.black);
+    ellipse(2,4,10,16,C.white);
+    ellipse(-8,-2,2.5,10,"#f8d774");ellipse(10,-1,2.5,9,"#f8d774");
+    circle(0,-23,14,C.black);
+    ellipse(1,-27,9,5,"#363f45");
+    circle(-5,-26,4,C.white);circle(6,-26,4,C.white);
+    circle(-4,-26,2.1,C.black);circle(7,-26,2.1,C.black);
+    ctx.beginPath();ctx.moveTo(0,-20);ctx.lineTo(14,-16);ctx.lineTo(0,-13);
+    ctx.closePath();ctx.fillStyle=C.orange;ctx.fill();
+    if(boss){
+      ctx.beginPath();
+      ctx.moveTo(-14,-38);ctx.lineTo(-13,-51);ctx.lineTo(-5,-44);
+      ctx.lineTo(0,-55);ctx.lineTo(6,-44);ctx.lineTo(14,-51);
+      ctx.lineTo(14,-38);ctx.closePath();ctx.fillStyle="#ebc650";ctx.fill();
+      circle(0,-46,2.6,C.red);
+      ctx.strokeStyle="#f7b648";ctx.lineWidth=3;
+      ctx.beginPath();ctx.arc(0,0,29,-.4,2.7);ctx.stroke();
+    }
+    if(bruiser){
+      ctx.beginPath();ctx.moveTo(-14,-34);ctx.lineTo(14,-34);
+      ctx.lineWidth=5;ctx.strokeStyle="#b14b59";ctx.stroke();
+      text("!",0,-44,15,C.red,"center",900);
+    }
+    if(psycho){ctx.strokeStyle=C.red;ctx.lineWidth=2;
+      ctx.beginPath();ctx.moveTo(-10,-30);ctx.lineTo(-2,-26);
+      ctx.moveTo(13,-30);ctx.lineTo(3,-26);ctx.stroke();}
+    if(b.flash>0){ellipse(0,-1,16,24,"#ff4f6599");}
+    if(b.state==="mob"){
+      circle(-4,-26,2.5,C.red);circle(7,-26,2.5,C.red);
+    }
+    ctx.restore();
+  }
+  function drawPlayer(p){
+    ctx.save();ctx.translate(p.x,p.y);
+    const angle=Math.atan2(p.fy,p.fx);
+    ctx.rotate(angle+Math.PI/2);
+    ellipse(0,10,21,9,"#30526c99");
+    // Legs and boots.
+    rect(-12,11,10,17,"#1e3039");rect(3,11,10,17,"#1e3039");
+    ellipse(-9,25,8,5,"#111d26");ellipse(9,25,8,5,"#111d26");
+    // Arms and gloves.
+    ellipse(-19,0,8,14,"#375564");ellipse(19,0,8,14,"#375564");
+    circle(-20,-8,6,"#212a2d");circle(20,-8,6,"#212a2d");
+    // Upgradeable expedition jacket.
+    const jacket=p.parka>0?"#f1a834":"#417c87";
+    ellipse(0,0,20,22,"#18333e");
+    ellipse(0,0,16,20,jacket);
+    rect(-3,-19,6,37,"#ecf4dd");
+    rect(-14,2,28,4,"#263c41");
+    // Hood, goggles, and expressive head.
+    circle(0,-14,15,p.parka>0?"#f3e7bc":"#cbd2c8");
+    circle(0,-14,12,"#253942");
+    ellipse(0,-14,11,6,"#a4e6ff");
+    rect(-9,-16,18,4,"#152532");
+    circle(0,-8,5,"#d1a481");
+    if(p.rage>0){ctx.strokeStyle=C.red;ctx.lineWidth=3;
+      ctx.beginPath();ctx.arc(0,-13,19,0,Math.PI*2);ctx.stroke();}
+    ctx.restore();
+    // Weapon points along the movement direction.
+    const fx=p.fx,fy=p.fy,x=p.x+fx*23,y=p.y+fy*23;
+    if(p.weapon==="flame"){
+      ctx.strokeStyle="#48595f";ctx.lineWidth=13;
+      ctx.beginPath();ctx.moveTo(x-fx*13,y-fy*13);
+      ctx.lineTo(x+fx*35,y+fy*35);ctx.stroke();
+      circle(x+fx*35,y+fy*35,8,p.flameActive>0?"#ffe082":"#aa714b");
+    }else if(p.weapon==="rocket"){
+      ctx.strokeStyle="#3f4748";ctx.lineWidth=17;
+      ctx.beginPath();ctx.moveTo(x-fx*15,y-fy*15);
+      ctx.lineTo(x+fx*42,y+fy*42);ctx.stroke();
+      circle(x+fx*40,y+fy*40,9,"#f09540");
+      if(p.muzzle>0)circle(x+fx*51,y+fy*51,16,"#ffbd6e");
+    }else if(p.weapon==="ion"){
+      ctx.strokeStyle="#8af6ff";ctx.lineWidth=12;
+      ctx.beginPath();ctx.moveTo(x-fx*15,y-fy*15);
+      ctx.lineTo(x+fx*40,y+fy*40);ctx.stroke();
+      circle(x+fx*40,y+fy*40,11,"#75f8ff");
+      if(p.muzzle>0)circle(x+fx*51,y+fy*51,20,"#aaffff");
+    }else if(p.weapon==="uzi"||p.weapon==="shotgun"){
+      const nx=-fy,ny=fx,len=p.weapon==="shotgun"?32:22;
+      ctx.beginPath();ctx.moveTo(x-fx*8,y-fy*8);
+      ctx.lineTo(x+fx*len,y+fy*len);
+      ctx.lineWidth=p.weapon==="shotgun"?8:7;ctx.strokeStyle="#202d34";ctx.stroke();
+      if(p.muzzle>0){circle(x+fx*(len+4),y+fy*(len+4),rand(7,13),C.yellow);}
+    }else if(p.weapon==="staff"||p.weapon==="nunchucks"||p.weapon==="knife"){
+      ctx.beginPath();ctx.moveTo(x-fx*10,y-fy*10);
+      ctx.lineTo(x+fx*(p.weapon==="staff"?44:24),y+fy*(p.weapon==="staff"?44:24));
+      ctx.lineWidth=p.weapon==="staff"?6:4;
+      ctx.strokeStyle=ARMORY[p.weapon].color;ctx.stroke();
+    }
+    if(p.swing>0){
+      ctx.beginPath();ctx.arc(p.x+fx*p.swingReach,p.y+fy*p.swingReach,25,0,Math.PI*2);
+      ctx.lineWidth=5;ctx.strokeStyle=p.swingColor;ctx.stroke();
+    }
+  }
+  function bar(x, y, width, percent, color, label) {
+    text(label, x, y - 12, 12, C.white, "left", 900);
+    rect(x, y, width, 13, "#2d4553");
+    rect(x, y, width * clamp(percent / 100, 0, 1), 13, color);
+    ctx.strokeStyle = "#f3f8fa";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x, y, width, 13);
+  }
+  function drawObjectiveCompass(){
+    const player=game.player;
+    let nearest=null, minDist=Infinity;
+    for(const item of game.drops){
+      const d=Math.hypot(item.x-player.x,item.y-player.y);
+      if(d<minDist){nearest=item;minDist=d;}
+    }
+    if(player.temp<48&&(game.fires.length||game.yeti?.alive)){
+      nearest=null;minDist=Infinity;
+      for(const fire of game.fires){
+        const d=Math.hypot(fire.x-player.x,fire.y-player.y);
+        if(d<minDist){nearest={x:fire.x,y:fire.y,kind:"FIRE"};minDist=d;}
+      }
+      if(game.yeti?.alive&&game.yeti.rage<=0){
+        const d=Math.hypot(game.yeti.x-player.x,game.yeti.y-player.y);
+        if(d<minDist){nearest={x:game.yeti.x,y:game.yeti.y,kind:"YETI"};minDist=d;}
+      }
+    }
+    if(!nearest&&game.yeti?.alive){
+      const y=game.yeti;
+      nearest={x:y.x,y:y.y,kind:y.rage>0?"ANGRY YETI":"FRIENDLY YETI"};
+      minDist=Math.hypot(y.x-player.x,y.y-player.y);
+    }
+    if(!nearest){
+      const boss=game.birds.find(b=>b.variant==="boss"&&!b.down);
+      if(boss){nearest={x:boss.x,y:boss.y,kind:"BOSS"};minDist=Math.hypot(boss.x-player.x,boss.y-player.y);}
+    }
+    if(!nearest)return;
+    const angle=Math.atan2(nearest.y-player.y,nearest.x-player.x);
+    // Compass now lives entirely in the lower HUD, not over the arena.
+    rect(711,H-102,281,43,"#1b3546");
+    circle(735,H-80,15,"#3b5968");
+    ctx.save();ctx.translate(735,H-80);ctx.rotate(angle);
+    ctx.beginPath();ctx.moveTo(12,0);ctx.lineTo(-6,-7);ctx.lineTo(-3,0);
+    ctx.lineTo(-6,7);ctx.closePath();ctx.fillStyle=C.yellow;ctx.fill();ctx.restore();
+    text("NEAREST "+nearest.kind.toUpperCase(),757,H-87,12,C.white);
+    text(Math.round(minDist)+"m · FOLLOW THE ARROW",757,H-70,11,C.cyan);
+  }
+  function drawHud(){
+    // The entire HUD sits in two opaque bands. Nothing floats over the player.
+    rect(0,0,W,120,"#091925f4");
+    rect(0,118,W,2,"#59798a");
+    rect(0,H-105,W,105,"#091925f5");
+    rect(0,H-105,W,2,"#59798a");
+    text("EMPEROR GAUNTLET",18,24,23,C.white);
+    text("PENGUINS: "+game.score,310,24,19,C.red);
+    text("ICE: "+game.falls,579,24,17,C.cyan);
+    const phaseName=game.phase.toUpperCase();
+    text("WAVE "+game.wave+" · "+phaseName,839,24,14,game.darkness>.5?C.cyan:C.yellow);
+    const p=game.player;
+    bar(18,53,192,p.hp,C.red,"HEALTH");
+    bar(247,53,192,p.temp,p.warming?C.orange:C.cyan,p.warming?"TEMP + HEAT":"TEMPERATURE");
+    bar(476,53,192,p.stamina,C.green,"STAMINA");
+    const w=wind(),n=norm(w.x,w.y);
+    circle(776,56,19,"#354c5b");
+    ctx.beginPath();ctx.moveTo(776,56);
+    ctx.lineTo(776+n.x*16,56+n.y*16);
+    ctx.lineWidth=3;ctx.strokeStyle=C.yellow;ctx.stroke();
+    text(game.blizzardTimer>0?"BLIZZARD":"CLEAR-ISH",843,57,17,
+      game.blizzardTimer>0?C.yellow:C.white);
+    rect(0,83,W,35,"#173241");
+    const wp=ARMORY[p.weapon];
+    text("WEAPON: "+wp.name,18,100,16,wp.color);
+    text(wp.type==="gun"?"AMMO: "+p.ammo[p.weapon]:"MELEE / UNLIMITED",310,100,15,C.white);
+    text("GRENADES: "+p.grenades,500,100,15,C.orange);
+    text(p.yetiWarming?"YETI WARMTH":p.warming?"CAMPFIRE WARMTH":
+      p.combo>1?p.combo+"x COMBO":"FIND HEAT TO SURVIVE",695,100,14,
+      p.warming?C.orange:C.white);
+    text("POINTS: "+game.points,18,H-80,16,C.yellow);
+    text("BEST: "+best,18,H-61,13,C.cyan);
+    const angry=game.yeti?.alive&&game.yeti.rage>0?game.yeti:null;
+    const boss=game.birds.find(b=>b.variant==="boss"&&!b.down);
+    if(angry||boss){
+      const target=angry||boss;
+      const hp=target.hp/Math.max(1,target.maxHp);
+      text(angry?"HOSTILE YETI · +1000":"THE EMPEROR OF BAD DECISIONS",
+        499,H-91,13,angry?C.red:C.yellow,"center");
+      rect(321,H-76,355,14,"#562c3a");
+      rect(321,H-76,355*clamp(hp,0,1),14,angry?C.red:C.orange);
+      ctx.strokeStyle="#f4e2aa";ctx.lineWidth=1;ctx.strokeRect(321,H-76,355,14);
+    }
+    drawObjectiveCompass();
+    // Notifications, boss warnings and wave announcements all share the bottom band.
+    const notice=game.guardianNotice>0?"YETI PROTECTS BABY SEAL · WARNING SLAP: -50% HP":
+      game.nightNotice>0?(game.phase==="dusk"?"DUSK: 15 SECONDS TO DARK":
+        game.phase==="night"?"59 SECOND POLAR NIGHT: USE YOUR FLASHLIGHT":
+        game.phase==="dawn"?"THE SUN IS COMING BACK":"DAYLIGHT RETURNS"):
+
+      game.yetiBanner>0?"FRIENDLY YETI SPOTTED · HE'S A WALKING HEATER":
+      game.waveBanner>0?"WAVE "+game.wave+" · "+
+      (game.wave%2===0?"THE EMPEROR COMETH":"THE ROOKERY WANTS REVENGE"):
+      game.messageTimer>0?game.message:"";
+    if(notice){
+      text(notice,W/2,H-27,notice.length>80?12:15,
+        game.guardianNotice>0?C.red:game.yetiBanner>0?C.yellow:C.white,"center");
+    }
+  }
+  function drawBlizzard() {
+    if (game.blizzardTimer <= 0) return;
+    const w = wind();
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = "#f4fbffce";
+    ctx.beginPath();
+    for (let i = 0; i < 140; i++) {
+      const x = ((i * 71 + game.clock * .7 * w.x) % W + W) % W;
+      const y = ((i * 43 + game.clock * .7 * w.y) % H + H) % H;
+      ctx.moveTo(x, y);
+      ctx.lineTo(x - w.x * 18, y - w.y * 18);
+    }
+    ctx.stroke();
+    rect(0, 84, W, H - 84, "#f5fcff25");
+  }
+  let nightCanvas=null,nightCtx=null;
+  function drawNight(camX,camY){
+    if(game.darkness<=0)return;
+    // A separate compositing surface keeps spotlight transparency from
+    // erasing the actual world. The gameplay HUD renders afterward.
+    if(!nightCanvas&&typeof document.createElement==="function"){
+      nightCanvas=document.createElement("canvas");
+      nightCanvas.width=W;nightCanvas.height=H;
+      nightCtx=nightCanvas.getContext("2d");
+    }
+    if(nightCtx){
+      nightCtx.clearRect(0,0,W,H);
+      nightCtx.globalCompositeOperation="source-over";
+      nightCtx.fillStyle="rgba(4,11,28,"+game.darkness.toFixed(3)+")";
+      nightCtx.fillRect(0,0,W,H);
+      nightCtx.globalCompositeOperation="destination-out";
+      const light=(wx,wy,r)=>{
+        const x=wx-camX,y=wy-camY;
+        if(x+r<0||x-r>W||y+r<118||y-r>H-104)return;
+        const glow=nightCtx.createRadialGradient(x,y,8,x,y,r);
+        glow.addColorStop(0,"rgba(0,0,0,.96)");
+        glow.addColorStop(.42,"rgba(0,0,0,.75)");
+        glow.addColorStop(1,"rgba(0,0,0,0)");
+        nightCtx.fillStyle=glow;nightCtx.beginPath();
+        nightCtx.arc(x,y,r,0,Math.PI*2);nightCtx.fill();
+      };
+      const p=game.player;
+      light(p.x,p.y,63); // Tiny immediate visibility ring. Beam does the scanning.
+      const px=p.x-camX,py=p.y-camY,a=Math.atan2(p.fy,p.fx);
+      // Directional flashlight: penguins outside this cone are obscured unless
+      // near a campfire or a brief energy/explosion glow.
+      nightCtx.save();nightCtx.translate(px,py);nightCtx.rotate(a);
+      const beam=nightCtx.createLinearGradient(0,0,390,0);
+      beam.addColorStop(0,"rgba(0,0,0,.98)");
+      beam.addColorStop(.7,"rgba(0,0,0,.9)");
+      beam.addColorStop(1,"rgba(0,0,0,0)");
+      nightCtx.fillStyle=beam;nightCtx.beginPath();
+      nightCtx.moveTo(0,0);nightCtx.lineTo(355,-116);
+      nightCtx.quadraticCurveTo(400,0,355,116);
+      nightCtx.closePath();nightCtx.fill();nightCtx.restore();
+      for(const fire of game.fires)light(fire.x,fire.y,fire.kind==="fuel"?125:180);
+      if(game.yeti?.alive)light(game.yeti.x,game.yeti.y,145);
+      for(const b of game.bullets)if(b.ion||b.rocket)light(b.x,b.y,b.ion?155:85);
+      for(const b of game.explosions)light(b.x,b.y,b.ion?260:160);
+      if(p.flameActive>0)light(p.x+p.fx*98,p.y+p.fy*98,185);
+      nightCtx.globalCompositeOperation="source-over";
+      ctx.drawImage(nightCanvas,0,0);
+    }else{
+      // Headless tests and older canvas implementations have a safe fallback.
+      rect(0,120,W,H-225,"rgba(7,20,39,"+game.darkness.toFixed(3)+")");
+    }
+    // Specks of Antarctic night sky visible in the far ice horizon.
+    for(let i=0;i<35;i++){
+      const x=(i*173+41)%W;
+      const y=145+(i*43)%250;
+      circle(x,y,i%5===0?1.9:1,"#d6edffbc");
+    }
+  }
+  function draw() {
+    if (!game) return;
+    // Don't clamp camera at world edges. The player always stays centered
+    // in the unobscured game area instead of sliding behind HUD panels.
+    const camX=game.player.x-W/2;
+    const camY=game.player.y-385;
+    ctx.save();
+    // Keep all moving actors inside a clearly defined gameplay viewport.
+    ctx.beginPath();
+    ctx.rect(0,120,W,H-225);
+    ctx.clip();
+    if(game.shake>0)ctx.translate(rand(-game.shake,game.shake),rand(-game.shake,game.shake));
+    drawWorld(camX,camY);
+    drawNight(camX,camY);
+    drawBlizzard();
+    ctx.restore();
+    drawHud();
+    if(pointerAim.active&&state==="running"){
+      const x=pointerAim.x,y=pointerAim.y;
+      ctx.strokeStyle=C.yellow;ctx.lineWidth=2;ctx.beginPath();
+      ctx.arc(x,y,12,0,Math.PI*2);
+      ctx.moveTo(x-20,y);ctx.lineTo(x-7,y);
+      ctx.moveTo(x+7,y);ctx.lineTo(x+20,y);
+      ctx.moveTo(x,y-20);ctx.lineTo(x,y-7);
+      ctx.moveTo(x,y+7);ctx.lineTo(x,y+20);
+      ctx.stroke();
+    }
+  }
+  function frame(now) {
+    if (!lastTime) lastTime = now;
+    const elapsed = Math.min(now - lastTime, 100);
+    lastTime = now;
+    if (state === "running") {
+      accumulator += elapsed;
+      let ticks = 0;
+      while (accumulator >= 1000 / FPS && ticks < 6 && state === "running") {
+        tick();
+        accumulator -= 1000 / FPS;
+        ticks++;
+      }
+    } else {
+      accumulator = 0;
+    }
+    draw();
+    requestAnimationFrame(frame);
+  }
+
+  function keyName(event) {
+    const k = event.key.toLowerCase();
+    if (k === "arrowup" || k === "w") return "up";
+    if (k === "arrowdown" || k === "s") return "down";
+    if (k === "arrowleft" || k === "a") return "left";
+    if (k === "arrowright" || k === "d") return "right";
+    if (k === "shift") return "sprint";
+    if (event.code === "Space") return "attack";
+    return "";
+  }
+  window.addEventListener("keydown", e => {
+    const k = keyName(e);
+    const space = e.code === "Space";
+    if (k || space || ["g","q","e","1","2","3","4","5","6","7","8","9"].includes(e.key.toLowerCase())) e.preventDefault();
+    if (k && state === "running") pressed.add(k);
+    if (e.repeat) return;
+    if (e.key.toLowerCase() === "p" || e.key === "Escape") {
+      if (state === "running" || state === "paused") pause();
+    } else if (space) {
+      if (state === "running") shove();
+      else if (state === "menu" || state === "over" || state === "paused") start();
+    } else if (state === "running" && e.key.toLowerCase() === "g") {
+      throwGrenade();
+    } else if (state === "running" && (e.key.toLowerCase() === "q" || e.key.toLowerCase() === "e")) {
+      cycleWeapon(e.key.toLowerCase()==="e"?1:-1);
+    } else if (state === "running" && /^[1-9]$/.test(e.key)) {
+      selectWeapon(WEAPON_ORDER[Number(e.key)-1]);
+    } else if (e.key.toLowerCase() === "r" && state === "over") {
+      start();
+    } else if (e.key === "Enter" && state !== "running") {
+      start();
+    }
+  });
+  window.addEventListener("keyup", e => {
+    const k = keyName(e);
+    if (k) pressed.delete(k);
+  });
+  window.addEventListener("blur", () => {
+    pressed.clear();
+    if (state === "running") pause();
+  });
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden && state === "running") pause();
+  });
+  document.querySelectorAll("[data-hold]").forEach(button => {
+    const action = button.dataset.hold;
+    const release = () => { pressed.delete(action); button.classList.remove("pressed"); };
+    button.addEventListener("pointerdown", e => {
+      e.preventDefault();
+      if (state !== "running") return;
+      button.setPointerCapture?.(e.pointerId);
+      pressed.add(action);
+      button.classList.add("pressed");
+    });
+    button.addEventListener("pointerup", release);
+    button.addEventListener("pointercancel", release);
+    button.addEventListener("lostpointercapture", release);
+  });
+  const attackTouch = document.getElementById("touch-shove");
+  attackTouch.addEventListener("pointerdown",e=>{
+    e.preventDefault();
+    if(state!=="running")return;
+    attackTouch.setPointerCapture?.(e.pointerId);
+    pressed.add("attack");
+    shove();
+  });
+  const releaseAttack=()=>pressed.delete("attack");
+  attackTouch.addEventListener("pointerup",releaseAttack);
+  attackTouch.addEventListener("pointercancel",releaseAttack);
+  attackTouch.addEventListener("lostpointercapture",releaseAttack);
+  const grenadeTouch=document.getElementById("touch-grenade");
+  if(grenadeTouch)grenadeTouch.addEventListener("pointerdown",e=>{e.preventDefault();throwGrenade();});
+  const swapTouch=document.getElementById("touch-swap");
+  if(swapTouch)swapTouch.addEventListener("pointerdown",e=>{e.preventDefault();cycleWeapon(1);});
+  // SNES controller: shoulders, SELECT and START. The desktop keys remain unchanged.
+  const prevTouch=document.getElementById("touch-prev");
+  const nextTouch=document.getElementById("touch-next");
+  const selectTouch=document.getElementById("touch-select");
+  const startTouch=document.getElementById("touch-start");
+  for(const [button,action] of [
+    [prevTouch,()=>cycleWeapon(-1)],
+    [nextTouch,()=>cycleWeapon(1)],
+    [selectTouch,()=>cycleWeapon(-1)],
+    [startTouch,()=>state==="running"?pause():start()]
+  ]){
+    if(!button)continue;
+    button.addEventListener("pointerdown",e=>{
+      e.preventDefault();
+      action();
+    });
+  }
+  const aimAtPointer=e=>{
+    const box=canvas.getBoundingClientRect();
+    if(!box.width||!box.height)return;
+    pointerAim.x=clamp((e.clientX-box.left)*W/box.width,0,W);
+    pointerAim.y=clamp((e.clientY-box.top)*H/box.height,0,H);
+    pointerAim.active=true;
+    pointerAim.touch=e.pointerType==="touch";
+  };
+  canvas.addEventListener("pointermove",e=>{
+    if(e.pointerType==="touch"&&state!=="running")return;
+    aimAtPointer(e);
+  });
+  canvas.addEventListener("pointerdown",e=>{
+    if(state!=="running")return;
+    if(e.pointerType==="touch"){
+      e.preventDefault();
+      // Drag on the ice with one thumb to aim while the other holds B.
+      canvas.setPointerCapture?.(e.pointerId);
+      aimAtPointer(e);
+      return;
+    }
+    if(e.button!==0)return;
+    pressed.add("attack");shove();
+  });
+  // Touch aiming is optional and never overrides the D-pad. Releasing a
+  // pointing finger must not release the separate B button's held-fire state.
+  const releasePointer=e=>{
+    if(e?.pointerType==="touch"){
+      pointerAim.active=false;
+      pointerAim.touch=false;
+      return;
+    }
+    pressed.delete("attack");
+  };
+  canvas.addEventListener("pointerup",releasePointer);
+  canvas.addEventListener("pointercancel",releasePointer);
+  canvas.addEventListener("pointerleave",e=>{
+    releasePointer(e);
+    if(e?.pointerType!=="touch")pointerAim.active=false;
+  });
+  playButton.addEventListener("click", start);
+  pauseButton.addEventListener("click", pause);
+  fullButton.addEventListener("click", () => {
+    if (document.fullscreenElement) document.exitFullscreen?.();
+    else gameFrame.requestFullscreen?.();
+  });
+  gameFrame.addEventListener("contextmenu", e => e.preventDefault());
+  // Prevent browser swipe-to-scroll/pinch gesture inside the handheld cabinet.
+  // This does not alter normal desktop browsing.
+  gameFrame.addEventListener("touchmove",e=>{
+    if(e.cancelable)e.preventDefault();
+  },{passive:false});
+  gameFrame.addEventListener("gesturestart",e=>{
+    if(e.cancelable)e.preventDefault();
+  },{passive:false});
+  game = newGame();
+  requestAnimationFrame(frame);
+})();
+
+  </script>
+</body>
+</html>
