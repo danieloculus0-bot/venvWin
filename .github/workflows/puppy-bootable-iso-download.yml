@@ -1,0 +1,175 @@
+name: Isolated venvWin Puppy ISO download after real boot
+
+# Build from the last independently boot-proven Puppy snapshot.
+# This is NOT a full release, Wine integration, or monolithic Debian build.
+on:
+  push:
+    branches: [test/puppy-bootable-iso-download-20261020]
+    paths: [.github/workflows/puppy-bootable-iso-download.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: venvwin-puppy-download-20261020
+  cancel-in-progress: false
+
+jobs:
+  puppy-iso-boot-and-upload:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout isolated last-proven Puppy source
+        uses: actions/checkout@v4
+
+      - name: Verify actual source scripts, not guest proof
+        run: |
+          set -euo pipefail
+          bash -n puppy-native/build-puppy.sh
+          sh -n puppy-native/venvwin-guest-probe
+          sh -n puppy-native/venvwin-session
+          sh -n puppy-native/venvwin-launcher
+          python3 -m py_compile puppy-native/qemu-monitor-probe.py
+          test -s puppy-native/art/venvwin-amber-arc.webp.b64
+          echo SOURCE_GATE_PASS_NOT_GUEST_PROOF
+
+      - name: Install only ISO authoring and guest virtualization dependencies
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            qemu-system-x86 xorriso squashfs-tools rsync curl librsvg2-bin imagemagick file
+
+      - name: Remaster authentic checksum-verified Puppy to venvWin experimental ISO
+        id: build
+        run: |
+          set -euo pipefail
+          bash puppy-native/build-puppy.sh
+          OUT="$GITHUB_WORKSPACE/dist/puppy-native"
+          ISO="$OUT/venvwin-puppy-native-10.0.12-experimental.iso"
+          test -s "$ISO"
+          file "$ISO"
+          xorriso -indev "$ISO" -report_el_torito plain > "$OUT/iso-eltorito-records.txt" 2>&1
+          xorriso -indev "$ISO" -report_system_area plain > "$OUT/iso-system-area-records.txt" 2>&1
+          grep -qi 'El Torito' "$OUT/iso-eltorito-records.txt"
+          (cd "$OUT" && sha256sum "$(basename "$ISO")" > "venvwin-puppy-native-10.0.12-experimental.iso.sha256")
+          echo REMASTERED_ISO_EXISTS_SOURCE_CHECKED_NOT_GUEST_BOOT
+
+      - name: Boot THE GENERATED ISO in isolated real QEMU and require guest-origin evidence
+        id: boot
+        run: |
+          set -euo pipefail
+          OUT="$GITHUB_WORKSPACE/dist/puppy-native"
+          ISO="$OUT/venvwin-puppy-native-10.0.12-experimental.iso"
+          SERIAL="$OUT/usb-download-qemu-guest-serial.log"
+          SERIAL_LF="$OUT/usb-download-qemu-guest-serial-lf.log"
+          MONITOR="$OUT/usb-download-qemu-monitor.sock"
+          VERDICT="$OUT/usb-download-boot-verdict.txt"
+          rm -f "$SERIAL" "$SERIAL_LF" "$MONITOR"
+          printf 'status=NOT_PROVEN\n' > "$VERDICT"
+          ACCEL=tcg
+          if test -r /dev/kvm && test -w /dev/kvm; then ACCEL=kvm; fi
+          echo "GUEST_QEMU_ACCEL=$ACCEL"
+          qemu-system-x86_64 -accel "$ACCEL" -m 3072 -smp 2 \
+            -boot order=d -cdrom "$ISO" \
+            -vga std -usb -device usb-tablet -display vnc=127.0.0.1:0 \
+            -serial "file:$SERIAL" \
+            -monitor "unix:$MONITOR,server=on,wait=off" \
+            -no-reboot -net none > "$OUT/usb-download-qemu-stderr.log" 2>&1 &
+          PID=$!
+          cleanup() {
+            kill "$PID" 2>/dev/null || true
+            wait "$PID" 2>/dev/null || true
+          }
+          trap cleanup EXIT
+          sleep 7
+          python3 puppy-native/qemu-monitor-probe.py --socket "$MONITOR" --action enter \
+            > "$OUT/usb-download-enter.log" 2>&1 || true
+          PASS=0
+          for poll in $(seq 1 75); do
+            sleep 10
+            if test -f "$SERIAL"; then
+              tr -d '\r' < "$SERIAL" > "$SERIAL_LF"
+              if grep -Fxq PUPPY_GUEST_STARTUP_EXECUTED "$SERIAL_LF" &&
+                 grep -Fxq PUPPY_GUI_AND_OVERLAY_PRESENT "$SERIAL_LF" &&
+                 grep -Fxq PUPPY_VENVWIN_CAPSULE_CLI_PASS "$SERIAL_LF" &&
+                 grep -Fxq PUPPY_GUEST_BOOT_PROVEN "$SERIAL_LF"; then
+                echo "LIVE_PUPPY_GUEST_PROOF_POLL=$poll"
+                PASS=1
+                break
+              fi
+            fi
+            kill -0 "$PID" 2>/dev/null || break
+          done
+          if test "$PASS" -ne 1; then
+            echo REAL_GUEST_BOOT_PROOF_FAILED
+            if test -f "$SERIAL_LF"; then tail -n 90 "$SERIAL_LF"; fi
+            exit 1
+          fi
+          python3 puppy-native/qemu-monitor-probe.py --socket "$MONITOR" --action screen \
+            --output "$OUT/usb-download-boot-screen.ppm" \
+            > "$OUT/usb-download-screen.log" 2>&1 || true
+          test -s "$ISO"
+          (cd "$OUT" && sha256sum -c venvwin-puppy-native-10.0.12-experimental.iso.sha256)
+          cat > "$VERDICT" <<'VERDICT_EOF'
+          status=EXPERIMENTAL_PUPPY_CORE_GUEST_BOOT_PROVEN
+          authentic_puppy_boot=PASS_QEMU_ISO
+          live_gui_and_union=PASS_GUEST_MARKER
+          venvwin_capsule_cli=PASS_GUEST_MARKER
+          wine_windows_exe_msi=NOT_PROVEN
+          user_persistence_reboot=NOT_PROVEN
+          ram_copy=NOT_PROVEN
+          independent_sfs_loading=NOT_PROVEN
+          physical_usb_boot=NOT_PROVEN
+          full_release=NO
+          VERDICT_EOF
+          cat "$VERDICT"
+          echo REAL_GUEST_BOOT_PASS_UPLOADABLE_EXPERIMENTAL_ISO
+
+      - name: Always upload bounded boot evidence, even if ISO is rejected
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: venvwin-puppy-usb-iso-boot-diagnostics
+          retention-days: 14
+          if-no-files-found: warn
+          path: |
+            dist/puppy-native/usb-download-boot-verdict.txt
+            dist/puppy-native/usb-download-qemu-guest-serial.log
+            dist/puppy-native/usb-download-qemu-guest-serial-lf.log
+            dist/puppy-native/usb-download-qemu-stderr.log
+            dist/puppy-native/usb-download-enter.log
+            dist/puppy-native/usb-download-screen.log
+            dist/puppy-native/usb-download-boot-screen.ppm
+            dist/puppy-native/upstream-checksum.log
+            dist/puppy-native/iso-eltorito-records.txt
+            dist/puppy-native/iso-system-area-records.txt
+            dist/puppy-native/venvwin-boot-catalog.txt
+            dist/puppy-native/tested-sources.sha256
+            dist/puppy-native/iso-size.txt
+
+      - name: Upload downloadable boot-proven Puppy ISO (not a release)
+        if: steps.build.outcome == 'success' && steps.boot.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: venvwin-puppy-10_0_12-experimental-boot-proven-ISO
+          retention-days: 7
+          if-no-files-found: error
+          compression-level: 0
+          path: |
+            dist/puppy-native/venvwin-puppy-native-10.0.12-experimental.iso
+            dist/puppy-native/venvwin-puppy-native-10.0.12-experimental.iso.sha256
+            dist/puppy-native/usb-download-boot-verdict.txt
+
+      - name: Enforce that only genuinely boot-proven ISO qualifies
+        if: always()
+        run: |
+          set -euo pipefail
+          test "${{ steps.build.outcome }}" = success
+          test "${{ steps.boot.outcome }}" = success
+          grep -Fxq status=EXPERIMENTAL_PUPPY_CORE_GUEST_BOOT_PROVEN \
+            dist/puppy-native/usb-download-boot-verdict.txt
+          grep -Fxq PUPPY_GUEST_BOOT_PROVEN \
+            dist/puppy-native/usb-download-qemu-guest-serial-lf.log
+          echo USB_ISO_QEMU_BOOT_VERIFIED_NOT_HARDWARE_OR_WINDOWS_RELEASE
