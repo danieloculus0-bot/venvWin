@@ -31,7 +31,7 @@ jobs:
           sh -n puppy-native/venvwin-session
           sh -n puppy-native/venvwin-launcher
           python3 -m py_compile puppy-native/qemu-monitor-probe.py
-          test -s puppy-native/art/venvwin-amber-arc.webp.b64
+          test -s puppy-native/art/venvwin-wallpaper.svg
           echo SOURCE_GATE_PASS_NOT_GUEST_PROOF
 
       - name: Install only ISO authoring and guest virtualization dependencies
