@@ -56,7 +56,7 @@ def test_bean_refuses_to_certify_unbuilt_puppy_runtime():
 def test_manifest_does_not_claim_unbundled_core_applications():
     text = BUILDER.read_text()
     for entry in (
-        'VENVWIN_MANIFEST_STANDARD_BROWSER="netsurf-gtk"',
+        'VENVWIN_MANIFEST_STANDARD_BROWSER="netsurf-gtk,epiphany-browser"',
         'VENVWIN_MANIFEST_OFFICE_TOOLS="abiword,gnumeric"',
         'VENVWIN_MANIFEST_PDF_VIEWER="not_bundled"',
         'VENVWIN_MANIFEST_SOFTWARE_CENTER="not_bundled"',
