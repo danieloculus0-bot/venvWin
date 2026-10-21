@@ -10,7 +10,7 @@ import subprocess
 ROOT = Path(__file__).resolve().parents[1]
 GAME = ROOT / "src/venvwin/games/emperor-gauntlet/play.html"
 BUILDER = ROOT / "venvwin-portable/build-iso.sh"
-SOURCE_COMMIT = "49dfdb3127e6ba2fcacd610cfea211a61ee36e53"
+SOURCE_COMMIT = "442c87250a391ef74ead84db8a98821a0f512291"
 
 
 class ExternalAssetParser(HTMLParser):
