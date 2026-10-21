@@ -8,7 +8,7 @@ into a fast, compact USB-first environment on old x86_64 machines.
 
 ## The one bundled game: Emperor Gauntlet
 
-**Emperor Gauntlet is the ONLY arcade game shipped in venvWin Portable.** It is the real, standalone HTML/Canvas/JavaScript game from [FUN](https://github.com/danieloculus0-bot/FUN) (source commit `49dfdb3127e6ba2fcacd610cfea211a61ee36e53`), vendored at `src/venvwin/games/emperor-gauntlet/play.html`. The game requires **no network connection, Python/Pygame runtime, server, or downloaded game assets**.
+**Emperor Gauntlet is the ONLY arcade game shipped in venvWin Portable.** It is the real, standalone HTML/Canvas/JavaScript game from [FUN](https://github.com/danieloculus0-bot/FUN) (source commit `442c87250a391ef74ead84db8a98821a0f512291`), vendored at `src/venvwin/games/emperor-gauntlet/play.html`. The game requires **no network connection, Python/Pygame runtime, server, or downloaded game assets**.
 
 The ISO build creates **Emperor Gauntlet** in the desktop Applications → Games menu and places `venvWin-Emperor-Gauntlet.desktop` on the live-user desktop. The launcher opens the local `file://` game in Firefox ESR on standard/privacy images or Epiphany/WebKit on the core image. NetSurf is retained for lightweight browsing but is **not** used for this HTML5 canvas game.
 
