@@ -6,6 +6,16 @@ Lucid Puppy 5.2.8 is the architecture inspiration, not a kernel or package
 source to copy. venvWin should be a ridiculous amount of usefulness packed
 into a fast, compact USB-first environment on old x86_64 machines.
 
+## The one bundled game: Emperor Gauntlet
+
+**Emperor Gauntlet is the ONLY arcade game shipped in venvWin Portable.** It is the real, standalone HTML/Canvas/JavaScript game from [FUN](https://github.com/danieloculus0-bot/FUN) (source commit `49dfdb3127e6ba2fcacd610cfea211a61ee36e53`), vendored at `src/venvwin/games/emperor-gauntlet/play.html`. The game requires **no network connection, Python/Pygame runtime, server, or downloaded game assets**.
+
+The ISO build creates **Emperor Gauntlet** in the desktop Applications → Games menu and places `venvWin-Emperor-Gauntlet.desktop` on the live-user desktop. The launcher opens the local `file://` game in Firefox ESR on standard/privacy images or Epiphany/WebKit on the core image. NetSurf is retained for lightweight browsing but is **not** used for this HTML5 canvas game.
+
+The older **Frontier Trail** remains as a separate developmental Python source project and is **excluded from the live image and its Games menu**. The game is not an Axiom manufacturing module; this is a deliberately small, fun feature of the portable OS.
+
+The game HTML is small; a capable WebKit/Firefox browser is not. Verify its installed-size impact, cold-start memory, frame rate and keyboard/audio behavior on the target Puppy hardware before approving the lean-core ISO. This source/launcher change does **not** establish a successful ISO build, QEMU boot, or physical-machine gameplay test.
+
 ## What belongs
 
 - A small modern kernel/initramfs, compressed read-only SquashFS base and
