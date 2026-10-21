@@ -13,3 +13,7 @@ This file is the explicit **one-time build trigger** for
 
 Only commits modifying this request file trigger the heavy build; everyday
 source and README commits do not.
+
+## Build retry
+
+Re-trigger after correcting the flash-ready shell syntax regression detected by the first run. Gate correction commit: `ef06e6123fbdb4ab7138d1f79428d8e3269cfb1f`.
