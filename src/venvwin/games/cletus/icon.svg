@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" role="img" aria-label="Cletus Saves Candy game icon">
+<defs><linearGradient id="g" x2="1" y2="1"><stop stop-color="#31173b"/><stop offset="1" stop-color="#0c1328"/></linearGradient></defs>
+<rect x="4" y="4" width="120" height="120" rx="24" fill="url(#g)" stroke="#fa75b2" stroke-width="5"/>
+<path d="M14 92L45 67L62 80L96 45L115 60L115 112L14 112Z" fill="#e95d9d" opacity=".65"/>
+<path d="M28 30H41V67H28ZM52 39H67V67H52ZM81 20H95V67H81Z" fill="#8e4a96"/>
+<path d="M45 41q13-15 32 0v8H45Z" fill="#dbaf78"/><path d="M43 40Q53 16 70 23L82 36L75 43Z" fill="#74452a"/>
+<text x="64" y="104" text-anchor="middle" font-family="DejaVu Sans,Arial,sans-serif" font-size="29" font-weight="900" fill="#ffdc70">CLETUS</text>
+</svg>
