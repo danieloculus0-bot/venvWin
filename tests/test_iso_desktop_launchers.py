@@ -9,6 +9,8 @@ EXPECTED_DESKTOP_LAUNCHERS = [
     "venvWin-Capsules.desktop",
     "venvWin-Doctor.desktop",
     "venvWin-Private-Browser.desktop",
+    "venvWin-Emperor-Gauntlet.desktop",
+    "venvWin-Cletus-Saves-Candy.desktop",
 ]
 
 
