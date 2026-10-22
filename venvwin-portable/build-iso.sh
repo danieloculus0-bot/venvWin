@@ -129,8 +129,8 @@ wireplumber
 xfce4-pulseaudio-plugin
 EOF
 
-# Core also needs a real HTML5/Canvas JavaScript engine for its one offline game.
-# NetSurf is retained for simple browsing; Epiphany/WebKit renders Gauntlet.
+# Core needs a modern HTML5/Canvas JavaScript engine for both offline games.
+# NetSurf remains for basic browsing; Epiphany/WebKit runs the games.
 # Standard/privacy already include Firefox ESR and avoid duplicating engines.
 if [[ "${PROFILE}" == "core" ]]; then
   echo 'epiphany-browser' >> config/package-lists/00-venvwin-core.list.chroot
@@ -194,10 +194,18 @@ fi
 
 # Product image receives ONLY executable application source, never the whole
 # development repository (tests, workflows, documentation, build scripts, etc.).
-# Only Emperor Gauntlet ships as a game; Frontier Trail remains in source control.
+# Both FUN games ship offline; Frontier Trail remains in source control only.
 GAME_HTML="${ROOT_DIR}/src/venvwin/games/emperor-gauntlet/play.html"
+CLETUS_HTML="${ROOT_DIR}/src/venvwin/games/cletus/play.html"
+CLETUS_COVER="${ROOT_DIR}/src/venvwin/games/cletus/cover.svg"
+CLETUS_ICON="${ROOT_DIR}/src/venvwin/games/cletus/icon.svg"
 if [[ ! -s "${GAME_HTML}" ]] || ! grep -q '<canvas' "${GAME_HTML}"; then
   echo "EMPEROR_GAUNTLET_MISSING: required vendored offline HTML5 game is absent" >&2
+  exit 1
+fi
+if [[ ! -s "${CLETUS_HTML}" ]] || ! grep -q '<title>Cletus Saves Candy' "${CLETUS_HTML}" ||
+   [[ ! -s "${CLETUS_COVER}" ]] || [[ ! -s "${CLETUS_ICON}" ]]; then
+  echo "CLETUS_SAVES_CANDY_MISSING: game, cover, or icon asset is absent" >&2
   exit 1
 fi
 rsync -a \
@@ -388,6 +396,9 @@ cat > config/includes.chroot/usr/share/pixmaps/venvwin-emperor-gauntlet.svg <<'E
  <path d="M31 99 L51 105 L39 114Z M72 105 L92 99 L84 114Z" fill="#ffd26a"/>
 </svg>
 EOF
+
+# The same SVG is used for Cletus in the Games menu and its desktop shortcut.
+install -m 0644 "${CLETUS_ICON}" config/includes.chroot/usr/share/pixmaps/venvwin-cletus-saves-candy.svg
 
 cat > config/includes.chroot/etc/xdg/autostart/venvwin-first-run.desktop <<'EOF'
 [Desktop Entry]
@@ -607,13 +618,48 @@ cat > config/includes.chroot/usr/share/applications/venvwin-emperor-gauntlet.des
 [Desktop Entry]
 Type=Application
 Name=Emperor Gauntlet
-Comment=Play the offline Antarctic arcade game, the only game bundled with venvWin Portable
+Comment=Play the offline Antarctic arcade survival game
 Exec=/usr/local/bin/venvwin-emperor-gauntlet
 Icon=venvwin-emperor-gauntlet
 Terminal=false
 Categories=Game;
 EOF
 
+cat > config/includes.chroot/usr/local/bin/venvwin-cletus-saves-candy <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+GAME_HTML=/opt/venvwin/src/venvwin/games/cletus/play.html
+if [[ ! -r "${GAME_HTML}" ]]; then
+  echo "Cletus Saves Candy HTML asset is not installed" >&2
+  exit 1
+fi
+# Fully local game assets. NetSurf cannot render the JavaScript game.
+URL="file://${GAME_HTML}"
+if command -v firefox-esr >/dev/null 2>&1; then
+  exec firefox-esr --new-window "${URL}"
+elif command -v epiphany >/dev/null 2>&1; then
+  exec epiphany --new-window "${URL}"
+elif command -v chromium >/dev/null 2>&1; then
+  exec chromium --new-window "${URL}"
+else
+  echo "An HTML5 JavaScript browser is required (Firefox ESR, Epiphany, Chromium)" >&2
+  exit 1
+fi
+EOF
+chmod +x config/includes.chroot/usr/local/bin/venvwin-cletus-saves-candy
+
+cat > config/includes.chroot/usr/share/applications/venvwin-cletus-saves-candy.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Cletus Saves Candy
+Comment=Play the offline Neon City rescue game
+Exec=/usr/local/bin/venvwin-cletus-saves-candy
+Icon=venvwin-cletus-saves-candy
+Terminal=false
+Categories=Game;
+EOF
+
+install -m 0755 config/includes.chroot/usr/share/applications/venvwin-cletus-saves-candy.desktop config/includes.chroot/etc/skel/Desktop/venvWin-Cletus-Saves-Candy.desktop
 install -m 0755 config/includes.chroot/usr/share/applications/venvwin-emperor-gauntlet.desktop config/includes.chroot/etc/skel/Desktop/venvWin-Emperor-Gauntlet.desktop
 install -m 0755 config/includes.chroot/usr/share/applications/venvwin-first-boot.desktop config/includes.chroot/etc/skel/Desktop/venvWin-First-Boot.desktop
 install -m 0755 config/includes.chroot/usr/share/applications/venvwin-dashboard.desktop config/includes.chroot/etc/skel/Desktop/venvWin-Dashboard.desktop
@@ -788,9 +834,9 @@ dashboard_url=http://127.0.0.1:8787
 dashboard_bind_default=127.0.0.1
 dashboard_lan_mode=explicit_token_required
 first_boot_desktop_launchers=true
-first_boot_desktop_launchers_list=venvWin-First-Boot.desktop,venvWin-Dashboard.desktop,venvWin-Capsules.desktop,venvWin-Doctor.desktop,venvWin-Private-Browser.desktop,venvWin-Software-Center.desktop,venvWin-Notepad.desktop,venvWin-Network-Settings.desktop,venvWin-Hardware-Check.desktop,venvWin-Media-Player.desktop,venvWin-Audio-Control.desktop,venvWin-Camera-Test.desktop,venvWin-Partition-Manager.desktop,venvWin-Drive-Health.desktop,venvWin-File-Recovery.desktop,venvWin-Emperor-Gauntlet.desktop
+first_boot_desktop_launchers_list=venvWin-First-Boot.desktop,venvWin-Dashboard.desktop,venvWin-Capsules.desktop,venvWin-Doctor.desktop,venvWin-Private-Browser.desktop,venvWin-Software-Center.desktop,venvWin-Notepad.desktop,venvWin-Network-Settings.desktop,venvWin-Hardware-Check.desktop,venvWin-Media-Player.desktop,venvWin-Audio-Control.desktop,venvWin-Camera-Test.desktop,venvWin-Partition-Manager.desktop,venvWin-Drive-Health.desktop,venvWin-File-Recovery.desktop,venvWin-Emperor-Gauntlet.desktop,venvWin-Cletus-Saves-Candy.desktop
 first_boot_proof_bundle=true
-first_boot_expected_desktop_files=venvWin-First-Boot.desktop,venvWin-Dashboard.desktop,venvWin-Capsules.desktop,venvWin-Private-Browser.desktop,venvWin-Software-Center.desktop,venvWin-Notepad.desktop,venvWin-Network-Settings.desktop,venvWin-Hardware-Check.desktop,venvWin-Media-Player.desktop,venvWin-Audio-Control.desktop,venvWin-Camera-Test.desktop,venvWin-Partition-Manager.desktop,venvWin-Drive-Health.desktop,venvWin-File-Recovery.desktop,venvWin-Emperor-Gauntlet.desktop,venvWin-Quick-Start.txt,venvWin-First-Boot-Proof.txt,venvWin-Dashboard.txt,venvWin-First-Boot-Checklist.txt,venvwin-init.txt,venvwin-associate.txt,venvwin-first-run.txt,venvwin-storage.txt,venvwin-doctor.txt
+first_boot_expected_desktop_files=venvWin-First-Boot.desktop,venvWin-Dashboard.desktop,venvWin-Capsules.desktop,venvWin-Private-Browser.desktop,venvWin-Software-Center.desktop,venvWin-Notepad.desktop,venvWin-Network-Settings.desktop,venvWin-Hardware-Check.desktop,venvWin-Media-Player.desktop,venvWin-Audio-Control.desktop,venvWin-Camera-Test.desktop,venvWin-Partition-Manager.desktop,venvWin-Drive-Health.desktop,venvWin-File-Recovery.desktop,venvWin-Emperor-Gauntlet.desktop,venvWin-Cletus-Saves-Candy.desktop,venvWin-Quick-Start.txt,venvWin-First-Boot-Proof.txt,venvWin-Dashboard.txt,venvWin-First-Boot-Checklist.txt,venvwin-init.txt,venvwin-associate.txt,venvwin-first-run.txt,venvwin-storage.txt,venvwin-doctor.txt
 storage_source_marker=true
 standard_browser=${VENVWIN_MANIFEST_STANDARD_BROWSER}
 privacy_browser_profile=${VENVWIN_MANIFEST_PRIVACY_BROWSER_PROFILE}
@@ -807,17 +853,20 @@ wireless_manager=network-manager,network-manager-gnome
 usb_support=${VENVWIN_MANIFEST_USB_SUPPORT}
 hardware_probe_tools=${VENVWIN_MANIFEST_HARDWARE_PROBE_TOOLS}
 rescue_tools=${VENVWIN_MANIFEST_RESCUE_TOOLS}
-included_games=emperor-gauntlet
+included_games=emperor-gauntlet,cletus-saves-candy
 included_game_engine=offline_html5_canvas_javascript
 included_game_source=FUN@49dfdb3127e6ba2fcacd610cfea211a61ee36e53
+included_game_source_cletus=FUN@e26473565988ef4d8bbe449ec36ccbe5a65c623d
 included_game_asset=src/venvwin/games/emperor-gauntlet/play.html
-included_game_launchers=venvwin-emperor-gauntlet.desktop
-included_game_icons=venvwin-emperor-gauntlet.svg
+included_game_asset_cletus=src/venvwin/games/cletus/play.html
+included_game_cover_cletus=src/venvwin/games/cletus/cover.svg
+included_game_launchers=venvwin-emperor-gauntlet.desktop,venvwin-cletus-saves-candy.desktop
+included_game_icons=venvwin-emperor-gauntlet.svg,venvwin-cletus-saves-candy.svg
 other_game_sources_excluded=venvwin/frontier_trail
 firmware_bundle=${VENVWIN_MANIFEST_FIRMWARE_BUNDLE}
 standard_profile_policy=${VENVWIN_MANIFEST_STANDARD_PROFILE_POLICY}
-excluded_bloat=inkscape,cd_tools,dvd_tools,burners,audio_editors,extra_games_except_emperor_gauntlet,full_libreoffice_suite,libreoffice-impress,libreoffice-draw,libreoffice-base,developer_stack
-product_gate=first boot must initialize storage, expose status, show setup UI, write proof bundle, show desktop launchers, start local dashboard, expose software center, expose notepad, expose network settings, provide audio/camera/media tools, provide document and CSV compatibility, expose offline Emperor Gauntlet as the only bundled game, with a desktop launcher and HTML5-compatible browser, and provide hardware/driver/rescue diagnostics
+excluded_bloat=inkscape,cd_tools,dvd_tools,burners,audio_editors,extra_games_except_fun_pair,full_libreoffice_suite,libreoffice-impress,libreoffice-draw,libreoffice-base,developer_stack
+product_gate=first boot must initialize storage, expose status, show setup UI, write proof bundle, show desktop launchers, start local dashboard, expose software center, expose notepad, expose network settings, provide audio/camera/media tools, provide document and CSV compatibility, expose offline Emperor Gauntlet and Cletus Saves Candy in the Games menu with branded desktop icons and HTML5-compatible browser, and provide hardware/driver/rescue diagnostics
 EOF
 
 echo "Built ISO: ${OUTPUT_ISO}"

@@ -18,11 +18,11 @@ Experimental GPL-3.0 Windows-compatibility capsule and portable Linux-system too
 - Automated project tests, lightweight preflight and branding checks in GitHub Actions.
 - Experimental venvWin Portable Linux path; the current source/build tools do not prove a universally bootable hardware image.
 
-## Bundled offline game: Emperor Gauntlet
+## Bundled offline games: Emperor Gauntlet and Cletus Saves Candy
 
-**Emperor Gauntlet is the only game included in the planned venvWin Portable/Puppy live ISO**, copied from [FUN's playable single-file HTML version](https://github.com/danieloculus0-bot/FUN/blob/main/emperor-gauntlet/play.html) and packaged without any online assets. A live desktop icon and Games-menu entry launch the installed HTML via a Canvas/JavaScript-capable browser (Epiphany/WebKit in the compact core profile, Firefox ESR in standard/privacy). **No Pygame, separate game service or internet** is required for gameplay. Older Frontier Trail source remains in Git, but is not included in the ISO.
+Both [Emperor Gauntlet](https://github.com/danieloculus0-bot/FUN/blob/main/emperor-gauntlet/play.html) and [Cletus Saves Candy](https://github.com/danieloculus0-bot/FUN/blob/main/docs/cletus/play.html) are included as local HTML/JavaScript games in venvWin Portable. Each has a **branded Applications > Games icon and its own desktop launcher**; Cletus uses an offline replacement cover image and local font fallbacks. The compact core uses Epiphany/WebKit; standard/privacy use Firefox ESR. No separate server, game runtime install, or internet is required for gameplay. Frontier Trail stays in source, excluded from the live image.
 
-This is source and build-recipe integration, **not** a claim that venvWin has booted on hardware or the game has passed an in-guest play test. [Game integration and boot limitations](venvwin-portable/README.md#the-one-bundled-game-emperor-gauntlet).
+This verifies source and ISO build-recipe integration only, **not** a booted ISO or tested guest gameplay. [Integration limitations](venvwin-portable/README.md#bundled-offline-games).
 
 ## venvWin Portable product and release gate
 

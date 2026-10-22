@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="680" viewBox="0 0 1200 680" role="img" aria-label="Cletus Saves Candy cover art, neon city at night">
+<defs>
+ <linearGradient id="sky" x2=".18" y2="1"><stop stop-color="#29183a"/><stop offset=".62" stop-color="#4f2246"/><stop offset="1" stop-color="#0b1022"/></linearGradient>
+ <linearGradient id="street" x2="0" y2="1"><stop stop-color="#35334c"/><stop offset="1" stop-color="#100d1d"/></linearGradient>
+ <radialGradient id="glow"><stop stop-color="#ffbd54" stop-opacity=".7"/><stop offset="1" stop-color="#ffbd54" stop-opacity="0"/></radialGradient>
+ <filter id="pink"><feGaussianBlur stdDeviation="15"/></filter>
+</defs>
+<rect width="1200" height="680" fill="url(#sky)"/>
+<circle cx="980" cy="130" r="210" fill="url(#glow)"/>
+<path d="M0 330 V115 H90 V258 H161 V172 H252 V297 H305 V99 H392 V330 H472 V185 H570 V343 H645 V140 H764 V347 H830 V90 H937 V327 H1035 V186 H1133 V320 H1200 V520 H0Z" fill="#151b34"/>
+<g fill="#e971b0" opacity=".67">
+<path d="M30 181h19v24H30zM68 224h17v28H68zM206 200h18v35h-18zM334 131h20v26h-20zM355 179h16v24h-16zM498 228h18v34h-18zM687 175h23v33h-23zM719 242h21v23h-21zM865 126h19v30h-19zM904 212h20v29h-20zM1086 229h22v31h-22z"/>
+</g>
+<path d="M0 497 L360 410 L710 426 L1200 494 V680 H0Z" fill="url(#street)"/>
+<path d="M520 680 L650 425 L736 426 L895 680" fill="#262139"/>
+<path d="M699 452 L715 451 L721 486 L696 486Z M705 530 L729 530 L738 572 L694 572Z M697 611 L748 611 L765 680 L677 680Z" fill="#ffcb7d" opacity=".8"/>
+<rect x="0" y="320" width="1200" height="11" fill="#ff4cae" opacity=".2" filter="url(#pink)"/>
+<g transform="translate(286 297)">
+ <ellipse cx="0" cy="326" rx="156" ry="30" fill="#080714" opacity=".75"/>
+ <path d="M-75 120 L75 120 L108 324 L32 324 L0 235 L-18 324 L-95 324Z" fill="#141927"/>
+ <path d="M-120 82 Q-112 26 -62 23 H56 Q109 22 122 93 L90 218 L44 233 L23 153 L-25 157 L-48 223 L-95 207Z" fill="#e3a05a"/>
+ <path d="M-91 79 Q-65 8 49 28 L64 99 L-87 118Z" fill="#47835d"/>
+ <path d="M-52 14 L-61 -45 L23 -51 L47 17 Q-4 49 -52 14Z" fill="#efa86f"/>
+ <path d="M-70 -42 Q-45 -100 10 -90 Q66 -81 58 -37 L45 -33 L24 -53 L-64 -23Z" fill="#704524"/>
+ <path d="M-93 44 L-111 5 L3 -45 L101 0 L88 36Z" fill="#292734"/>
+ <path d="M94 137 L163 99 L196 111 L200 130 L126 172Z" fill="#e6a26e"/>
+ <path d="M138 100 L178 78 L200 91 L172 119Z" fill="#27374f"/>
+ <path d="M175 79 L230 54 L241 73 L196 98Z" fill="#a5bed4"/>
+</g>
+<g transform="translate(955 337)">
+ <ellipse cx="0" cy="278" rx="98" ry="24" fill="#080714" opacity=".8"/>
+ <path d="M-30 86 L48 86 L69 272 L22 272 L-6 176 L-20 272 L-70 272Z" fill="#231b2f"/>
+ <path d="M-76 -2 Q-42 -24 54 2 L75 165 L-66 165Z" fill="#8f2d5e"/>
+ <circle cy="-61" r="50" fill="#e8af8a"/>
+ <path d="M-51 -72 Q-48 -124 0 -122 Q56 -119 57 -64 L39 -76 L20 -102 L-31 -62Z" fill="#251626"/>
+</g>
+<rect x="30" y="27" width="1140" height="146" rx="15" fill="#0a0d1e" opacity=".72"/>
+<text x="600" y="87" font-family="DejaVu Sans,Arial,sans-serif" font-size="76" font-weight="900" text-anchor="middle" letter-spacing="2" fill="#ffd15f">CLETUS SAVES</text>
+<text x="600" y="161" font-family="DejaVu Sans,Arial,sans-serif" font-size="85" font-weight="900" text-anchor="middle" letter-spacing="8" fill="#f575b0">CANDY</text>
+<text x="598" y="652" text-anchor="middle" font-family="DejaVu Sans,Arial,sans-serif" font-weight="bold" font-size="23" letter-spacing="4" fill="#ffcb7d">NEON CITY RESCUE</text>
+</svg>
