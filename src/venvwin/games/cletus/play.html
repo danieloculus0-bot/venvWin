@@ -4,7 +4,42 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover" />
     <title>Cletus Saves Candy</title>
-    <!-- venvWin Portable offline edition; source FUN@594fbcdb11108101cea3d0bb7c13be552bddd0ac -->
+    <!-- venvWin Portable offline edition; source FUN@83a397f150a56498193e773a0920e430432944fd -->
+    <meta name="cletus-build" content="drivefix-20261022-5" />
+    <!-- The installed shortcut keeps its existing URL. On reactivation, check for
+         releases and reload from that same URL with a fresh query if necessary. -->
+    <script>
+    (function(){
+      "use strict";
+      const built="drivefix-20261022-5";
+      // Local/offline bundles must not contact GitHub Pages or redirect.
+      if(location.protocol!=="https:"||location.hostname!=="danieloculus0-bot.github.io")return;
+      let checking=false,lastCheck=0;
+      async function checkForUpdate(){
+        if(document.hidden||checking||Date.now()-lastCheck<8000)return;
+        checking=true;lastCheck=Date.now();
+        try{
+          const probe=new URL("./release.json",location.href);
+          probe.searchParams.set("_",String(Date.now()));
+          const response=await fetch(probe.href,{cache:"no-store"});
+          if(!response.ok)return;
+          const info=await response.json();
+          const latest=info&&info.build;
+          if(typeof latest!=="string"||!/^[a-z0-9._-]{1,64}$/i.test(latest)||latest===built)return;
+          const next=new URL(location.href);
+          // A matching query avoids reload loops while GitHub Pages deploys.
+          if(next.searchParams.get("v")===latest)return;
+          next.searchParams.set("v",latest);
+          location.replace(next.href);
+        }catch(err){console.debug("Cletus update check unavailable",err)}
+        finally{checking=false}
+      }
+      window.cletusCheckForUpdate=checkForUpdate;
+      window.addEventListener("pageshow",checkForUpdate);
+      window.addEventListener("focus",checkForUpdate);
+      document.addEventListener("visibilitychange",function(){if(!document.hidden)checkForUpdate()});
+    })();
+    </script>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'%3E%3Crect width='80' height='80' rx='15' fill='%23180d23'/%3E%3Ctext x='40' y='56' text-anchor='middle' font-size='54' font-family='sans-serif' font-weight='900' fill='%23ffcf61'%3EC%3C/text%3E%3C/svg%3E" /><meta name="theme-color" content="#15101d" /><meta name="apple-mobile-web-app-capable" content="yes" /><meta name="mobile-web-app-capable" content="yes" /><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" /><meta name="apple-mobile-web-app-title" content="Cletus Saves Candy" />
     <meta name="description" content="A gritty 16-bit city rescue. Track the van, follow the leads, take down Big Tony, and bring Candy home." />
     <meta name="robots" content="index, follow" />
