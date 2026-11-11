@@ -13,6 +13,7 @@ from .desktop import generate_desktop_launcher
 from .first_run import wizard_text, write_first_run_files
 from .health import health_report
 from .install import install_into_capsule
+from .intake import launch_from_capsule
 from .open import open_windows_file
 from .paths import capsules_dir, default_root, ensure_runtime_dirs, profiles_dir
 from .persistence import persistence_report
@@ -58,6 +59,10 @@ def build_parser() -> argparse.ArgumentParser:
     open_cmd.add_argument("file_path", type=Path)
     open_cmd.add_argument("--dry-run", action="store_true")
     open_cmd.add_argument("--profile", default="default")
+    run_cmd = sub.add_parser("run", help="Launch an installed app in its existing Wine capsule")
+    run_cmd.add_argument("capsule_id")
+    run_cmd.add_argument("executable_path", type=Path)
+    run_cmd.add_argument("--dry-run", action="store_true")
 
     profile = sub.add_parser("profile", help="Manage runner profiles")
     profile_sub = profile.add_subparsers(dest="profile_command", required=True)
@@ -221,6 +226,14 @@ def cmd_open(root: Path, file_path: Path, dry_run: bool, profile_name: str) -> i
     return int(result.get("exit_code") or 0)
 
 
+def cmd_run(root: Path, capsule_id: str, executable_path: Path, dry_run: bool) -> int:
+    ensure_runtime_dirs(root)
+    capsule = load_capsule(capsules_dir(root), capsule_id)
+    result = launch_from_capsule(capsules_dir(root), capsule, executable_path, dry_run=dry_run)
+    print(json.dumps(result, indent=2))
+    return int(result.get("exit_code") or 0)
+
+
 def cmd_profile_default(root: Path) -> int:
     ensure_runtime_dirs(root)
     path = save_profile(profiles_dir(root), RunnerProfile.default())
@@ -356,6 +369,8 @@ def main(argv: list[str] | None = None) -> int:
             return cmd_associate(args.applications_dir)
         if args.command == "open":
             return cmd_open(root, args.file_path, args.dry_run, args.profile)
+        if args.command == "run":
+            return cmd_run(root, args.capsule_id, args.executable_path, args.dry_run)
         if args.command == "profile" and args.profile_command == "default":
             return cmd_profile_default(root)
         if args.command == "create":

@@ -7,6 +7,7 @@ from typing import Any
 
 from .capsule import Capsule, create_capsule, load_capsule, save_capsule, slugify_app_name, utc_now
 from .install import install_into_capsule
+from .intake import discover_application_exes, create_application_shortcut
 from .profile import RunnerProfile, load_profile
 from .runner import get_runner
 
@@ -76,6 +77,24 @@ def open_windows_file(
         result = install_into_capsule(capsules_root, capsule, file_path, dry_run=dry_run)
         result["action"] = "install"
         result["file_type"] = file_type
+        # Installer success is not application launch proof. Discover actual targets.
+        if not dry_run and result.get("exit_code") == 0:
+            choices = discover_application_exes(capsule.prefix_path)
+            result["launch_targets"] = [str(target) for target in choices]
+            if len(choices) == 1:
+                desktop = Path(os.environ.get("VENVWIN_DESKTOP_DIR", str(Path.home() / "Desktop")))
+                if desktop.is_dir():
+                    result["desktop_shortcut"] = str(create_application_shortcut(
+                        capsules_root, capsule, choices[0], desktop))
+                    result["status"] = "installed_shortcut_created_not_yet_launched"
+                else:
+                    result["status"] = "installed_target_found_no_desktop_directory"
+            elif choices:
+                result["status"] = "installed_multiple_targets_select_one"
+            else:
+                result["status"] = "installer_succeeded_no_application_target_found"
+        elif not dry_run and result.get("exit_code") != 0:
+            result["status"] = "installer_failed"
         return result
 
     command = get_runner(capsule.profile.runner).prepare_launch(capsule, str(file_path))
@@ -109,4 +128,12 @@ def open_windows_file(
     completed = subprocess.run(command.args, env=env, check=False)
     result["exit_code"] = completed.returncode
     result["completed_at"] = utc_now()
+    if completed.returncode == 0:
+        desktop = Path(os.environ.get("VENVWIN_DESKTOP_DIR", str(Path.home() / "Desktop")))
+        if desktop.is_dir():
+            result["desktop_shortcut"] = str(create_application_shortcut(
+                capsules_root, capsule, file_path, desktop))
+        result["status"] = "windows_binary_executed"
+    else:
+        result["status"] = "windows_binary_failed"
     return result

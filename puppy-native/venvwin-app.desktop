@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=venvWin Portable
+Comment=Windows application capsules and storage control
+Exec=/usr/local/bin/venvwin-control-center
+Terminal=false
+Icon=applications-other
+Categories=Utility;System;

@@ -1,0 +1,26 @@
+#!/bin/sh
+# Invoked only by a real guest terminal. Cannot count as auto-startup proof.
+set -u
+emit() {
+  printf '%s\n' "$1"
+  if [ -c /dev/ttyS0 ]; then printf '%s\n' "$1" >/dev/ttyS0 2>/dev/null || true; fi
+}
+emit VENVWIN_INTERACTIVE_GUEST_TERMINAL_CONFIRMED
+if [ -f /opt/venvwin/src/venvwin/cli.py ]; then emit VENVWIN_YDRV_SOURCE_PRESENT; else emit VENVWIN_YDRV_SOURCE_MISSING; fi
+if [ -x /root/Startup/venvwin-session ]; then emit VENVWIN_STARTUP_HOOK_PRESENT; else emit VENVWIN_STARTUP_HOOK_MISSING; fi
+if [ -x /root/Startup/venvwin-guest-probe ]; then emit VENVWIN_GUEST_PROBE_PRESENT; else emit VENVWIN_GUEST_PROBE_MISSING; fi
+if [ -r /tmp/venvwin-puppy-guest-proof.log ]; then
+  emit VENVWIN_AUTOSTART_LOG_PRESENT
+  cat /tmp/venvwin-puppy-guest-proof.log
+else
+  emit VENVWIN_AUTOSTART_LOG_MISSING
+fi
+if command -v python3 >/dev/null 2>&1; then
+  emit "VENVWIN_PYTHON_FOUND=$(command -v python3)"
+  if python3 -c 'import tkinter' >/dev/null 2>&1; then emit VENVWIN_TK_FOUND; else emit VENVWIN_TK_MISSING; fi
+else emit VENVWIN_PYTHON_MISSING; fi
+if command -v yad >/dev/null 2>&1; then emit VENVWIN_YAD_FOUND; else emit VENVWIN_YAD_MISSING; fi
+if command -v wine >/dev/null 2>&1; then emit "VENVWIN_WINE_FOUND=$(wine --version 2>&1)"; else emit VENVWIN_WINE_MISSING; fi
+if awk '$3 == "overlay" || $3 == "aufs" {found=1} END {exit !found}' /proc/mounts; then emit VENVWIN_LIVE_OVERLAY_PRESENT; else emit VENVWIN_LIVE_OVERLAY_NOT_OBSERVED; fi
+if [ -s /tmp/venvwin-session/control-center.log ]; then emit VENVWIN_CONTROL_CENTER_LOG_NONEMPTY; else emit VENVWIN_CONTROL_CENTER_LOG_EMPTY; fi
+emit VENVWIN_INTERACTIVE_REPORT_COMPLETE

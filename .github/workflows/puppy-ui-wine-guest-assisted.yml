@@ -1,0 +1,70 @@
+name: Puppy native interactive startup and SFS diagnostic
+# ONE controlled VNC-assisted guest investigation. Does not publish an ISO.
+on:
+  push:
+    branches: [feat/puppy-ui-wine-integration-20261011]
+    paths:
+      - ".github/workflows/puppy-ui-wine-guest-assisted.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  guest-observation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 29
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Source checks and host-only GUI input dependencies
+        run: |
+          python -m pip install -e . pytest vncdotool pillow
+          python -m pytest -q tests/test_puppy_native_contract.py tests/test_puppy_ui_wine_contract.py tests/test_puppy_windows_intake.py
+          bash -n puppy-native/build-puppy.sh
+          bash -n puppy-native/prove-puppy-qemu.sh
+          sh -n puppy-native/venvwin-diagnostic
+          python -m py_compile puppy-native/qemu-vnc-guest-input.py
+      - name: Install verified host-only remaster and QEMU tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends xorriso squashfs-tools qemu-system-x86 rsync curl
+      - name: Create single checksum-pinned native Puppy ISO with diagnostic addon
+        id: build
+        run: |
+          bash puppy-native/build-puppy.sh
+          grep -q 'squashfs-root/usr/local/bin/venvwin-diagnostic' dist/puppy-native/venvwin-layer-inventory.txt
+          grep -q 'squashfs-root/root/Startup/venvwin-guest-probe' dist/puppy-native/venvwin-layer-inventory.txt
+      - name: Observe real graphical first run and test SFS loading from guest terminal
+        id: boot
+        run: |
+          VENVWIN_VNC_ASSIST=1 bash puppy-native/prove-puppy-qemu.sh
+      - name: Keep only guest observations and screenshots (never rejected ISO)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: venvwin-puppy-gui-startup-and-sfs-investigation
+          retention-days: 14
+          if-no-files-found: warn
+          path: |
+            dist/puppy-native/upstream-checksum.log
+            dist/puppy-native/venvwin-layer-inventory.txt
+            dist/puppy-native/iso-size.txt
+            dist/puppy-native/tested-sources.sha256
+            dist/puppy-native/venvwin-boot-catalog.txt
+            dist/puppy-native/qemu-guest-serial.log
+            dist/puppy-native/qemu-stderr.log
+            dist/puppy-native/qemu-grub-input.log
+            dist/puppy-native/qemu-vnc-input.log
+            dist/puppy-native/qemu-vnc-*.png
+            dist/puppy-native/qemu-frame-*.ppm
+            dist/puppy-native/puppy-guest-verdict.txt
+      - name: Enforce real auto-startup proof; manual guest typing cannot pass
+        if: always()
+        run: |
+          echo 'MANUAL_VNC_INPUT_IS_NEVER_AUTOSTART_PROOF'
+          if test -e dist/puppy-native/puppy-guest-verdict.txt; then
+            cat dist/puppy-native/puppy-guest-verdict.txt
+          fi
+          grep -Fxq 'PUPPY_GUEST_BOOT_PROVEN' dist/puppy-native/qemu-guest-serial.log
+          echo 'CORE_GUEST_AUTO_STARTUP_PROVEN; WINE_AND_PRODUCT_STILL_UNVERIFIED'

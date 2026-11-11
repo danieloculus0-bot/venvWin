@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+ <defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+   <stop offset="0" stop-color="#0a0c10"/><stop offset=".52" stop-color="#15181e"/><stop offset="1" stop-color="#090b0f"/>
+  </linearGradient>
+  <radialGradient id="glow" cx=".78" cy=".46" r=".7">
+   <stop offset="0" stop-color="#7d410e" stop-opacity=".30"/><stop offset=".62" stop-color="#202024" stop-opacity=".04"/><stop offset="1" stop-color="#0b0d11" stop-opacity="0"/>
+  </radialGradient>
+  <linearGradient id="warm" x1="0" y1="0" x2="1" y2="1">
+   <stop stop-color="#ffad37"/><stop offset="1" stop-color="#ff7600"/>
+  </linearGradient>
+ </defs>
+ <rect width="1280" height="720" fill="url(#bg)"/>
+ <rect width="1280" height="720" fill="url(#glow)"/>
+ <g fill="none" stroke="#ff8a00" stroke-opacity=".10" stroke-width="1.5">
+  <path d="M767 -140L1457 550 M849 -140L1539 550 M931 -140L1621 550 M1013 -140L1703 550"/>
+  <path d="M875 845L1510 210 M945 845L1580 210 M1015 845L1650 210"/>
+ </g>
+ <g transform="translate(869 344) rotate(-32)" fill="none" stroke="#ff8a00">
+  <rect x="-151" y="-64" width="303" height="129" rx="64" stroke-width="1.5" opacity=".33"/>
+  <rect x="-194" y="-101" width="389" height="203" rx="102" stroke-width="1.5" opacity=".11"/>
+  <rect x="-114" y="-31" width="227" height="62" rx="31" stroke-width="4.5" opacity=".31"/>
+ </g>
+ <rect x="0" y="0" width="9" height="720" fill="url(#warm)"/>
+ <path d="M112 204h58" stroke="#ff8a00" stroke-width="5" stroke-linecap="square"/>
+ <text x="111" y="320" font-family="DejaVu Sans, sans-serif" font-size="88" font-weight="bold" letter-spacing="-5" fill="#f4f2ee">venv<tspan fill="#ff920a">Win</tspan></text>
+ <text x="117" y="371" font-family="DejaVu Sans, sans-serif" font-size="21" letter-spacing="6" fill="#c0c1c3">PORTABLE</text>
+ <text x="117" y="453" font-family="DejaVu Sans, sans-serif" font-size="15" letter-spacing="2" fill="#94999f">Windows application compatibility</text>
+ <text x="117" y="633" font-family="DejaVu Sans, sans-serif" font-size="13" letter-spacing="2.5" fill="#747b86">SYSTEM STARTUP</text>
+ <rect x="117" y="653" width="308" height="3" rx="1" fill="#30343b"/>
+ <rect x="117" y="653" width="78" height="3" rx="1" fill="#ff8a00"/>
+</svg>

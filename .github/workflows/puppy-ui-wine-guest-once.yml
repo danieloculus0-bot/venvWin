@@ -1,0 +1,74 @@
+name: Puppy UI/Wine one-shot real guest startup diagnostic
+# Deliberately run only when this workflow is introduced/edited or explicitly dispatched.
+# No monolithic Debian build, no unverified ISO uploads or merges.
+on:
+  push:
+    branches: [feat/puppy-ui-wine-integration-20261011]
+    paths:
+      - ".github/workflows/puppy-ui-wine-guest-once.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  real-puppy-guest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 29
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Source contracts and installer-to-shortcut simulations
+        run: |
+          python -m pip install -e . pytest
+          python -m pytest -q tests/test_puppy_native_contract.py tests/test_puppy_ui_wine_contract.py tests/test_puppy_windows_intake.py
+          bash -n puppy-native/build-puppy.sh
+          bash -n puppy-native/prove-puppy-qemu.sh
+          sh -n puppy-native/venvwin-guest-probe
+          echo 'SOURCE_AND_SIMULATION_CHECKS_PASS_NOT_GUEST_PROOF'
+      - name: Install only the host QEMU/remaster tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends             xorriso squashfs-tools qemu-system-x86 rsync curl
+      - name: Single remaster of official pinned Puppy with latest UI and Wine wrapper
+        id: build
+        run: |
+          bash puppy-native/build-puppy.sh
+          grep -q 'squashfs-root/usr/local/bin/venvwin-wine' dist/puppy-native/venvwin-layer-inventory.txt
+          grep -q 'squashfs-root/root/Startup/venvwin-session' dist/puppy-native/venvwin-layer-inventory.txt
+          echo 'PUPPY_UI_WINE_WRAPPERS_INCLUDED_NOT_EXECUTED'
+      - name: Real BIOS Puppy boot with screenshot and guest serial proof
+        id: guest
+        run: |
+          bash puppy-native/prove-puppy-qemu.sh
+      - name: Diagnostic evidence only, never unpublished ISO
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: puppy-ui-wine-real-guest-diagnostics
+          retention-days: 14
+          if-no-files-found: warn
+          path: |
+            dist/puppy-native/upstream-checksum.log
+            dist/puppy-native/venvwin-layer-inventory.txt
+            dist/puppy-native/iso-size.txt
+            dist/puppy-native/tested-sources.sha256
+            dist/puppy-native/venvwin-boot-catalog.txt
+            dist/puppy-native/qemu-guest-serial.log
+            dist/puppy-native/qemu-stderr.log
+            dist/puppy-native/qemu-grub-input.log
+            dist/puppy-native/qemu-frame-*.ppm
+            dist/puppy-native/puppy-guest-verdict.txt
+      - name: Strictly record unverified Wine and full product gates
+        if: always()
+        run: |
+          echo "REAL_PUPPY_BOOT_GATE=${{ steps.guest.outcome }}"
+          echo "WINE_IN_PUPPY_APP_EXECUTION=NOT_YET_PROVEN"
+          echo "MSI_IN_PUPPY_APP_EXECUTION=NOT_YET_PROVEN"
+          echo "RAM_SAVE_SFS_AND_SIX_BEAN_GATES=UNVERIFIED"
+          test "${{ steps.build.outcome }}" = success
+          test "${{ steps.guest.outcome }}" = success
+          grep -Fxq PUPPY_GUEST_BOOT_PROVEN dist/puppy-native/qemu-guest-serial.log
+          echo 'CORE_GUEST_BOOT_CONFIRMED_NOT_RELEASE_READY'

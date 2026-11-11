@@ -1,0 +1,33 @@
+#!/bin/sh
+# Recover the original orange-on-charcoal first-run control center.
+set -u
+export PYTHONPATH="/opt/venvwin/src${PYTHONPATH:+:$PYTHONPATH}"
+export GTK_THEME="Adwaita:dark"
+if command -v python3 >/dev/null 2>&1 &&
+   python3 -c 'import tkinter; from venvwin.gui_first_run import main' >/dev/null 2>&1; then
+  exec python3 -m venvwin.gui_first_run
+fi
+# Puppy commonly supplies YAD. Give a real desktop UI even without Tk.
+if command -v yad >/dev/null 2>&1; then
+  selection="$(yad --center --width=730 --height=430 --title='venvWin Portable | Control Center' \
+    --text='venvWin Portable\nDark Mint-style shell | orange actions\nWine loads only when selected. Storage may be disposable.' \
+    --list --column='Select a task' \
+    'Wine runner status' 'Install Wine (explicit confirmation)' 'Open Capsules' \
+    'Start Dashboard' 'First-run storage report' 'Run Doctor' \
+    --print-column=1 --no-headers 2>/dev/null)" || exit 0
+  case "$selection" in
+    'Wine runner status') result="$(/usr/local/bin/venvwin-wine --status 2>&1)"; yad --info --title='Wine runner' --text="$result" ;;
+    'Install Wine (explicit confirmation)')
+      yad --info --title='Wine setup' --text='Open a terminal and run: venvwin-wine --install\nYou will be asked to confirm. This writes to the live Puppy layer.' ;;
+    'Open Capsules') if command -v rox >/dev/null 2>&1; then rox "$HOME/.local/share/venvwin/capsules"; fi ;;
+    'Start Dashboard') if command -v defaultbrowser >/dev/null 2>&1; then defaultbrowser http://127.0.0.1:8787; fi ;;
+    'First-run storage report') /usr/local/bin/venvwin storage >/tmp/venvwin-storage-ui.txt 2>&1; yad --text-info --filename=/tmp/venvwin-storage-ui.txt --title='Storage state' ;;
+    'Run Doctor') /usr/local/bin/venvwin doctor >/tmp/venvwin-doctor-ui.txt 2>&1; yad --text-info --filename=/tmp/venvwin-doctor-ui.txt --title='Diagnostics' ;;
+  esac
+  exit 0
+fi
+if command -v xmessage >/dev/null 2>&1; then
+  exec xmessage -center 'venvWin Portable: Python/Tk and YAD unavailable. Use venvwin-wine --status to inspect the optional Wine runner.'
+fi
+echo 'VENVWIN_GUI_DEPENDENCIES_MISSING: Python/Tk or YAD required' >&2
+exit 70

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import subprocess
 import sys
+import shutil
 from pathlib import Path
 
 from .first_run import PUBLIC_PRODUCT_NAME, first_run_summary, write_first_run_files
@@ -47,6 +48,7 @@ def display_model(home: Path | None = None) -> dict[str, str]:
         "leave_no_trace": "ON" if summary["leave_no_trace"] else "CHECK STORAGE",
         "portable_owned": "YES" if summary["portable_owned"] else "NO",
         "host_risk": "YES" if summary["host_risk"] else "NO",
+        "wine_status": "FOUND" if shutil.which("wine") else "MISSING",
     }
 
 
@@ -183,7 +185,7 @@ class VenvWinFirstRunApp:
         path = tk.Frame(card, bg=BG, padx=10, pady=9, highlightbackground=BORDER, highlightthickness=1)
         path.pack(fill="x")
         self.label(path, self.model["capsule_store"], 10, ACCENT, wrap=620).pack(anchor="w")
-        self.label(card, "Windows apps run inside isolated capsules. Your host stays clean unless you intentionally change storage.", 10, MUTED).pack(anchor="w", pady=(14, 0))
+        self.label(card, "Capsules keep app settings separate. Wine does not sandbox mounted drives. Choose save storage explicitly.", 10, MUTED).pack(anchor="w", pady=(14, 0))
         row = tk.Frame(card, bg=CARD)
         row.pack(fill="x", pady=(14, 0))
         self.button(row, "▣ Initialize / Repair", self.initialize, True).pack(side="left", padx=(0, 10))
@@ -194,10 +196,12 @@ class VenvWinFirstRunApp:
         self.label(parent, "System Status", 18, TEXT, True).pack(anchor="w")
         self.badge(parent, "Leave no trace", "No changes to host system.", self.model["leave_no_trace"], status_color(self.model["storage_status"]))
         self.badge(parent, "Portable storage", "All data stays on portable storage.", self.model["portable_owned"], GOOD if self.model["portable_owned"] == "YES" else BAD)
-        self.badge(parent, "Host write risk", "Windows apps cannot write to host system.", self.model["host_risk"], BAD if self.model["host_risk"] == "YES" else GOOD)
+        self.badge(parent, "Host write risk", "Host mounts are not sandboxed by Wine.", self.model["host_risk"], BAD if self.model["host_risk"] == "YES" else GOOD)
+        self.badge(parent, "Wine runner", "Check the runner before installing EXE/MSI files.", self.model["wine_status"], GOOD if self.model["wine_status"] == "FOUND" else BAD)
+        self.button(parent, "Wine setup / status", self.wine_setup).pack(fill="x", pady=(10, 2))
         note = tk.Frame(parent, bg=CARD_SOFT, padx=10, pady=10, highlightbackground=BORDER, highlightthickness=1)
         note.pack(fill="x", pady=(16, 0))
-        self.label(note, "Green means safe. Red means stop and fix the storage setup before installing apps.", 9, MUTED, wrap=250).pack(anchor="w")
+        self.label(note, "Orange actions. Red means a missing runner or storage risk. Wine prefixes are not security sandboxes.", 9, MUTED, wrap=250).pack(anchor="w")
 
     def badge(self, parent, title: str, sub: str, value: str, color: str) -> None:
         box = tk.Frame(parent, bg=CARD, padx=10, pady=10, highlightbackground=BORDER, highlightthickness=1)
@@ -215,6 +219,17 @@ class VenvWinFirstRunApp:
         tk.Label(bar, text="☰ venvWin", bg=ACCENT, fg="#111111", font=(FONT, 12, "bold"), padx=16).pack(side="left", fill="y", padx=(8, 10), pady=6)
         tk.Label(bar, text=f"{PUBLIC_PRODUCT_NAME} Control Center", bg="#202020", fg=TEXT, font=(FONT, 10), padx=14, relief="solid", bd=1).pack(side="left", fill="y", pady=7)
         tk.Label(bar, text=f"Leave no trace: {self.model['leave_no_trace']}", bg="#111111", fg=MUTED, font=(FONT, 9)).pack(side="right", padx=12)
+
+    def wine_setup(self) -> None:
+        try:
+            result = subprocess.run(["venvwin-wine", "--status"], text=True,
+                                    capture_output=True, check=False, timeout=15)
+            detail = (result.stdout + result.stderr).strip()
+        except (OSError, subprocess.TimeoutExpired):
+            detail = "The optional venvWin Wine wrapper is unavailable."
+        messagebox.showinfo("venvWin Wine",
+                            detail + "\n\nTo install interactively in Puppy:\nvenvwin-wine --install"
+                            + "\nOr load a verified SFS:\nvenvwin-wine --load-sfs FILE.sfs")
 
     def initialize(self) -> None:
         summary = write_first_run_files(self.home)

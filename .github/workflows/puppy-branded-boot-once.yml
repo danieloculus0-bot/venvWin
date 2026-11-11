@@ -1,0 +1,70 @@
+name: venvWin genuine branded Puppy ISO and BIOS splash smoke
+# One-shot source+ISO evidence. Never publish a rejected ISO.
+on:
+  push:
+    branches: [feat/puppy-ui-wine-integration-20261011]
+    paths:
+      - ".github/workflows/puppy-branded-boot-once.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  branded-bios:
+    runs-on: ubuntu-latest
+    timeout-minutes: 19
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Test boot menu safety and shell scripts
+        run: |
+          python -m pip install -e . pytest
+          python -m pytest -q tests/test_puppy_boot_branding.py tests/test_puppy_branding_sources.py tests/test_puppy_native_contract.py tests/test_puppy_jwm_branding.py
+          bash -n puppy-native/build-puppy.sh
+          sh -n puppy-native/venvwin-session
+          python -m py_compile puppy-native/brand-boot-menu.py
+      - name: Install host-only ISO, bitmap and emulator tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends             xorriso squashfs-tools qemu-system-x86 rsync curl librsvg2-bin imagemagick
+      - name: Build exact checksum-pinned ISO with native branded boot menus
+        id: build
+        run: |
+          bash puppy-native/build-puppy.sh
+          grep -q 'squashfs-root/etc/xdg/templates/_root_.jwmrc' dist/puppy-native/venvwin-layer-inventory.txt
+          if grep -Ei '(bean-core|venvwin-bean|bean-mini-service|opt/bean)' dist/puppy-native/venvwin-layer-inventory.txt; then
+            echo 'UNREQUESTED_BEAN_RUNTIME_BUNDLED' >&2
+            exit 1
+          fi
+          echo VENVWIN_BRANDED_ISO_WITHOUT_BEAN_SERVICE_VERIFIED
+      - name: Observe branded BIOS boot menu inside actual QEMU
+        id: observe
+        run: |
+          set -euo pipefail
+          OUT="$PWD/dist/puppy-native"
+          qemu-system-x86_64 -accel tcg -m 3072 -smp 2 -boot order=d             -cdrom "$OUT/venvwin-puppy-native-10.0.12-experimental.iso"             -vga std -display vnc=127.0.0.1:0 -net none -no-reboot             -serial "file:$OUT/brand-qemu-serial.log"             -monitor "unix:$OUT/brand-qemu-monitor.sock,server=on,wait=off"             >"$OUT/brand-qemu-stderr.log" 2>&1 &
+          PID=$!
+          trap 'kill "$PID" 2>/dev/null || true; wait "$PID" 2>/dev/null || true' EXIT
+          sleep 6
+          python3 puppy-native/qemu-monitor-probe.py             --socket "$OUT/brand-qemu-monitor.sock" --action screen             --output "$OUT/brand-bios-6s.ppm"
+          echo ACTUAL_QEMU_BIOS_SCREEN_CAPTURED_GUEST_APP_UNVERIFIED
+      - name: Preserve source and screen evidence only, not ISO
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: venvwin-puppy-native-branding-diagnostics
+          retention-days: 14
+          if-no-files-found: warn
+          path: |
+            dist/puppy-native/brand-bios-6s.ppm
+            dist/puppy-native/venvwin-boot.png
+            dist/puppy-native/venvwin-wallpaper.png
+            dist/puppy-native/brand-boot-output/**
+            dist/puppy-native/verify-brand-extract.log
+            dist/puppy-native/iso-size.txt
+            dist/puppy-native/venvwin-boot-catalog.txt
+            dist/puppy-native/venvwin-layer-inventory.txt
+            dist/puppy-native/brand-core/jwmrc.upstream
+            dist/puppy-native/brand-core/jwmrc.venvwin
+            dist/puppy-native/upstream-checksum.log
