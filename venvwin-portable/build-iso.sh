@@ -25,7 +25,13 @@ rm -rf "${BUILD_DIR}"
 mkdir -p "${BUILD_DIR}" "${OUT_DIR}"
 cd "${BUILD_DIR}"
 
+# Keep the 61 explicitly selected core packages; omit apt's automatic
+# recommendations only for core. Standard/privacy retain their old behavior.
+APT_RECOMMENDS=true
+if [[ "${PROFILE}" == "core" ]]; then APT_RECOMMENDS=false; fi
+
 lb config \
+  --apt-recommends "${APT_RECOMMENDS}" \
   --mode debian \
   --distribution bookworm \
   --architectures amd64 \

@@ -101,6 +101,7 @@ jobs:
             dist/venvwin-core-static-pass.txt
             dist/venvwin-core-qemu-serial.log
             dist/venvwin-core-qemu-stderr.log
+            dist/venvwin-core-qemu-boot-key.log
             dist/venvwin-core-frame-*.ppm
             dist/venvwin-core-boot-verdict.txt
             dist/venvwin-core-bean-report.json

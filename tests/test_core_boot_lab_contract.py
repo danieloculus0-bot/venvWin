@@ -52,3 +52,60 @@ def test_action_collects_real_evidence_but_never_uploads_a_failed_iso():
     assert "steps.core_boot.outcome == 'success' && steps.bean.outcome == 'success'" in workflow
     assert "venvwin-puppy-core-boot-proven-iso" in workflow
     assert "venvwin-core-qemu-serial.log" in workflow
+
+
+def test_headless_grub_selection_is_not_mistaken_for_guest_readiness():
+    script = CORE.read_text()
+    assert 'channel.sendall(b"sendkey ret\\n")' in script
+    assert "QEMU_BOOT_MENU_ENTER_SENT (not guest boot evidence)" in script
+    assert "QEMU_BOOT_MENU_ENTER_FAILED" in script
+    assert 'grep -Fxq "BEAN_GUEST_READY" "$SERIAL"' in script
+    assert 'grep -Fxq "BEAN_GUEST_FIRST_RUN_PASS" "$SERIAL"' in script
+    assert "status=CORE_GUEST_PROVEN" in script
+
+
+def test_qemu_monitor_sends_real_enter_to_mock_grub_console(tmp_path):
+    """Exercise the actual embedded HMP client; no ISO, QEMU or fake guest proof."""
+    import socket
+    import sys
+    import threading
+
+    script = CORE.read_text()
+    client = script.split('python3 - "$MONITOR" <<\'PY\'', 1)[1].split("\n", 1)[1].split("\nPY", 1)[0]
+    monitor = tmp_path / "qemu.sock"
+    received = []
+
+    with socket.socket(socket.AF_UNIX) as server:
+        server.bind(str(monitor))
+        server.listen(1)
+
+        def serve():
+            with server.accept()[0] as conn:
+                conn.sendall(b"QEMU monitor ready\n(qemu) ")
+                received.append(conn.recv(128))
+                conn.sendall(b"(qemu) ")
+
+        thread = threading.Thread(target=serve, daemon=True)
+        thread.start()
+        result = subprocess.run(
+            [sys.executable, "-c", client, str(monitor)],
+            capture_output=True, text=True, timeout=8,
+        )
+        thread.join(timeout=3)
+
+    assert result.returncode == 0, result.stderr
+    assert received == [b"sendkey ret\n"]
+    assert "QEMU_BOOT_MENU_ENTER_SENT" in result.stdout
+    assert "BEAN_GUEST_READY" not in result.stdout
+
+
+def test_core_size_optimization_preserves_explicit_packages_and_other_profiles():
+    script = (ROOT / "venvwin-portable/build-iso.sh").read_text()
+    assert 'APT_RECOMMENDS=true' in script
+    assert 'if [[ "${PROFILE}" == "core" ]]; then APT_RECOMMENDS=false; fi' in script
+    assert '--apt-recommends "${APT_RECOMMENDS}"' in script
+    core_list = script.split("cat > config/package-lists/00-venvwin-core.list.chroot <<'EOF'\n", 1)[1]
+    core_list = core_list.split("\nEOF", 1)[0].splitlines()
+    assert len(core_list) == 61
+    assert {"linux-image-amd64", "live-boot", "live-config", "xfce4-session",
+            "network-manager", "python3", "pipewire"} <= set(core_list)
