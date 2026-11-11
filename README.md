@@ -1,3 +1,24 @@
+# venvWin — Puppy-native migration candidate
+
+**Status: unreleased experimental Puppy remaster, not yet boot-proven.**
+
+The legacy Debian/XFCE live-build implementation has been preserved on [archive/debian-live-pre-puppy-20261011](https://github.com/danieloculus0-bot/venvWin/tree/archive/debian-live-pre-puppy-20261011). The new system is being built from **actual BookwormPup64 10.0.12**, inheriting its upstream bootloader, initramfs, SFS layers, RAM options and Puppy persistence infrastructure.
+
+## Puppy-native build and evidence
+
+- Source: [official BookwormPup64 10.0.12 distribution](https://distro.ibiblio.org/puppylinux/puppy-bookwormpup/BookwormPup64/10.0.12/), pinned ISO SHA-256 ae65f6e6d70a96f48bdbb291c2426f8a2fd77a73692e149e81a5eecb6fe7509f.
+- Build script: puppy-native/build.sh. It verifies upstream bytes, adds original venvWin source as an independent Puppy adrv/ydrv SFS, and replays the upstream ISO boot records without injecting Debian live-build.
+- Test workflow: .github/workflows/puppy-native-boot.yml. Source-only tests first, then the real ISO and a diskless QEMU boot test. Only guest-generated serial proof is accepted.
+- Readiness: **not ready until successful real boot, live layer checks, optional copy to RAM, persistence across a reboot, modular SFS use, and Windows-app capsules in the guest.** Python source being packaged does not prove that Puppy has its Python, Wine or GUI dependencies.
+- Size: optimize only after confirming boot and function. A 900 MiB target is not a reason to reject an otherwise functional experimental image.
+- Promotion: no deletion of legacy or merge into main before verified boots and the product gates. Until then, this branch is a **release candidate**, not a release.
+
+The previous Debian build remains documented below for historical context. Its paths are not the intended future boot architecture.
+
+---
+
+## Archived implementation README (legacy)
+
 # venvWin
 
 Experimental GPL-3.0 Windows-compatibility capsule and portable Linux-system tooling. Official project use is intended to remain free of charge, including personal and business use.
