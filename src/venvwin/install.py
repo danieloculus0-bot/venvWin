@@ -27,6 +27,11 @@ def record_installer(
         target_dir = capsule_dir(capsules_root, capsule.capsule_id) / "installers"
         target_dir.mkdir(parents=True, exist_ok=True)
         target = target_dir / installer_path.name
+        # Keep previously recorded installer bytes when names repeat.
+        index = 1
+        while target.exists():
+            target = target_dir / f"{installer_path.stem}-{index}{installer_path.suffix}"
+            index += 1
         shutil.copy2(installer_path, target)
         stored_path = str(target)
 

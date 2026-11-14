@@ -115,3 +115,28 @@ def test_file_association_generation(environment):
     msi = (apps_dir / "venvwin-open-msi.desktop").read_text()
     assert "Exec=venvwin open %f" in exe
     assert "Exec=venvwin open %f" in msi
+
+
+def test_repeated_installer_names_preserve_original_artifacts(tmp_path):
+    from venvwin.capsule import create_capsule, load_capsule
+    from venvwin.install import record_installer
+    from venvwin.profile import RunnerProfile
+
+    capsules = tmp_path / "capsules"
+    capsule = create_capsule(capsules, "Repeated Setup", RunnerProfile.default())
+    first_dir = tmp_path / "first"
+    second_dir = tmp_path / "second"
+    first_dir.mkdir()
+    second_dir.mkdir()
+    first = first_dir / "Setup.exe"
+    second = second_dir / "Setup.exe"
+    first.write_bytes(b"MZ version one")
+    second.write_bytes(b"MZ version two")
+
+    a = record_installer(capsules, capsule, first)
+    b = record_installer(capsules, capsule, second)
+    assert a["stored_path"] != b["stored_path"]
+    assert Path(a["stored_path"]).read_bytes() == b"MZ version one"
+    assert Path(b["stored_path"]).read_bytes() == b"MZ version two"
+    reloaded = load_capsule(capsules, capsule.capsule_id)
+    assert [x["stored_path"] for x in reloaded.installers] == [a["stored_path"], b["stored_path"]]
