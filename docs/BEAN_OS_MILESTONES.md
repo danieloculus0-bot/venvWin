@@ -51,6 +51,23 @@ https://github.com/danieloculus0-bot/BEAN/actions/runs/43680313673
 - [ ] Establish reproducible x86-64 image build and boot smoke test.
 - [ ] Establish supported Jetson ARM64 build/install procedure.
 
+### M1A: Actual GUI navigation by BEAN Core
+- [x] Linux X11 graphical test desktop boots under Xvfb + Openbox.
+- [x] Existing BEAN GoalCycle invokes a registered OS mouse/keyboard
+  control adapter, enumerates real windows and captures screens.
+- [x] Demonstrate clicking an application, typing/saving a text document,
+  reopening it through file manager, and verifying real file output.
+- [x] Verify screenshot artifacts and persistent GoalCycle receipt on CI.
+- [ ] Discover and click **unknown** controls through accessibility metadata,
+  instead of fixture-specific relative button positions.
+- [ ] Implement generic cross-application task plans and recovery after
+  navigation failures, including focus and window placement changes.
+- [ ] Support Wayland and Jetson-specific graphical sessions.
+
+Evidence: https://github.com/danieloculus0-bot/BEAN/actions/runs/43689023636
+Scope: isolated GUI proof on an actual Linux graphical session, not a
+bootable BEAN OS or a connection to the owner's computer.
+
 ### M2: Functional desktop
 - [ ] Working login, desktop session and custom BEAN UI shell.
 - [ ] Modern web browser and internet connectivity.
