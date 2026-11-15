@@ -1,0 +1,59 @@
+name: BEANpup native ISO guest boot gate
+on:
+  push:
+    branches: [feat/beanpup-native-migration-20261114]
+    paths:
+      - "beanpup/**"
+      - ".github/workflows/beanpup-boot.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build-and-boot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - name: Source gate
+        run: |
+          set -euo pipefail
+          bash -n beanpup/build.sh
+          grep -Fq 'BookwormPup64_10.0.12' beanpup/build.sh
+          ! grep -Eq 'apt-get install|pip install|systemctl enable' beanpup/build.sh
+      - name: Install builder and test emulator on CI host only
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y xorriso squashfs-tools qemu-system-x86
+      - name: Build checksum-pinned base plus minimal addon
+        run: bash beanpup/build.sh | tee dist/beanpup-build.log
+      - name: Boot the actual ISO in isolated emulator
+        run: |
+          set -euo pipefail
+          timeout --signal=TERM --kill-after=10 240 \
+            qemu-system-x86_64 -machine pc -accel tcg -m 3072 -smp 2 \
+              -boot d -cdrom dist/beanpup-candidate.iso -net none -no-reboot \
+              -display none -vga std -serial file:dist/beanpup-guest-serial.log \
+              -monitor none > dist/beanpup-qemu.log 2>&1 || true
+          test -s dist/beanpup-guest-serial.log
+          grep -Fxq BEANPUP_GUEST_GUI_STARTUP_PASS dist/beanpup-guest-serial.log
+          echo "BEANPUP_QEMU_GUI_BOOT_PASS"
+      - name: Retain logs, checksums and release status only
+        if: always()
+        run: |
+          {
+            echo "BEANPUP_RELEASE_READY=NO"
+            echo "BASE=BookwormPup64_10.0.12"
+            echo "QEMU_GUEST_GUI_PROOF=$(grep -Fc BEANPUP_GUEST_GUI_STARTUP_PASS dist/beanpup-guest-serial.log 2>/dev/null || :)"
+            echo "PERSISTENCE_REBOOT=UNVERIFIED"
+            echo "PHYSICAL_USB_BOOT=UNVERIFIED"
+            echo "BEAN_CORE_INTEGRATION=NOT_INCLUDED"
+          } > dist/beanpup-verdict.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: beanpup-boot-diagnostics
+          retention-days: 14
+          path: |
+            dist/*.txt
+            dist/*.log
+            dist/*.sha256
